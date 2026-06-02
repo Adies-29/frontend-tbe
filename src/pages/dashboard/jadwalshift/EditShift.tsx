@@ -232,29 +232,26 @@ export default function EditShift() {
                             className="w-5 h-5 cursor-pointer" />
                         <label htmlFor="is_potong_gaji_terlambat" className="text-sm font-medium text-gray-700 cursor-pointer">Potong Gaji Jika Terlambat</label>
                     </div>
-                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Input
-                        label="Denda Terlambat (Rp/Menit)"
-                        nama="denda_terlambat_per_menit"
-                        type="number"
-                        placeholder="Masukkan nominal"
-                        register={register}
-                        error={errors.denda_terlambat_per_menit?.message}
-                        disabled={!watch("is_potong_gaji_terlambat")}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Input
+                            label="Denda Terlambat (Rp/Menit)"
+                            nama="denda_terlambat_per_menit"
+                            type="number"
+                            placeholder="Masukkan nominal"
+                            register={register}
+                            error={errors.denda_terlambat_per_menit?.message}
+                            disabled={!watch("is_potong_gaji_terlambat")}
 
-                    />
-                    <Input
-                        label="Batas Toleransi (Menit)"
-                        nama="batas_toleransi_menit"
-                        type="number"
-                        placeholder="0"
-                        register={register}
-                        error={errors.batas_toleransi_menit?.message}
-                    />
-                     </div>
-
-
-                    
+                        />
+                        <Input
+                            label="Batas Toleransi (Menit)"
+                            nama="batas_toleransi_menit"
+                            type="number"
+                            placeholder="0"
+                            register={register}
+                            error={errors.batas_toleransi_menit?.message}
+                        />
+                    </div>
 
                 </section>
 
