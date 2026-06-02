@@ -54,10 +54,12 @@ export const TabelMasterGaji = ({ data, onAturGaji }: TabelMasterGajiProps) => {
             '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }
         }}>
             <DataGrid
+                showToolbar
+                autoHeight
                 rows={data}
                 columns={columns}
                 initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
-                pageSizeOptions={[5, 10, 25]}
+                pageSizeOptions={[10, 25]}
                 disableRowSelectionOnClick
             />
         </Box>

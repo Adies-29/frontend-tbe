@@ -15,14 +15,14 @@ const schema = z.object({
             .regex(/^[0-9]*$/, "NIK hanya boleh berisi angka")
             .max(16, "NIK harus 16 digit")
             .optional(),
-    no_bpjs: z.string()
+    bpjs: z.string()
             .regex(/^[0-9]*$/, "No BPJS hanya boleh berisi angka")
             .optional(),
     tanggal_bergabung: z.string().min(1, "Tanggal bergabung harus diisi"),
     jenis_kelamin: z.string().min(1, "Jenis Kelamin harus diisi"),
     nama: z.string().min(1, "Nama Pegawai harus diisi"),
     tempat_lahir: z.string().min(1, "Tempat Lahir harus diisi"),
-    tgl_lahir: z.string().min(1, "Tanggal Lahir harus diisi"),
+    tanggal_lahir: z.string().min(1, "Tanggal Lahir harus diisi"),
     no_hp: z.string()
             .regex(/^[0-9]*$/, "Nomor HP hanya boleh berisi angka")
             .optional(),
@@ -103,16 +103,16 @@ export default function EditPegawai(){
                     const pilihJabatan = masterJabatan.filter((j: any) => j.departemen_id?.toString() === pegawaiId );
                     setJabatanList(pilihJabatan);
 
-                    const { nik, no_bpjs, tanggal_bergabung, jenis_kelamin, nama, tempat_lahir, tgl_lahir, no_hp, alamat, email, pin_mesin, jabatan_id, default_shift_id } = pegawai;
+                    const { nik, no_bpjs, tanggal_bergabung, jenis_kelamin, nama, tempat_lahir, tanggal_lahir, no_hp, alamat, email, pin_mesin, jabatan_id, default_shift_id } = pegawai;
 
                     reset({
                         nik: nik || "",
-                        no_bpjs: no_bpjs || "",
+                        bpjs: no_bpjs || "",
                         tanggal_bergabung: tanggal_bergabung || "",
                         jenis_kelamin: jenis_kelamin || "",
                         nama: nama || "",
                         tempat_lahir: tempat_lahir || "",
-                        tgl_lahir: tgl_lahir || "",
+                        tanggal_lahir: tanggal_lahir || "",
                         no_hp: no_hp || "",
                         alamat: alamat || "",
                         email: email || "",
@@ -163,12 +163,12 @@ export default function EditPegawai(){
                 },
                  body: JSON.stringify({
                     nik: data.nik || null,
-                    no_bpjs: data.no_bpjs || null,
-                    tanggal_bergaung: data.tanggal_bergabung,
+                    bpjs: data.bpjs || null,
+                    tanggal_bergabung: data.tanggal_bergabung,
                     jenis_kelamin: data.jenis_kelamin,
                     nama: data.nama,
                     tempat_lahir: data.tempat_lahir,
-                    tgl_lahir:data.tgl_lahir,
+                    tanggal_lahir:data.tanggal_lahir,
                     no_hp: data.no_hp,
                     alamat: data.alamat,
                     email: data.email || null,
@@ -230,28 +230,27 @@ export default function EditPegawai(){
 
                         <Input
                             label="N0 BPJS Pegawai"
-                            nama="no_bpjs"
+                            nama="bpjs"
                             register={register}
-                            error={errors.no_bpjs?.message}
+                            error={errors.bpjs?.message}
                         />
-
-                        <InputSelect
-                            label="Jenis Kelamin"
-                            nama="jenis_kelamin"
-                            register={register}
-                            error={errors.jenis_kelamin?.message}
-                            options={departemenList.map(dept => ({
-                                value: dept.id,
-                                label: dept.nama_departemen
-                            }))}
-                        />
-
                         <Input
                             label="Nama Karyawan"
                             nama="nama"
                             register={register}
                             error={errors.nama?.message}
                         />
+                        <InputSelect
+                            label="Jenis Kelamin"
+                            nama="jenis_kelamin"
+                            register={register}
+                            error={errors.jenis_kelamin?.message}
+                            options={[
+                                { value: "Laki-laki", label: "Laki-laki" },
+                                { value: "Perempuan", label: "Perempuan" }
+                            ]}
+                        />
+
 
                         <Input
                             label="Tempat Lahir"
@@ -261,15 +260,15 @@ export default function EditPegawai(){
                         />
                         <Input
                             label="Tanggal Lahir"
-                            nama="tgl_lahir"
+                            nama="tanggal_lahir"
                             type="date"
                             register={register}
-                            error={errors.tgl_lahir?.message}
+                            error={errors.tanggal_lahir?.message}
                         />
 
                         <Input
                             label="Nomor HP"
-                            nama="nohp"
+                            nama="no_hp"
                             register={register}
                             error={errors.no_hp?.message}
                         />
@@ -311,6 +310,22 @@ export default function EditPegawai(){
                             nama="pin_mesin"
                             register={register}
                             error={errors.pin_mesin?.message}
+                        />
+
+                        <Input
+                            label="Tanggal Bergabung *"
+                            nama="tanggal_bergabung"
+                            type="date"
+                            register={register}
+                            error={errors.tanggal_bergabung?.message}
+                        />
+
+                        <Input
+                            label="Email (Opsional)"
+                            nama="email"
+                            type="email"
+                            register={register}
+                            error={errors.email?.message}
                         />
 
                         <TextArea
