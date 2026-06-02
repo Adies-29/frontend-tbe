@@ -11,6 +11,8 @@ import {
 } from "@mui/x-data-grid";
 import { Pencil, Save,  X } from "lucide-react";
 import type { AbsensiData } from "../../../types";
+import dayjs from "dayjs";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 
 
@@ -30,7 +32,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
         setRows(initialData);
     }, [initialData]);
 
-    // --- FUNGSI-FUNGSI AKSI ---
+    
 
     // 1. Mulai Edit (Ikon Pencil)
     const handleEditClick = (id: GridRowId) => () => {
@@ -54,26 +56,79 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     // --- FUNGSI UPDATE DATA KE STATE ---
     const processRowUpdate = async (newRow: GridRowModel) => {
         const updatedRow = { ...newRow } as AbsensiData;
+        const token = useAuthStore((state) => (state.token));
         setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
         
-        console.log("Mencoba simpan data baru:", updatedRow); 
-        
-        // Nanti di sini tempat kamu naruh fungsi Fetch / Axios metode PUT untuk simpan ke backend
-        // Setelah berhasil:
-        // onRefresh(); // <--- Ini akan menyuruh Parent langsung narik data ulang (Layar kedip up-to-date!)
+        try {
+            
+            const response = await fetch(`http://localhost:3000/api/v1/absensi/${updatedRow.id}`, {
+                method: "PUT", 
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` 
+                },
+                body: JSON.stringify({
+                    status: updatedRow.status_masuk,       
+                    lembur: updatedRow.status_lembur,       
+                }),
+            });
 
-        return updatedRow;
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                alert("Gagal menyimpan perubahan ke server!");
+                onRefresh(); 
+                return newRow; 
+            }
+            console.log("Sukses update data!", result);
+            onRefresh(); 
+
+            return updatedRow;
+
+        } catch (error) {
+            console.error("Terjadi kesalahan jaringan:", error);
+            alert("Terjadi kesalahan saat menghubungi server.");
+            onRefresh(); 
+            return newRow;
+        }
     };
     const handleRowModesModelChange = (newRowModesModel: GridRowModesModel) => {
         setRowModesModel(newRowModesModel);
     };
 
+    const handleProcessRowUpdateError = (error: Error) => {
+        console.error("Gagal menyimpan data baris:", error);
+        alert("Gagal mengupdate data! Silakan coba lagi.");
+    };
+
+    const formatWaktuAbsen = (time: any) => {
+        if (!time || time === "-" || time === "null" || time === "00:00:00") {
+            return <span className="text-gray-400 font-bold">-</span>;
+        }
+        if (typeof time === "string" && time.includes(":")) {
+            return <span className="font-semibold text-gray-700">{time.substring(0, 5)}</span>;
+        }
+        const parsed = dayjs(time);
+        if (parsed.isValid()) {
+            return <span className="font-semibold text-gray-700">{parsed.format("HH:mm")}</span>;
+        }
+        return <span className="font-semibold text-gray-700">{time}</span>;
+    };
+
     const columns: GridColDef[] = [
         { field: "id", headerName: "ID", width: 70, align: "center", headerAlign:"center" },
         { field: "nama", headerName: "Nama", flex: 1, minWidth: 150 },
-        { field: "masuk", headerName: "Waktu Masuk", flex: 1, minWidth: 150, align: "center", headerAlign: "center",  },
+        { 
+            field: "waktu_masuk", 
+            headerName: "Waktu Masuk",
+            flex: 1, 
+            minWidth: 150, 
+            align: "center", 
+            headerAlign: "center",
+            renderCell: (params) => formatWaktuAbsen(params.value)
+        },
         {
-            field: 'status',
+            field: 'status_masuk',
             headerName: 'Status',
             valueOptions: ["Tepat", "Void", "Terlambat",],
             type: 'singleSelect',
@@ -104,9 +159,17 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             }
             
         },
-        { field: "pulang", headerName: "Waktu Pulang", flex: 1, minWidth: 130, align: "center", headerAlign: "center"},
+        { 
+            field: "waktu_pulang", 
+            headerName: "Waktu Pulang", 
+            flex: 1, 
+            minWidth: 130, 
+            align: "center", 
+            headerAlign: "center",
+            renderCell: (params) => formatWaktuAbsen(params.value)
+        },
         {
-            field: "lembur",
+            field: "status_lembur",
             headerName: "Status Lembur",
             valueOptions: ["Lembur", "-",],
             editable: true,
@@ -137,48 +200,14 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                 );
             }
         },
-       {
-            field: 'actions',
-            type: 'actions',
-            headerName: 'Aksi',
-            width: 140,
-            cellClassName: 'actions',
-            getActions: ({ id }) => {
-                const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
-
-                if (isInEditMode) {
-                    return [
-                        <GridActionsCellItem
-                            icon={<Save size={18} className="text-green-600 hover:text-green-800" />}
-                            label="Save"
-                            onClick={handleSaveClick(id)}
-                        />,
-                        <GridActionsCellItem
-                            icon={<X size={18} className="text-red-600 hover:text-red-800" />}
-                            label="Cancel"
-                            onClick={handleCancelClick(id)}
-                            color="inherit"
-                        />,
-                    ];
-                }
-
-                return [
-
-                    <GridActionsCellItem
-                        icon={<Pencil size={18} className="text-gray-600 hover:text-black" />}
-                        label="Edit"
-                        onClick={handleEditClick(id)}
-                        color="inherit"
-                    />,
-                ];
-            },
-        },
+        
     ];
 
     return (
        <div className="w-full bg-white">
             <DataGrid
                 showToolbar 
+                onProcessRowUpdateError={handleProcessRowUpdateError}
                 editMode="row"
                 rowModesModel={rowModesModel}
                 onRowModesModelChange={handleRowModesModelChange}

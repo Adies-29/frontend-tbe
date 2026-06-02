@@ -58,12 +58,16 @@ export default function GajiTunjanganIndex() {
 
             const result = await response.json();
 
-            if(response.ok) {
-                const formattedData : MasterGajiData[] = result.map((item:any) => ({
+            if (response.ok && result.success) { 
+                
+                const data = result.data || []; 
+
+                const formattedData: MasterGajiData[] = data.map((item: any) => ({
                     id: String(item.id),
                     nama_jabatan: item.nama_jabatan,
-                    departemen: item.departemen?.nama_departemen || "Umum"
+                    departemen: item.departemen?.nama_departemen || item.departemen || "-"
                 }));
+                
                 setMasterJabatanData(formattedData);
             }
         } catch (error) {
@@ -73,42 +77,6 @@ export default function GajiTunjanganIndex() {
         }
     }, [token]);
 
-    const fetchRekapGaji = useCallback ( async (currentPeriode: string, valueWaktu: string) => {
-        try {
-            setIsLoadingRekap(true)
-
-            let url = `http://localhost:3000/api/v1/gaji/rekap?periode=${currentPeriode}`;
-            if(valueWaktu){
-                url += `&waktu=${valueWaktu}`;
-            }
-
-            const response = await fetch(url, {
-                method: "GET",
-                headers: {
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`
-                }
-            });
-
-            const result = await response.json();
-
-            if(response.ok && result.success){
-                setRekapGajiData(result.data || []);
-                
-
-                // Set data widget atas secara dinamis dari akumulasi total data rekap backend
-                setSummaryCards({
-                    estimasiPengeluaran: result.statistik?.total_pengeluaran || 0,
-                    totalBonus: result.statistik?.total_bonus || 0,
-                    totalPotongan: result.statistik?.total_potongan || 0
-                });
-            }
-        } catch (error) {
-            console.error("Gagal memuat rekap gaji:", error);
-        } finally{
-            setIsLoadingRekap(false);
-        }
-    }, [token]);
     
     useEffect(() => {
         if (activeTab === `master`) {
@@ -118,9 +86,6 @@ export default function GajiTunjanganIndex() {
             }
         } else if (activeTab === `rekap`) {
             
-            if(rekapGajiData.length === 0) {
-                fetchRekapGaji(periode, filterValue);
-            }
         }
     }, [activeTab]);
 

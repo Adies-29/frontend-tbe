@@ -20,14 +20,14 @@ const schema = z.object({
         .regex(/^[0-9]*$/, "NIK hanya boleh berisi angka")
         .max(16, "NIK harus 16 digit")
         .optional(),
-    no_bpjs: z.string()
+    bpjs: z.string()
         .regex(/^[0-9]*$/, "No BPJS hanya boleh berisi angka")
         .optional(),
     tanggal_bergabung: z.string().min(1, "Tanggal bergabung harus diisi"),
     jenis_kelamin: z.string().min(1, "Jenis Kelamin harus diisi"),
     nama: z.string().min(1, "Nama Pegawai harus diisi"),
     tempat_lahir:z.string().min(1, "Tempat Lahir harus diisi"),
-    tgl_lahir : z.string().min(1, "Tanggal Lahir harus diisi"),
+    tanggal_lahir : z.string().min(1, "Tanggal Lahir harus diisi"),
     no_hp: z.string()
         .regex(/^[0-9]*$/, "Nomor HP hanya boleh berisi angka")
         .optional(),
@@ -117,12 +117,12 @@ export default function AddPegawai() {
                 },
                 body: JSON.stringify({
                     nik: data.nik || null,
-                    no_bpjs: data.no_bpjs || null,
-                    tanggal_bergaung: data.tanggal_bergabung,
+                    bpjs: data.bpjs || null,
+                    tanggal_bergabung: data.tanggal_bergabung,
                     jenis_kelamin: data.jenis_kelamin,
                     nama: data.nama,
                     tempat_lahir: data.tempat_lahir,
-                    tgl_lahir:data.tgl_lahir,
+                    tanggal_lahir:data.tanggal_lahir,
                     no_hp: data.no_hp,
                     alamat: data.alamat,
                     email: data.email || null,
@@ -165,7 +165,7 @@ export default function AddPegawai() {
                     />
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="p-6">
+                <form onSubmit={handleSubmit(onSubmit, (err) => console.log("ZOD ERROR:", err))} className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Input
                             label="NIK Pegawai"
@@ -176,20 +176,9 @@ export default function AddPegawai() {
 
                         <Input
                             label="N0 BPJS Pegawai"
-                            nama="no_bpjs"
+                            nama="bpjs"
                             register={register}
-                            error={errors.no_bpjs?.message}
-                        />
-
-                        <InputSelect
-                            label="Jenis Kelamin"
-                            nama="jenis_kelamin"
-                            register={register}
-                            error={errors.jenis_kelamin?.message}
-                            options={departemenList.map(dept => ({
-                                value: dept.id,
-                                label: dept.nama_departemen
-                            }))}
+                            error={errors.bpjs?.message}
                         />
 
                         <Input
@@ -197,6 +186,17 @@ export default function AddPegawai() {
                             nama="nama"
                             register={register}
                             error={errors.nama?.message}
+                        />
+
+                        <InputSelect
+                            label="Jenis Kelamin"
+                            nama="jenis_kelamin"
+                            register={register}
+                            error={errors.jenis_kelamin?.message}
+                            options={[
+                                { value: "Laki-laki", label: "Laki-laki" },
+                                { value: "Perempuan", label: "Perempuan" }
+                            ]}
                         />
 
                         <Input
@@ -207,15 +207,15 @@ export default function AddPegawai() {
                         />
                         <Input
                             label="Tanggal Lahir"
-                            nama="tgl_lahir"
+                            nama="tanggal_lahir"
                             type="date"
                             register={register}
-                            error={errors.tgl_lahir?.message}
+                            error={errors.tanggal_lahir?.message}
                         />
 
                         <Input
                             label="Nomor HP"
-                            nama="nohp"
+                            nama="no_hp"
                             register={register}
                             error={errors.no_hp?.message}
                         />
@@ -257,6 +257,20 @@ export default function AddPegawai() {
                             nama="pin_mesin"
                             register={register}
                             error={errors.pin_mesin?.message}
+                        />
+                        <Input
+                            label="Tanggal Bergabung *"
+                            nama="tanggal_bergabung"
+                            type="date"
+                            register={register}
+                            error={errors.tanggal_bergabung?.message}
+                        />
+
+                         <Input
+                            label="Email"
+                            nama="email"
+                            register={register}
+                            error={errors.email?.message}
                         />
 
                         <TextArea

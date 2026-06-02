@@ -206,7 +206,6 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
                 autoHeight
                 rows={rows}
                 columns={columns}
-                editMode="row" // Mengubah satu baris penuh sekaligus
                 rowModesModel={rowModesModel}
                 onRowModesModelChange={handleRowModesModelChange}
                 processRowUpdate={processRowUpdate}
