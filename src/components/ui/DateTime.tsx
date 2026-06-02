@@ -50,7 +50,7 @@ export default function DateTime() {
         const fetchShift = async () => {
             try {
                 setIsLoading(true);
-                const respose = await fetch ("http://localhost:3000/api/v1/shifts");
+                const respose = await fetch ("https://ppm-sooty.vercel.app/api/v1/shifts");
                 if (!respose.ok)
                     throw new Error("Gagal ambil data")
 

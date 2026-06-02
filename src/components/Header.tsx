@@ -11,7 +11,7 @@ export default function Header() {
         const fetchShiftData = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetch("http://localhost:3000/api/v1/shifts"); 
+                const response = await fetch("https://ppm-sooty.vercel.app/api/v1/shifts"); 
                 if (!response.ok) throw new Error("Backend tidak merespons");
                 
                 const data = await response.json();

@@ -25,7 +25,7 @@ export default function DashboardIndex() {
     // 3. FUNGSI TARIK DATA (Dibungkus useCallback agar bisa dilempar ke Tabel)
     const fetchLiveDashboard = useCallback(async () => {
         try {
-            const response = await fetch("http://localhost:3000/api/v1/dashboard/live"); 
+            const response = await fetch("https://ppm-sooty.vercel.app/api/dashboard/live"); 
             const result = await response.json();
 
             if (response.ok && result.success) {
