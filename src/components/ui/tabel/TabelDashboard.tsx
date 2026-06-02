@@ -71,9 +71,9 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     const columns: GridColDef[] = [
         { field: "id", headerName: "ID", width: 70, align: "center", headerAlign:"center" },
         { field: "nama", headerName: "Nama", flex: 1, minWidth: 150 },
-        { field: "masuk", headerName: "Waktu Masuk", flex: 1, minWidth: 150, align: "center", headerAlign: "center",  },
+        { field: "waktu_masuk", headerName: "Waktu Masuk", flex: 1, minWidth: 150, align: "center", headerAlign: "center",  },
         {
-            field: 'status',
+            field: 'status_masuk',
             headerName: 'Status',
             valueOptions: ["Tepat", "Void", "Terlambat",],
             type: 'singleSelect',
@@ -104,9 +104,9 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             }
             
         },
-        { field: "pulang", headerName: "Waktu Pulang", flex: 1, minWidth: 130, align: "center", headerAlign: "center"},
+        { field: "waktu_pulang", headerName: "Waktu Pulang", flex: 1, minWidth: 130, align: "center", headerAlign: "center"},
         {
-            field: "lembur",
+            field: "status_lembur",
             headerName: "Status Lembur",
             valueOptions: ["Lembur", "-",],
             editable: true,

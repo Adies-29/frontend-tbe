@@ -25,27 +25,36 @@ export default function DashboardIndex() {
     // 3. FUNGSI TARIK DATA (Dibungkus useCallback agar bisa dilempar ke Tabel)
     const fetchLiveDashboard = useCallback(async () => {
         try {
-            const response = await fetch("http://localhost:3000/api/dashboard/live"); 
+            const response = await fetch("https://ppm-sooty.vercel.app/api/dashboard/live"); 
             const result = await response.json();
 
             if (response.ok && result.success) {
                 setSummary(result.statistik);
 
                 // Format data agar sesuai dengan interface AbsensiData di TabelDashboard
-                const formattedRows = result.data_karyawan.map((karyawan: any) => {
+                const formattedRows = result.data_karyawan.map((karyawan: any, index: number) => {
                     let labelStatus = "Belum Hadir";
-                    if (karyawan.status === 'intime' || karyawan.status === 'ontime') labelStatus = 'Tepat';
-                    else if (karyawan.status === 'late') labelStatus = 'Terlambat';
-                    else if (karyawan.status === 'void') labelStatus = 'Void';
-
+                    
+                    // Perbaikan: Pastikan kita membaca string aslinya dengan huruf kecil untuk pencocokan yang aman
+                    const statusBackend = (karyawan.status_masuk || karyawan.status || "").toLowerCase();
+                
+                    if (statusBackend === 'intime' || statusBackend === 'ontime') labelStatus = 'Tepat';
+                    else if (statusBackend === 'late') labelStatus = 'Terlambat';
+                    else if (statusBackend === 'void') labelStatus = 'Void';
+                    // Jika backend mengirim "Tepat" / "Terlambat" secara langsung dari update kita sebelumnya
+                    else if (karyawan.status_masuk === 'Tepat' || karyawan.status_masuk === 'Terlambat' || karyawan.status_masuk === 'Void') {
+                        labelStatus = karyawan.status_masuk;
+                    }
+                
                     return {
-                        id: karyawan.id_pegawai,
-                        nama: karyawan.nama,
-                        jabatan: karyawan.jabatan,
-                        waktu_masuk: karyawan.jam_masuk,
+                        // PERBAIKAN UTAMA: Jika karyawan.id kosong, cari id_pegawai. Jika kosong juga, pakai index + 1
+                        id: karyawan.id || karyawan.id_pegawai || index + 1,
+                        nama: karyawan.nama || "Tanpa Nama",
+                        jabatan: karyawan.jabatan || "-",
+                        waktu_masuk: karyawan.waktu_masuk || "-",
                         status_masuk: labelStatus,
-                        waktu_pulang: karyawan.jam_pulang,
-                        status_lembur: "-" 
+                        waktu_pulang: karyawan.waktu_pulang || "-",
+                        status_lembur: karyawan.status_lembur || "-",
                     };
                 });
                 
