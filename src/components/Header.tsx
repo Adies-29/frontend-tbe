@@ -1,17 +1,25 @@
 import { useEffect, useState } from "react";
 import { useLocation, matchPath } from "react-router-dom"; // <-- DITAMBAHKAN matchPath
 import DateTime from "./ui/DateTime";
+import { useAuthStore } from "../store/useAuthStore"; // <-- Import useAuthStore untuk mengambil token
 
 export default function Header() {
     // --- LOGIKA SHIFT ---
     const [currentShift, setCurrentShift] = useState("");
     const [isLoading, setIsLoading] = useState(true);
+    const token = useAuthStore((state) => state.token);
 
     useEffect(() => {
         const fetchShiftData = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetch("http://localhost:3000/api/v1/shifts"); 
+                const response = await fetch("https://ppm-sooty.vercel.app/api/v1/shifts", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`, // <-- Kunci masuknya di sini
+                        "Content-Type": "application/json"
+                    }
+                });
                 if (!response.ok) throw new Error("Backend tidak merespons");
                 
                 const data = await response.json();
