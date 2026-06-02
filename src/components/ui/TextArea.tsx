@@ -2,7 +2,7 @@ import React from 'react';
 
 interface TextAreaProps {
     label: string;
-    name: string;
+    nama: string;
     register: any;
     error?: string;
     placeholder?: string;
@@ -11,7 +11,7 @@ interface TextAreaProps {
 
 export const TextArea: React.FC<TextAreaProps> = ({
     label,
-    name,
+    nama,
     register,
     error,
     placeholder,
@@ -22,7 +22,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
         <div className={`flex flex-col gap-1 ${className}`}>
             <label className="text-sm font-medium text-gray-700">{label}</label>
             <textarea 
-                {...register(name)}
+                {...register(nama)}
                 placeholder={placeholder}
                 // 3. Tambahkan w-full di sini, dan sedikit styling agar senada dengan input lain
                 className={`border rounded px-3 py-2 min-h-25 w-full outline-none transition-colors ${

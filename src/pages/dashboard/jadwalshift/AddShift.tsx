@@ -145,14 +145,6 @@ export default function AddShift() {
                         <AlertCircle size={20} /> <h2>Toleransi & Batas Scan</h2>
                     </div>
                     <Input
-                        label="Batas Toleransi (Menit)"
-                        nama="batas_toleransi_menit"
-                        type="number"
-                        placeholder="0"
-                        register={register}
-                        error={errors.batas_toleransi_menit?.message}
-                    />
-                    <Input
                         label="Batas Maksimal Lembur (Menit)"
                         nama="batas_maksimal_lembur_menit"
                         type="number"
@@ -191,16 +183,29 @@ export default function AddShift() {
                     </div>
 
 
-                    <Input
-                        label="Denda Terlambat (Rp/Menit)"
-                        nama="denda_terlambat_per_menit"
-                        type="number"
-                        placeholder="Masukkan nominal"
-                        register={register}
-                        error={errors.denda_terlambat_per_menit?.message}
-                        disabled={!watch("is_potong_gaji_terlambat")}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        
+                        <Input
+                            label="Batas Toleransi (Menit)"
+                            nama="batas_toleransi_menit"
+                            type="number"
+                            placeholder="0"
+                            register={register}
+                            error={errors.batas_toleransi_menit?.message}
+                        />
+                        
+                        <Input
+                            label="Denda Terlambat (Rp/Menit)"
+                            nama="denda_terlambat_per_menit"
+                            type="number"
+                            placeholder="Masukkan nominal"
+                            register={register}
+                            error={errors.denda_terlambat_per_menit?.message}
+                            disabled={!watch("is_potong_gaji_terlambat")}
 
-                    />
+                        />
+                        
+                    </div>
 
                 </section>
 

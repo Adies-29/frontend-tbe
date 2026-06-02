@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Wallet, TrendingDown, TrendingUp } from 'lucide-react';
+import { Wallet, TrendingDown, TrendingUp, Loader2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Button from '../../../components/ui/Button';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -232,14 +232,18 @@ export default function GajiTunjanganIndex() {
 
             {/* KONTEN TAB 2: MASTER GAJI JABATAN */}
             {activeTab === 'master' && (
-                <div className="flex flex-col gap-6 animate-in fade-in duration-300">
+                <div className="flex flex-col gap-6 animate-in fade-in duration-300 relative min-h-[200px]">
+                    {isLoadingMaster && (
+                        <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center rounded-xl">
+                            <Loader2 className="animate-spin text-red-600" size={32} />
+                        </div>
+                    )}
+
                     <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
                         <h1 className="text-xl font-bold text-gray-800 mb-1">Standar Upah & Bonus</h1>
                         <p className="text-sm text-gray-500 mb-6">Atur nominal gaji pokok, tunjangan, dan bonus berdasarkan masing-masing jabatan.</p>
                         
-                        {/* PANGGIL KOMPONEN TABEL MASTER GAJI DI SINI */}
-                       <TabelMasterGaji data={masterJabatanData} onAturGaji={handleNavigasiAturGaji} />
-
+                        <TabelMasterGaji data={masterJabatanData} onAturGaji={handleNavigasiAturGaji} />
                     </div>
                 </div>
             )}
