@@ -129,14 +129,12 @@ export default function GajiTunjanganIndex() {
         try {
             setIsLoadingRekap(true);
             
-            // Logika Penentuan URL berdasarkan Dropdown Periode
-            let url = `https://ppm-sooty.vercel.app/api/v1/gaji`;
+            // 1. Penentuan URL berdasarkan Dropdown Periode
+            let url = `https://ppm-sooty.vercel.app/api/v1/gaji`; 
             
-            if (periode === 'minggu') {
+            if (periode === 'Mingguan') {
                 url = `https://ppm-sooty.vercel.app/api/v1/gaji/mingguan`;
-            } else if (periode === 'hari') {
-                // WAJIB mengirimkan tanggal yang dipilih dari input kalender (filterValue)
-                // Jika belum memilih tanggal, default ke hari ini
+            } else if (periode === 'Harian') {
                 const tanggalPilihan = filterValue || new Date().toLocaleDateString('en-CA');
                 url = `https://ppm-sooty.vercel.app/api/v1/gaji/harian?tanggal=${tanggalPilihan}`;
             }
@@ -154,37 +152,39 @@ export default function GajiTunjanganIndex() {
             if (response.ok && result.success) {
                 const data = result.data || [];
                 
-                // Jika periode='hari', backend getRekapHarian sudah merakit strukturnya dengan sempurna
-                // Jadi kita tidak perlu melakukan map logic yang rumit lagi seperti di mingguan/bulanan
                 let formattedData: RekapGajiData[] = [];
 
+                // 2. Formatting Data
                 if (periode === 'hari') {
-                    formattedData = data; // Data langsung siap pakai
+                    formattedData = data; // Data langsung siap pakai dari API harian
                 } else {
-                    // ... (Logika map() lama untuk Mingguan dan Bulanan tetap di sini) ...
+                    // Pastikan proses map ini mengembalikan (return) objek
                     formattedData = data.map((item: any) => {
-                         // (Kopikan kode map lama Anda di sini)
+                        const isMingguan = periode === 'minggu';
+                        const totalBonusMingguan = (item.total_bonus_kerapian_mingguan || 0) + (item.total_bonus_disiplin_mingguan || 0);
+        
+                        return {
+                            id: String(item.id),
+                            nama: item.pegawai?.nama || "Tanpa Nama",
+                            jabatan: item.pegawai?.jabatan?.nama_jabatan || "-",
+                            gaji_dasar: isMingguan ? (item.total_gaji_pokok_mingguan || 0) : (item.gaji_dasar || 0),
+                            total_bonus: isMingguan ? totalBonusMingguan : (item.total_bonus || 0),
+                            total_potongan: isMingguan ? (item.total_denda_mingguan || 0) : (item.total_potongan || 0),
+                            gaji_bersih: isMingguan ? (item.total_pendapatan_bersih_mingguan || 0) : (item.total_gaji || 0),
+                            status: isMingguan ? "Lunas/Cair" : (item.status_pembayaran || "Pending")
+                        };
                     });
                 }
                 
                 setRekapGajiData(formattedData);
-                // ... (Update Widget Finansial) ...
 
-                // Update Widget Finansial
-                const totalPengeluaran = formattedData.reduce((sum, curr) => sum + curr.gaji_bersih, 0);
-                const totalBonusSemua = formattedData.reduce((sum, curr) => sum + curr.total_bonus, 0);
-                const totalPotonganSemua = formattedData.reduce((sum, curr) => sum + curr.total_potongan, 0);
-
-                setSummaryCards({
-                    estimasiPengeluaran: totalPengeluaran,
-                    totalBonus: totalBonusSemua,
-                    totalPotongan: totalPotonganSemua
-                });
             } else {
                 console.error("Gagal mengambil data gaji:", result.message);
             }
         } catch (error) {
-            console.error(error);
+            console.error("Error fetchRekapGaji:", error);
+        } finally {
+            setIsLoadingRekap(false);
         }
     };
 
