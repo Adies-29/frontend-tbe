@@ -26,7 +26,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
                 placeholder={placeholder}
                 // 3. Tambahkan w-full di sini, dan sedikit styling agar senada dengan input lain
                 className={`border rounded px-3 py-2 min-h-25 w-full outline-none transition-colors ${
-                    error ? "border-red-500 focus:ring-1 focus:ring-red-500" : "border-gray-400 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                    error ? "border-blue-500 focus:ring-1 focus:ring-blue-500" : "border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 }`}
             />
             {error && <p className="text-red-500 text-xs mt-1">{error}</p>}

@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import {
     DataGrid,
     type GridColDef,
-    type GridRowModesModel,
     GridRowModes,
     GridActionsCellItem,
     type GridRowId,
@@ -144,6 +143,9 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     };
 
 
+   
+
+
     // --- 3. DEFINISI KOLOM ---
     const columns: GridColDef[] = [
         {
@@ -180,8 +182,8 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
             }
         },
         {
-            field: 'jumlah_karyawan',
-            headerName: 'Jumlah Karyawan',
+            field: 'jumlah_pegawai',
+            headerName: 'Jumlah Pegawai',
             flex: 1,
             minWidth: 150,
             align: 'center',
@@ -252,9 +254,9 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
             }}
 
             initialState={{
-                pagination: { paginationModel: { page: 0, pageSize: 5 } },
+                pagination: { paginationModel: { page: 0, pageSize: 10 } },
             }}
-            pageSizeOptions={[5, 10]}   
+            pageSizeOptions={[10, 20]}   
             disableRowSelectionOnClick
             sx={{
                 border: 'none',

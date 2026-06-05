@@ -1,8 +1,11 @@
 import { z } from "zod";
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, type SubmitHandler } from 'react-hook-form';
 
-import { ArrowLeft } from "lucide-react";
+import { useForm, Controller } from 'react-hook-form'; 
+import Autocomplete from '@mui/material/Autocomplete'; 
+import TextField from '@mui/material/TextField'; 
+
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../../components/ui/Button";
 
@@ -17,11 +20,12 @@ import { useAuthStore } from "../../../store/useAuthStore";
 // 2. REVISI SCHEMA ZOD 
 const schema = z.object({
     nik: z.string()
-        .regex(/^[0-9]*$/, "NIK hanya boleh berisi angka")
-        .max(16, "NIK harus 16 digit")
+        .regex(/^\d*$/, "NIK hanya boleh berisi angka")
+        .refine((val) => val === "" || val.length === 16, "NIK harus tepat 16 digit")
         .optional(),
     bpjs: z.string()
-        .regex(/^[0-9]*$/, "No BPJS hanya boleh berisi angka")
+        .regex(/^\d*$/, "No BPJS hanya boleh berisi angka")
+        .refine((val) => val === "" || (val.length >= 11 && val.length <= 13), "No BPJS tidak valid (11-13 digit)")
         .optional(),
     tanggal_bergabung: z.string().min(1, "Tanggal bergabung harus diisi"),
     jenis_kelamin: z.string().min(1, "Jenis Kelamin harus diisi"),
@@ -29,7 +33,8 @@ const schema = z.object({
     tempat_lahir:z.string().min(1, "Tempat Lahir harus diisi"),
     tanggal_lahir : z.string().min(1, "Tanggal Lahir harus diisi"),
     no_hp: z.string()
-        .regex(/^[0-9]*$/, "Nomor HP hanya boleh berisi angka")
+        .regex(/^\d*$/, "Nomor HP hanya boleh berisi angka")
+        .refine((val) => val === "" || (val.length >= 10 && val.length <= 14), "Nomor HP tidak valid (10-14 digit)")
         .optional(),
     alamat: z.string().min(1, "Alamat Pegawai harus diisi"),
     email: z.string().email("Format email tidak valid").optional().or(z.literal("")),
@@ -41,15 +46,27 @@ const schema = z.object({
 });
 type FormData = z.infer<typeof schema>;
 
+const MOCK_KOTA = [
+    { id: 1, nama_kota: "Jakarta" },
+    { id: 2, nama_kota: "Surabaya" },
+    { id: 3, nama_kota: "Bandung" },
+    { id: 4, nama_kota: "Medan" },
+    { id: 5, nama_kota: "Semarang" },
+    { id: 6, nama_kota: "Yogyakarta" },
+    { id: 7, nama_kota: "Malang" },
+    { id: 8, nama_kota: "Makassar" },
+];
+
 
 export default function AddPegawai() {
     const navigate = useNavigate();
     const token = useAuthStore((state) => state.token);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [departemenList, setDepartemenList] = useState<any[]>([]);
     const [shiftList, setShiftList] = useState<any[]>([]);
     const [allJabatan, setAllJabatan] = useState<any[]>([]);
     const [jabatanList, setJabatanList] = useState<any[]>([]);
+    const [kotaList, _setKotaList] = useState<any[]>(MOCK_KOTA); 
     
     // Tambahkan watch dan setValue di sini
     const {
@@ -57,26 +74,29 @@ export default function AddPegawai() {
         handleSubmit,
         watch,
         setValue,
+        control,
         formState: { errors }
     } = useForm<FormData>({
         resolver: zodResolver(schema)
     });
     
+    
     useEffect(() =>{
         const fetctPegawai = async () => {
             try {
-               const [resDept, resJabatan, resShift] = await Promise.all([
+               const [resDept, resJabatan, resShift, ] = await Promise.all([
                     fetch("https://ppm-sooty.vercel.app/api/v1/departemen", { headers: { "Authorization": `Bearer ${token}` } }),
                     fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Authorization": `Bearer ${token}` } }),
-                    fetch("https://ppm-sooty.vercel.app/api/v1/shifts", { headers: { "Authorization": `Bearer ${token}` } })
+                    fetch("https://ppm-sooty.vercel.app/api/v1/shifts", { headers: { "Authorization": `Bearer ${token}` } }),
+                    // fetch("https://ppm-sooty.vercel.appapi/v1/kota",{ headers: { "Authorization": `Bearer ${token}` } })
                 ]);
                 const dataDept = await resDept.json();
                 const dataJabatan = await resJabatan.json();
                 const dataShift = await resShift.json();
-
+               
                 if (resDept.ok && dataDept.success) setDepartemenList(dataDept.data);
                 if (resJabatan.ok && dataJabatan.success) setAllJabatan(dataJabatan.data);
-                if (resShift.ok && dataShift.success) setShiftList(dataShift.data);
+                if (resShift.ok && dataShift.success) setShiftList(dataShift.data); 
                 
             } catch (error) {
                 console.error("Gagal memuat master data:", error);
@@ -94,7 +114,7 @@ export default function AddPegawai() {
             console.log("Data Semua Jabatan Yang Tersedia:", allJabatan);
 
             const pilih = allJabatan.filter((j) => {
-                // 👇 INTIP APAKAH KOLOM 'departemen_id' BENAR-BENAR ADA DI OBJEK JABATAN
+               
                 console.log("Membandingkan ID Dept di Jabatan:", j.departemen_id, "dengan", selectedDept);
                 return j.departemen_id?.toString() === selectedDept.toString()      
             });
@@ -107,7 +127,7 @@ export default function AddPegawai() {
     }, [selectedDept, allJabatan, setValue]);
     
     const onSubmit = async (data: FormData) => {
-        setIsLoading(true)
+        setIsSaving(true)
         try {
             const response = await fetch ("https://ppm-sooty.vercel.app/api/v1/pegawai", {
                 method: "POST",
@@ -145,153 +165,135 @@ export default function AddPegawai() {
             console.error("Error:", error);
             alert("Terjadi kesalahan saat menghubungi server.");
         }finally{
-            setIsLoading(false);
+            setIsSaving(false);
         }
     }
 
     
     return (
-        <div className="p-6 w-full">
-            <div className="bg-white rounded-xl shadow-md p-8 border border-gray-100">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800">
+        
+        <div className="p-3 md:p-6 w-full"> 
+            
+        
+            <div className="bg-white rounded-xl shadow-md p-4 md:p-8 border border-gray-100">
+                
+                {/* --- HEADER --- */}
+                <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+                    <h2 className="text-xl md:text-2xl font-bold text-gray-800">
                         Tambah Pegawai
                     </h2>
                     <Button
                         variant="back"
-                        icon={<ArrowLeft size={24} />}
+                        icon={<ArrowLeft size={20} />} 
                         onClick={() => navigate(-1)}
                         label="Kembali"
                     />
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit, (err) => console.log("ZOD ERROR:", err))} className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Input
-                            label="NIK Pegawai"
-                            nama="nik"
-                            register={register}
-                            error={errors.nik?.message}
-                        />
-
-                        <Input
-                            label="N0 BPJS Pegawai"
-                            nama="bpjs"
-                            register={register}
-                            error={errors.bpjs?.message}
-                        />
-
-                        <Input
-                            label="Nama Karyawan"
-                            nama="nama"
-                            register={register}
-                            error={errors.nama?.message}
-                        />
-
-                        <InputSelect
-                            label="Jenis Kelamin"
-                            nama="jenis_kelamin"
-                            register={register}
-                            error={errors.jenis_kelamin?.message}
-                            options={[
-                                { value: "Laki-laki", label: "Laki-laki" },
-                                { value: "Perempuan", label: "Perempuan" }
-                            ]}
-                        />
-
-                        <Input
-                            label="Tempat Lahir"
-                            nama="tempat_lahir"
-                            register={register}
-                            error={errors.tempat_lahir?.message}
-                        />
-                        <Input
-                            label="Tanggal Lahir"
-                            nama="tanggal_lahir"
-                            type="date"
-                            register={register}
-                            error={errors.tanggal_lahir?.message}
-                        />
-
-                        <Input
-                            label="Nomor HP"
-                            nama="no_hp"
-                            register={register}
-                            error={errors.no_hp?.message}
-                        />
-
-                        <InputSelect
-                            label="Departemen"
-                            nama="departemen"
-                            register={register}
-                            error={errors.departemen?.message}
-                            options={departemenList.map(dept => ({
-                                value: dept.id,
-                                label: dept.nama_departemen
-                            }))}
-                        />
-                        <InputSelect
-                            label="Jabatan"
-                            nama="jabatan_id"
-                            register={register}
-                            error={errors.jabatan_id?.message}
-                            options={jabatanList.map((jabatan) => ({
-                                value: jabatan.id,
-                                label: jabatan.nama_jabatan
-                            }))}
-                            disabled={!selectedDept}
-                        />
-
-                        <InputSelect
-                            label="Shift"
-                            nama="default_shift_id" 
-                            register={register}
-                            error={errors.default_shift_id?.message}
-                            options={shiftList.map((shift) => ({
-                                value: shift.id,
-                                label: shift.kode_shift || shift.nama_shift || `Shift ${shift.id}`
-                            }))}
-                        />
-                        <Input
-                            label="PIN Mesin Absensi *"
-                            nama="pin_mesin"
-                            register={register}
-                            error={errors.pin_mesin?.message}
-                        />
-                        <Input
-                            label="Tanggal Bergabung *"
-                            nama="tanggal_bergabung"
-                            type="date"
-                            register={register}
-                            error={errors.tanggal_bergabung?.message}
-                        />
-
-                         <Input
-                            label="Email"
-                            nama="email"
-                            register={register}
-                            error={errors.email?.message}
-                        />
-
-                        <TextArea
-                            label="Alamat Lengkap"
-                            nama="alamat"
-                            register={register}
-                            error={errors.alamat?.message}
-                            className="md:col-span-2"
-                        />
+                <form onSubmit={handleSubmit(onSubmit, (err) => console.log("ZOD ERROR:", err))} className="space-y-8">
+                    
+                    {/* --- SEKSI 1: INFORMASI PRIBADI --- */}
+                    <div>
+                        <h3 className="text-base md:text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4 md:mb-5">
+                            Informasi Pribadi
+                        </h3>
+                        {/* Jarak antar kotak (gap) dibuat lebih rapat di HP (gap-4) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                            <Input label="NIK Pegawai" nama="nik" register={register} error={errors.nik?.message} />
+                            <Input label="No BPJS Pegawai" nama="bpjs" register={register} error={errors.bpjs?.message}  />
+                            <Input label="Nama Pegawai" nama="nama" register={register} error={errors.nama?.message} />
+                            <InputSelect label="Jenis Kelamin" nama="jenis_kelamin" register={register} error={errors.jenis_kelamin?.message} options={[{ value: "Laki-laki", label: "Laki-laki" }, { value: "Perempuan", label: "Perempuan" }]} />
+                            
+                            {/* Autocomplete Tempat Lahir */}
+                            <div className="flex flex-col w-full">
+                                <label className="mb-1 text-sm font-medium text-gray-700">
+                                    Tempat Lahir
+                                </label>
+                                <Controller
+                                    name="tempat_lahir"
+                                    control={control}
+                                    render={({ field: { onChange, value } }) => (
+                                        <Autocomplete
+                                            options={kotaList}
+                                            getOptionLabel={(option) => option.nama_kota || ""}
+                                            value={kotaList.find((kota) => kota.nama_kota === value) || null}
+                                            onChange={(_, newValue) => {
+                                                onChange(newValue ? newValue.nama_kota : "");
+                                            }}
+                                            renderInput={(params) => (
+                                                <TextField
+                                                    {...params}
+                                                    placeholder="Ketik nama kota..."
+                                                    error={!!errors.tempat_lahir}
+                                                    helperText={errors.tempat_lahir?.message}
+                                                    size="small"
+                                                    sx={{
+                                                        '& .MuiOutlinedInput-root': {
+                                                            borderRadius: '0.5rem', 
+                                                            backgroundColor: 'white',
+                                                            '&.Mui-focused fieldset': {
+                                                                borderColor: '#3b82f6', 
+                                                                borderWidth: '1px', 
+                                                            },
+                                                        }
+                                                    }}
+                                                />
+                                            )}
+                                        />
+                                    )}
+                                />
+                            </div>
+                            <Input label="Tanggal Lahir" nama="tanggal_lahir" type="date" register={register} error={errors.tanggal_lahir?.message} />
+                        </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 mt-8 pt-5">
-                        <Button type="submit" label="Simpan" disabled={isLoading} />
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            label="Batal"
-                            onClick={() => navigate(-1)}
-                            disabled={isLoading}
-                        />
+                    {/* --- SEKSI 2: KONTAK & ALAMAT --- */}
+                    <div>
+                        <h3 className="text-base md:text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4 md:mb-5">
+                            Kontak & Alamat
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                            <Input label="Nomor HP" nama="no_hp" register={register} error={errors.no_hp?.message} />
+                            <Input label="Email" nama="email" register={register} error={errors.email?.message} />
+                            <TextArea label="Alamat Lengkap" nama="alamat" register={register} error={errors.alamat?.message} className="md:col-span-2" />
+                        </div>
                     </div>
+
+                    {/* --- SEKSI 3: DATA PEKERJAAN --- */}
+                    {/* Padding dikurangi sedikit untuk layar HP (p-4) */}
+                    <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-100">
+                        <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-4 md:mb-5">
+                            Data Pekerjaan & Perusahaan
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                            <Input label="Tanggal Bergabung *" nama="tanggal_bergabung" type="date" register={register} error={errors.tanggal_bergabung?.message} />
+                            <Input label="PIN Mesin Absensi *" nama="pin_mesin" register={register} error={errors.pin_mesin?.message} />
+                            <InputSelect label="Departemen" nama="departemen" register={register} error={errors.departemen?.message} options={departemenList.map(dept => ({ value: dept.id, label: dept.nama_departemen }))} />
+                            <InputSelect label="Jabatan" nama="jabatan_id" register={register} error={errors.jabatan_id?.message} options={jabatanList.map(jabatan => ({ value: jabatan.id, label: jabatan.nama_jabatan }))} disabled={!selectedDept} />
+                            <InputSelect label="Shift" nama="default_shift_id" register={register} error={errors.default_shift_id?.message} options={shiftList.map(shift => ({ value: shift.id, label: shift.kode_shift || shift.nama_shift || `Shift ${shift.id}` }))} />
+                        </div>
+                    </div>
+
+                    {/* --- TOMBOL SUBMIT --- */}
+                    {/* Trik Khusus Mobile: flex-col-reverse membuat tombol numpuk atas-bawah di HP */}
+                    <div className="flex justify-end gap-3 mt-8 pt-5 border-t border-gray-100">
+                        <Button 
+                            variant="success"
+                            type="submit" 
+                            label={isSaving ? "Menyimpan..." : "Simpan"} 
+                            disabled={isSaving} 
+                            icon={isSaving ? <Loader2 className="animate-spin" size={20} /> : undefined} 
+                        />
+                        <Button 
+                            type="button" 
+                            variant="secondary" 
+                            label="Batal" 
+                            onClick={() => navigate(-1)} 
+                            disabled={isSaving} 
+                        />
+                        
+                    </div>
+
                 </form>
             </div>
         </div>

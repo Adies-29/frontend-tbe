@@ -49,7 +49,7 @@ export default function DepartemenTable({ data: initialData = [] }: DepartemenTa
         if (!isConfirm) return;
 
         try {
-            const response =await fetch(`http://localhost:3000/api/v1/departemen/${id}`, {
+            const response =await fetch(`https://ppm-sooty.vercel.app/api/v1/departemen/${id}`, {
                 method:"DELETE"
             });
             const result = await response.json();
@@ -79,7 +79,7 @@ export default function DepartemenTable({ data: initialData = [] }: DepartemenTa
         }
 
         try {
-            const response = await fetch (`http://localhost:3000/api/v1/departemen/${newRow.id}`, {
+            const response = await fetch (`https://ppm-sooty.vercel.app/api/v1/departemen/${newRow.id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -192,9 +192,9 @@ export default function DepartemenTable({ data: initialData = [] }: DepartemenTa
                 onRowModesModelChange={handleRowModesModelChange}
                 processRowUpdate={processRowUpdate}
                 initialState={{
-                    pagination: { paginationModel: { page: 0, pageSize: 5 } },
+                    pagination: { paginationModel: { page: 0, pageSize: 10 } },
                 }}
-                pageSizeOptions={[5, 10, 20]}
+                pageSizeOptions={[10, 20]}
                 disableRowSelectionOnClick
                 sx={{
                     border: '1px solid #e5e7eb',

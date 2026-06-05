@@ -38,7 +38,7 @@ export interface JabatanData {
     departemen?: {
         nama_departemen: string;
     };
-    jumlah_karyawan?: number; 
+    jumlah_pegawai?: number; 
     upah_per_kehadiran?: number | null;
     bonus_disiplin_harian?: number | null;
     upah_lembur_per_jam?: number | null;
@@ -63,7 +63,7 @@ export interface DepartemenData {
     id: string;
     nama_departemen: string;
     jumlah_jabatan?: string; // dari index
-    total_karyawan?: number; // dari tabel
+    total_pegawai?: number; // dari tabel
     karyawan?: KaryawanDetail[]; // dari tabel
 }
 

@@ -294,7 +294,18 @@ export default function EditShift() {
                 </section>
 
                 <div className="md:col-span-2 flex justify-end gap-4 mt-4 p-4 rounded-xl border border-gray-200">
-                    <Button type="submit" label="Simpan Konfigurasi Shift" disabled={isSaving} icon={<Save size={20} />} />
+                    <Button
+                        variant="success"
+                        type="submit"
+                        label="Simpan Konfigurasi Shift"
+                        disabled={isSaving}
+                    />
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        label="Batal"
+                        onClick={() => navigate(-1)}
+                    />
                 </div>
             </form>
         </div>
