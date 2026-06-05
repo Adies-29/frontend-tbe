@@ -63,8 +63,11 @@ export default function AddPegawai() {
     const token = useAuthStore((state) => state.token);
     const [isSaving, setIsSaving] = useState(false);
     const [departemenList, setDepartemenList] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [shiftList, setShiftList] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [allJabatan, setAllJabatan] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [jabatanList, setJabatanList] = useState<any[]>([]);
     const [kotaList, _setKotaList] = useState<any[]>(MOCK_KOTA); 
     
@@ -84,11 +87,10 @@ export default function AddPegawai() {
     useEffect(() =>{
         const fetctPegawai = async () => {
             try {
-               const [resDept, resJabatan, resShift, ] = await Promise.all([
+               const [resDept, resJabatan, resShift] = await Promise.all([
                     fetch("https://ppm-sooty.vercel.app/api/v1/departemen", { headers: { "Authorization": `Bearer ${token}` } }),
                     fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Authorization": `Bearer ${token}` } }),
-                    fetch("https://ppm-sooty.vercel.app/api/v1/shifts", { headers: { "Authorization": `Bearer ${token}` } }),
-                    // fetch("https://ppm-sooty.vercel.appapi/v1/kota",{ headers: { "Authorization": `Bearer ${token}` } })
+                    fetch("https://ppm-sooty.vercel.app/api/v1/shifts", { headers: { "Authorization": `Bearer ${token}` } })
                 ]);
                 const dataDept = await resDept.json();
                 const dataJabatan = await resJabatan.json();

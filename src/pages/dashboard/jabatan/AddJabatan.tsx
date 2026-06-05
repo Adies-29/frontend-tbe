@@ -36,7 +36,7 @@ export default function AddJabatan() {
     useEffect(() => {
         const fetchDepartemen = async () =>{
             try {
-                const response = await fetch(`https://ppm-sooty.vercel.appapi/v1/departemen`);
+                const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/departemen`);
                 const result = await response.json();
 
                 if (response.ok){
@@ -54,7 +54,7 @@ export default function AddJabatan() {
    const onSubmit = async (data: FormData) => {
         setIsSaving(true)
         try {
-            const response = await fetch("https://ppm-sooty.vercel.appapi/v1/jabatan", {
+            const response = await fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -73,6 +73,7 @@ export default function AddJabatan() {
                 alert(`Gagal: ${result.message}`);
             }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error("CREATE JABATAN ERROR!:", error);
             alert(error.message || "Gagal terhubung ke server.");

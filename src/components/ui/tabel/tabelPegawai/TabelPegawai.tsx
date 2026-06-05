@@ -31,7 +31,10 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
     const navigate = useNavigate();
 
     useEffect(() => {
-        setRows(initialData);
+        const timer = setTimeout(() => {
+            setRows(initialData);
+        }, 0);
+        return () => clearTimeout(timer);
     }, [initialData]);
 
     // --- FUNGSI-FUNGSI AKSI ---
@@ -86,6 +89,7 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
             setRows((prevRows) => prevRows.map((row) => (row.id === newRow.id ? updatedRow : row)));
             return updatedRow;
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error("Gagal update:", error);
             alert(`Gagal menyimpan perubahan: ${error.message}`);

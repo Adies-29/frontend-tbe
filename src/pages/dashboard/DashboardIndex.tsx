@@ -15,6 +15,7 @@ export default function DashboardIndex() {
         belum_hadir: 0,
         dibatalkan_void: 0
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [rows, setRows] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -42,27 +43,15 @@ export default function DashboardIndex() {
                 setSummary(result.statistik);
                 
                 // Format data agar sesuai dengan interface AbsensiData di TabelDashboard
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const formattedRows = result.data_karyawan.map((karyawan: any, index: number) => {
-                    let labelStatus = "Belum Hadir";
-                    
-                    // Perbaikan: Pastikan kita membaca string aslinya dengan huruf kecil untuk pencocokan yang aman
-                    const statusBackend = (karyawan.status_masuk || karyawan.status || "").toLowerCase();
-                
-                    if (statusBackend === 'intime' || statusBackend === 'ontime') labelStatus = 'Tepat';
-                    else if (statusBackend === 'late') labelStatus = 'Terlambat';
-                    else if (statusBackend === 'void') labelStatus = 'Void';
-                    // Jika backend mengirim "Tepat" / "Terlambat" secara langsung dari update kita sebelumnya
-                    else if (karyawan.status_masuk === 'Tepat' || karyawan.status_masuk === 'Terlambat' || karyawan.status_masuk === 'Void') {
-                        labelStatus = karyawan.status_masuk;
-                    }
-                
                     return {
                         // PERBAIKAN UTAMA: Jika karyawan.id kosong, cari id_pegawai. Jika kosong juga, pakai index + 1
                         id: karyawan.id || karyawan.id_pegawai || index + 1,
                         nama: karyawan.nama || "Tanpa Nama",
                         jabatan: karyawan.jabatan || "-",
                         waktu_masuk: karyawan.waktu_masuk || "-",
-                        status_masuk: labelStatus,
+                        status_masuk: karyawan.status_masuk,
                         waktu_pulang: karyawan.waktu_pulang || "-",
                         status_lembur: karyawan.status_lembur || "-",
                     };
@@ -79,10 +68,13 @@ export default function DashboardIndex() {
 
     // 4. AUTO REFRESH (Panggil fungsi tarik data)
     useEffect(() => {
-        fetchLiveDashboard(); // Panggil pertama kali
+        const timeoutId = setTimeout(fetchLiveDashboard, 0); // Panggil pertama kali after a timeout
 
         const refreshInterval = setInterval(fetchLiveDashboard, 30000); // Tiap 30 dtk
-        return () => clearInterval(refreshInterval);
+        return () => {
+            clearInterval(refreshInterval);
+            clearTimeout(timeoutId); // Clear the timeout on cleanup
+        };
     }, [fetchLiveDashboard]);
 
     // Formatting UI
