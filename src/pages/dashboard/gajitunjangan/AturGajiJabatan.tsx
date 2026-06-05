@@ -38,8 +38,7 @@ export default function AturGajiJabatan() {
         reset, 
         formState: { errors }
     } = useForm<FormData>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(schema as any), 
+        resolver: zodResolver(schema), 
         defaultValues: {
             upah_per_kehadiran: 0,
             upah_lembur_per_jam: 0,
@@ -237,20 +236,20 @@ export default function AturGajiJabatan() {
                         {/* PERBAIKAN: Diubah jadi 3 kolom agar rapi */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <Input 
-                                label="Bonus Full (5 Hari)" 
-                                nama="bonus_minggu_5_hari" // PERBAIKAN
-                                type="number" 
-                                placeholder="Rp"
-                                register={register} 
-                                error={errors.bonus_minggu_5_hari?.message}
-                            />
-                            <Input 
                                 label="Bonus Full (6 Hari)" 
                                 nama="bonus_minggu_6_hari" // PERBAIKAN
                                 type="number" 
                                 placeholder="Rp"
                                 register={register} 
                                 error={errors.bonus_minggu_6_hari?.message}
+                            />
+                            <Input 
+                                label="Bonus Full (5 Hari)" 
+                                nama="bonus_minggu_5_hari" // PERBAIKAN
+                                type="number" 
+                                placeholder="Rp"
+                                register={register} 
+                                error={errors.bonus_minggu_5_hari?.message}
                             />
                             <Input 
                                 label="Bonus Harian" 
