@@ -28,7 +28,10 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     const token = useAuthStore((state) => state.token);
 
     useEffect(() => {
-        setRows(initialData);
+        const timer = setTimeout(() => {
+            setRows(initialData);
+        }, 0);
+        return () => clearTimeout(timer);
     }, [initialData]);
 
     const cekKerapihan = async (row: any, newStatus: boolean) =>{

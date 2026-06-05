@@ -22,11 +22,11 @@ export default function JadwalShiftIndex() {
                // Ambil token dari memori browser
                const token = useAuthStore.getState().token;
                const response = await fetch ("https://ppm-sooty.vercel.app/api/v1/shifts", {
-                   method: "GET",
-                   headers: {
-                       "Content-Type" : "application/json",
-                       "Autorization" : `Bearer${token}`
-                   }
+                method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
                });
                if (!response.ok){
                    if(response.status === 401 || response.status === 403){

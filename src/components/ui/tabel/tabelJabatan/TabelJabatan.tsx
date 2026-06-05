@@ -30,7 +30,13 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     useEffect(() => {
         const fetchDepartemen = async () => {
             try {
-                const response = await fetch("https://ppm-sooty.vercel.app/api/v1/departemen"); 
+                const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/departemen/`,{
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    } 
+                });
                 const result = await response.json();const options = result.data.map((dept: any) => ({
                     value: dept.id,
                     label: dept.nama_departemen

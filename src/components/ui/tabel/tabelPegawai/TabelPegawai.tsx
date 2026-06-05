@@ -44,7 +44,10 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
         try {
             const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/pegawai/${id}`, {
                 method: 'DELETE',
-                headers: { "Authorization" : `Bearer ${token}` }
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                } 
             });
             const result = await response.json();
 

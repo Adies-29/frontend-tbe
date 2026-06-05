@@ -7,7 +7,6 @@ import type { DepartemenData } from "../../../types";
 import { useAuthStore } from "../../../store/useAuthStore";
 
 
-
 export default function DepartemenIndex() {
     const navigate = useNavigate();
     const token = useAuthStore((state) => state.token)
