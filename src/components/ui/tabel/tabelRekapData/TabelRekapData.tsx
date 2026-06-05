@@ -63,7 +63,17 @@ export default function TabelRekapData({data: initialData} : TabelRekapDataProps
             showToolbar
             rows={rows}
             columns={columns}
-            pageSizeOptions={[5, 10, 20]}
+            pageSizeOptions={[10, 20]}
+            initialState={{
+                    pagination: {
+                        paginationModel: { page: 0, pageSize: 10 },
+                    },
+                    columns: {
+                        columnVisibilityModel: {
+                            id: false,         // Sembunyikan ID
+                        },
+                    },
+                }}
             />
 
         </div>

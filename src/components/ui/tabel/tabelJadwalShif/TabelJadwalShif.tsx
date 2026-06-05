@@ -37,7 +37,7 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
         if (!isConfirm) return;
 
         try {
-            const response = await fetch (`http://localhost:3000/api/v1/shifts/${id}`, {
+            const response = await fetch (`https://ppm-sooty.vercel.app/api/v1/shifts/${id}`, {
                 method: "DELETE",
                 headers: {"Authorization" : `Bearer ${token}` }
             });
@@ -62,7 +62,7 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
         const { kode_shift, jam_masuk, jam_pulang } = updatedRow;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/v1/shifts/${newRow.id}`, {
+            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/shifts/${newRow.id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type" : "application/json",

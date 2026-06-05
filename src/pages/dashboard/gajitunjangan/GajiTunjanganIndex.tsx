@@ -162,7 +162,7 @@ export default function GajiTunjanganIndex() {
                     formattedData = data; // Data langsung siap pakai
                 } else {
                     // ... (Logika map() lama untuk Mingguan dan Bulanan tetap di sini) ...
-                    formattedData = data.map((item: any) => {
+                    formattedData = data.map((_item: any) => {
                          // (Kopikan kode map lama Anda di sini)
                     });
                 }
@@ -326,7 +326,7 @@ export default function GajiTunjanganIndex() {
 
             {/* KONTEN TAB 2: MASTER GAJI JABATAN */}
             {activeTab === 'master' && (
-                <div className="flex flex-col gap-6 animate-in fade-in duration-300 relative min-h-[200px]">
+                <div className="flex flex-col gap-6 animate-in fade-in duration-300 relative min-h-50 w-full">
                     {isLoadingMaster && (
                         <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center rounded-xl">
                             <Loader2 className="animate-spin text-red-600" size={32} />
