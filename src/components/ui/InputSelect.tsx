@@ -36,8 +36,8 @@ export const InputSelect: React.FC<InputSelectProps> = ({
                 {...register(nama)}
                 disabled={disabled} 
                 defaultValue=""
-                className={`w-full px-4 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-red-500 focus:bg-white outline-none transition-all cursor-pointer ${
-                    error ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-red-500"
+                className={`w-full px-4 py-2 bg-gray-50 border rounded-lg focus:ring-1 focus:ring-blue-500 focus:bg-white outline-none transition-all cursor-pointer ${
+                    error ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-blue-500"
                 }`}
             >
                 {/* Opsi default (Placeholder) yang tidak bisa dipilih lagi setelah user memilih */}

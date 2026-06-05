@@ -21,7 +21,7 @@ interface DepartemenItem {
 
 export default function AddJabatan() {
     const navigate = useNavigate();
-    const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [departemenList, setDepartemenList] =  useState<DepartemenItem[]>([]);
 
     const {
@@ -36,7 +36,7 @@ export default function AddJabatan() {
     useEffect(() => {
         const fetchDepartemen = async () =>{
             try {
-                const response = await fetch(`http://localhost:3000/api/v1/departemen`);
+                const response = await fetch(`https://ppm-sooty.vercel.appapi/v1/departemen`);
                 const result = await response.json();
 
                 if (response.ok){
@@ -52,9 +52,9 @@ export default function AddJabatan() {
 
     // tombol Simpan diklik
    const onSubmit = async (data: FormData) => {
-        setIsLoading(true)
+        setIsSaving(true)
         try {
-            const response = await fetch("http://localhost:3000/api/v1/jabatan", {
+            const response = await fetch("https://ppm-sooty.vercel.appapi/v1/jabatan", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -77,7 +77,7 @@ export default function AddJabatan() {
             console.error("CREATE JABATAN ERROR!:", error);
             alert(error.message || "Gagal terhubung ke server.");
         }finally {
-            setIsLoading(false);
+            setIsSaving(false);
         }
     };
 
@@ -136,12 +136,13 @@ export default function AddJabatan() {
                         {/* AREA TOMBOL */}
                         <div className="flex justify-end gap-3 mt-4 pt-5 border-t border-gray-200">
                             <Button
+                                variant="success"
                                 type="submit"
-                                label={isLoading ? "Menyimpan..." : "SImpan"}
+                                label={isSaving ? "Menyimpan..." : "SImpan"}
                             />
                             <Button
                                 type="button"
-                                variant="secondary"
+                                variant="back"
                                 label="Batal"
                                 onClick={() => navigate(-1)}
                             />

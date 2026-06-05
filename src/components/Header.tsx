@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
-import { useLocation, matchPath } from "react-router-dom"; // <-- DITAMBAHKAN matchPath
+import { useLocation, matchPath } from "react-router-dom"; 
 import DateTime from "./ui/DateTime";
-import { useAuthStore } from "../store/useAuthStore"; // <-- Import useAuthStore untuk mengambil token
+import { useAuthStore } from "../store/useAuthStore";
 
 export default function Header() {
     // --- LOGIKA SHIFT ---
-    const [currentShift, setCurrentShift] = useState("");
-    const [isLoading, setIsLoading] = useState(true);
+    const [_currentShift, setCurrentShift] = useState("");
+    const [_isLoading, setIsLoading] = useState(true);
     const token = useAuthStore((state) => state.token);
+    const user = useAuthStore((state) => state.user);
 
     useEffect(() => {
         const fetchShiftData = async () => {
@@ -16,7 +17,7 @@ export default function Header() {
                 const response = await fetch("https://ppm-sooty.vercel.app/api/v1/shifts", {
                     method: "GET",
                     headers: {
-                        "Authorization": `Bearer ${token}`, // <-- Kunci masuknya di sini
+                        "Authorization": `Bearer ${token}`, 
                         "Content-Type": "application/json"
                     }
                 });
@@ -86,9 +87,13 @@ export default function Header() {
                         {currentRoute.title}
                     </h1>
                 </div>
-                <div className="md:hidden bg-[#C90000] rounded-full flex items-center gap-2 pr-4 pl-1 py-1 my-2 shadow-md ">
+
+               <div className="md:hidden bg-[#C90000] rounded-full flex items-center gap-2 pr-4 pl-1 py-1 my-2 shadow-md ">
                     <div className="bg-[#FFB800] w-8 h-8 rounded-full border-2 border-white/20"></div>
-                    <span className="text-white font-medium text-base md:text-xs tracking-wide text-center">Admin 1</span>
+                    
+                    <span className="text-white font-medium text-base md:text-xs tracking-wide text-center">
+                        {user || "Admin"}
+                    </span>
                 </div>
             </div>
 
@@ -101,9 +106,11 @@ export default function Header() {
             )}
 
             {/* KANAN */}
-            <div className="hidden md:flex bg-[#C90003] rounded-full items-center gap-3 pr-6 pl-1 py-1 shadow-md cursor-pointer hover:bg-red-800 transition-colors">
+           <div className="hidden md:flex bg-[#C90003] rounded-full items-center gap-3 pr-6 pl-1 py-1 shadow-md cursor-pointer hover:bg-red-800 transition-colors">
                 <div className="bg-[#FFB800] w-10 h-10 rounded-full border-2 border-white/20"></div>
-                <span className="text-white font-medium text-base md:text-lg tracking-wide text-center">Admin 1</span>
+                <span className="text-white font-medium text-base md:text-lg tracking-wide text-center">
+                    {user || "Admin"}
+                </span>
             </div>
 
         </header>

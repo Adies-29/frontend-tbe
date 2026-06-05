@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import {
     DataGrid,
     type GridColDef,
-    type GridRowModesModel,
     GridRowModes,
     GridActionsCellItem,
     type GridRowId,
@@ -31,7 +30,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     useEffect(() => {
         const fetchDepartemen = async () => {
             try {
-                const response = await fetch("http://localhost:3000/api/v1/departemen"); 
+                const response = await fetch("https://ppm-sooty.vercel.app/api/v1/departemen"); 
                 const result = await response.json();const options = result.data.map((dept: any) => ({
                     value: dept.id,
                     label: dept.nama_departemen
@@ -75,7 +74,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
         if (!isConfirm) return;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/v1/jabatan/${id}`, {
+            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/jabatan/${id}`, {
                 method: 'DELETE',
             });
             const result = await response.json();
@@ -100,7 +99,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
         }
 
         try {
-            const response = await fetch (`http://localhost:3000/api/v1/jabatan/${newRow.id}`, {
+            const response = await fetch (`https://ppm-sooty.vercel.app/api/v1/jabatan/${newRow.id}`, {
                 method: "PUT",
                 headers: { 
                     "Content-Type": "application/json",
@@ -136,6 +135,9 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
             return oldRow;
         } 
     };
+
+
+   
 
 
     // --- 3. DEFINISI KOLOM ---
@@ -174,8 +176,8 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
             }
         },
         {
-            field: 'jumlah_karyawan',
-            headerName: 'Jumlah Karyawan',
+            field: 'jumlah_pegawai',
+            headerName: 'Jumlah Pegawai',
             flex: 1,
             minWidth: 150,
             align: 'center',
@@ -246,9 +248,9 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
             }}
 
             initialState={{
-                pagination: { paginationModel: { page: 0, pageSize: 5 } },
+                pagination: { paginationModel: { page: 0, pageSize: 10 } },
             }}
-            pageSizeOptions={[5, 10]}   
+            pageSizeOptions={[10, 20]}   
             disableRowSelectionOnClick
             sx={{
                 border: 'none',

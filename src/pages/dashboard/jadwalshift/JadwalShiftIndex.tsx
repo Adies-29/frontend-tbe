@@ -21,7 +21,7 @@ export default function JadwalShiftIndex() {
            try {
                // Ambil token dari memori browser
                const token = useAuthStore.getState().token;
-               const response = await fetch ("http://localhost:3000/api/v1/shifts", {
+               const response = await fetch ("https://ppm-sooty.vercel.app/api/v1/shifts", {
                    method: "GET",
                    headers: {
                        "Content-Type" : "application/json",
@@ -63,8 +63,7 @@ export default function JadwalShiftIndex() {
                     <h1 className="text-2xl font-bold text-gray-800">Jadwal & Shift Kerja</h1>
                     <p className="text-sm text-gray-500 mt-1">Kelola master data jam kerja, toleransi, dan denda.</p>
                 </div>
-                <Button 
-                    variant="add" 
+                <Button  
                     label="Tambah Jadwal & Shift" 
                     onClick={() => navigate('/dashboard/jadwal-shift/tambah')} 
                 />

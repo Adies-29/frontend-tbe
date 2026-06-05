@@ -48,7 +48,7 @@ export default function GajiTunjanganIndex() {
     const fectchMasterJabatan = useCallback(async () => {
         try {
             setIsLoadingMaster(true)
-            const response = await fetch (`http://localhost:3000/api/v1/jabatan`, {
+            const response = await fetch (`https://ppm-sooty.vercel.app/api/v1/jabatan`, {
                 method: "GET",
                 headers: {
                     "Content-Type" : "application/json",
@@ -197,7 +197,7 @@ export default function GajiTunjanganIndex() {
 
             {/* KONTEN TAB 2: MASTER GAJI JABATAN */}
             {activeTab === 'master' && (
-                <div className="flex flex-col gap-6 animate-in fade-in duration-300 relative min-h-[200px]">
+                <div className="flex flex-col gap-6 animate-in fade-in duration-300 relative min-h-50 w-full">
                     {isLoadingMaster && (
                         <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center rounded-xl">
                             <Loader2 className="animate-spin text-red-600" size={32} />

@@ -35,7 +35,7 @@ type FormData = z.infer<typeof schema>;
 export default function AddShift() {
     const navigate = useNavigate();
     const token = useAuthStore((state) => state.token);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const {
         register,
@@ -60,9 +60,9 @@ export default function AddShift() {
 
 
     const onSubmit = async (data: FormData) => {
-        setIsLoading(true);
+        setIsSaving(true);
         try {
-            const response = await fetch(`http://localhost:3000/api/v1/shifts`, {
+            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/shifts`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -84,7 +84,7 @@ export default function AddShift() {
             console.error("Error:", error);
             alert("Terjadi kesalahan saat menghubungi server.");
         } finally {
-            setIsLoading(false)
+            setIsSaving(false)
         }
     };
 
@@ -96,7 +96,7 @@ export default function AddShift() {
                     <h1 className="text-xl font-bold text-gray-800">Tambah Konfigurasi Shift</h1>
                     <p className="text-sm text-gray-500">Atur jadwal, toleransi, dan denda keterlambatan.</p>
                 </div>
-                <Button variant="back" disabled={isLoading} icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)} label="Kembali" />
+                <Button variant="back" disabled={isSaving} icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)} label="Kembali" />
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -247,8 +247,19 @@ export default function AddShift() {
 
                 </section>
 
-                <div className="md:col-span-2 flex justify-end gap-4 mt-4 p-4 rounded-xl border border-gray-200">
-                    <Button type="submit" label="Simpan Konfigurasi Shift" disabled={isLoading} icon={<Save size={20} />} />
+                <div className="md:col-span-2 flex justify-end gap-4 mt-4 p-4 rounded-xl ">
+                    <Button
+                        variant="success"
+                        type="submit"
+                        label="Simpan Konfigurasi Shift"
+                        disabled={isSaving}
+                    />
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        label="Batal"
+                        onClick={() => navigate(-1)}
+                    />
                 </div>
             </form>
         </div>

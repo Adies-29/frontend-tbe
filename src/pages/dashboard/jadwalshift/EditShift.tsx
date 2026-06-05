@@ -54,7 +54,7 @@ export default function EditShift() {
             try {
                 setIsFetchingData(true)
 
-                const response = await fetch(`http://localhost:3000/api/v1/shifts/${id}`, {
+                const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/shifts/${id}`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -101,7 +101,7 @@ export default function EditShift() {
     const onSubmit = async (data: FormData) => {
         setIsSaving(true)
         try {
-            const response = await fetch(`http://localhost:3000/api/v1/shifts/${id}`, {
+            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/shifts/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -294,7 +294,18 @@ export default function EditShift() {
                 </section>
 
                 <div className="md:col-span-2 flex justify-end gap-4 mt-4 p-4 rounded-xl border border-gray-200">
-                    <Button type="submit" label="Simpan Konfigurasi Shift" disabled={isSaving} icon={<Save size={20} />} />
+                    <Button
+                        variant="success"
+                        type="submit"
+                        label="Simpan Konfigurasi Shift"
+                        disabled={isSaving}
+                    />
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        label="Batal"
+                        onClick={() => navigate(-1)}
+                    />
                 </div>
             </form>
         </div>

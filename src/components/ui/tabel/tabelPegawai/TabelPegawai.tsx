@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 import { 
     DataGrid, 
     type GridColDef, 
-    type GridRowModesModel, 
-    GridRowModes, 
+    type GridRowModesModel,  
     GridActionsCellItem, 
     type GridRowId, 
     type GridRowModel,
@@ -43,7 +42,7 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
         if (!isConfirm) return;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/v1/pegawai/${id}`, {
+            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/pegawai/${id}`, {
                 method: 'DELETE',
                 headers: { "Authorization" : `Bearer ${token}` }
             });
@@ -69,7 +68,7 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
         const { no_hp, email, masakerja } = updatedRow;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/v1/pegawai/${newRow.id}`, {
+            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/pegawai/${newRow.id}`, {
                 method:"PUT",
                 headers:{
                     "Content-Type" : "application/json",
@@ -94,6 +93,21 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
     const handleRowModesModelChange = (newRowModesModel: GridRowModesModel) => {
         setRowModesModel(newRowModesModel);
     };
+
+    const departemenOption = Array.from(
+        new Set(
+            initialData
+                .map((item) => item.jabatan?.departemen?.nama_departemen)
+                .filter(Boolean)
+        )
+    ) as string[];
+    const jabatanOption = Array.from(
+        new Set(
+            initialData
+                .map((item) => item.jabatan?.nama_jabatan)
+                .filter(Boolean)
+        )
+    ) as string[];
   
 
     // --- DEFINISI KOLOM ---
@@ -109,7 +123,7 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
                 return (
                     <button
                         // Arahkan ke halaman detail berdasarkan ID karyawan
-                        onClick={() => navigate(`/dashboard/data-karyawan/${params.row.id}`)}
+                        onClick={() => navigate(`/dashboard/data-pegawai/${params.row.id}`)}
                         className="text-black hover:text-red-700 hover:underline font-semibold text-left transition-colors"
                     >
                         {params.value}
@@ -120,12 +134,14 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
         { field: 'no_hp', headerName: 'No. HP', width: 140, editable: true }, 
         { field: 'email', headerName: 'Email', minWidth: 180, editable: true },
         { 
-            field: 'nama_departemen', 
+            field: 'departemen', 
             headerName: 'Departemen', 
             flex: 1, 
             minWidth: 130, 
             editable: true, 
+            valueOptions: departemenOption,
             type: 'singleSelect',
+            valueGetter: (_value, row) => row?.jabatan?.departemen?.nama_departemen || "-",
             renderCell: (params) => {
                 const namaDept = params.row.jabatan?.departemen?.nama_departemen;
                 return namaDept ? <span>{namaDept}</span> : <span className="text-gray-400">-</span>;
@@ -136,7 +152,10 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
             headerName: 'Jabatan', 
             editable: true,
             flex: 1, 
+            type: 'singleSelect',
+            valueOptions: jabatanOption,
             minWidth: 150,
+            valueGetter: (_value, row) => row.jabatan?.nama_jabatan || "-",
             renderCell: (params) => {
                 return (
                     <span className="font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
@@ -162,7 +181,7 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
             field: 'tanggal_bergabung', 
             headerName: 'Tgl Bergabung', 
             width: 130,
-            valueGetter: (params, row) => {
+            valueGetter: (_params, row) => {
                 // Pastikan mengecek nama field yang baru juga
                 if (!row.tanggal_bergabung) return "-";
                 const date = new Date(row.tanggal_bergabung);
@@ -212,7 +231,7 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
                 onProcessRowUpdateError={(error) => console.error("Gagal update baris:", error)}
                 initialState={{
                     pagination: {
-                        paginationModel: { page: 0, pageSize: 5 },
+                        paginationModel: { page: 0, pageSize: 10 },
                     },
                     columns: {
                         columnVisibilityModel: {
@@ -222,7 +241,7 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
                         },
                     },
                 }}
-                pageSizeOptions={[5, 10, 20]}
+                pageSizeOptions={[10, 20]}
                 disableRowSelectionOnClick
                 sx={{
                     border: "1px solid #e5e7eb",

@@ -4,11 +4,13 @@ import TabelDepartemen from "../../../components/ui/tabel/tabelDepartemen/TabelD
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import type { DepartemenData } from "../../../types";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 
 
 export default function DepartemenIndex() {
     const navigate = useNavigate();
+    const token = useAuthStore((state) => state.token)
 
     // 2. State untuk menyimpan data dari Database & status Loading
     const [dataDepartemen, setDataDepartemen] = useState<DepartemenData[]>([]);
@@ -18,32 +20,31 @@ export default function DepartemenIndex() {
         setIsLoading(true);
         try {
             // Tembak API Backend
-            const response = await fetch("http://localhost:3000/api/v1/departemen", {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    // "Authorization": `Bearer ${localStorage.getItem('token')}` // Gunakan ini nanti jika butuh login
-                }
-            });
+            const [resDept, resJabatan] = await Promise.all([
+                fetch("https://ppm-sooty.vercel.app/api/v1/departemen", { headers: { "Content-Type" : "application/json","Authorization": `Bearer ${token}` } }),
+                fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Content-Type" : "application/json","Authorization": `Bearer ${token}` } })
+            ])
 
-            if (!response.ok) {
-                throw new Error("Gagal memuat data dari server");
-            }
-
-            const result = await response.json();
+            const resultDept = await resDept.json();
+            const resultJabatan = await resJabatan.json();
             
-            // 4. MAPPING DATA: Sesuaikan bentuk data backend ke bentuk dummy-mu sebelumnya
-            const mappedData: DepartemenData[] = result.data.map((item: any) => ({
-                id: item.id,
-                nama_departemen: item.nama_departemen,
-                jumlah_Jabatan: item.jumlah_jabatan || 0 
-            }));
+            if (resDept.ok && resJabatan.ok) {
 
-            setDataDepartemen(mappedData);
-
+                const mappedData: DepartemenData[] = resultDept.data.map((dept: any) => {
+                    const jumlah = resultJabatan.data.filter((jab: any) => {
+                    return String(jab.departemen_id) === String(dept.id);
+                }).length
+                    return {
+                        id: dept.id,
+                        nama_departemen: dept.nama_departemen,
+                        jumlah_jabatan: jumlah
+                    };
+                });
+                setDataDepartemen(mappedData);
+            }
         } catch (error) {
-            console.error("Error fetching jabatan:", error);
-            alert("Gagal memuat data Departemen. Pastikan backend berjalan.");
+           console.error("Error fetching data departemen & jabatan:", error);
+             alert("Gagal memuat data Departemen. Pastikan backend berjalan.");
         } finally {
             setIsLoading(false);
         }
@@ -77,8 +78,8 @@ export default function DepartemenIndex() {
 
                     <div className="flex flex-col gap-3">
                         <Button
-                            variant="add"
-                            label="Tambah Departemen    "
+                            variant="primary"
+                            label="Tambah Departemen"
                             onClick={() => navigate("/dashboard/departemen/tambah-departemen")}
                         />
                     </div>

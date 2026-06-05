@@ -114,32 +114,32 @@ export default function DateTime() {
     }).replace(".", " : ");
 
     return(
-        <div className="flex items-center justify-center gap-4 md:gap-10 border border-gray-300 rounded-2xl px-4 md:px-6 py-2 bg-white w-full md:w-auto">
+        <div className="flex items-center justify-center md:justify-center gap-2 md:gap-10 border border-gray-300 rounded-2xl px-4 md:px-8 py-2 bg-white w-full md:w-auto shadow-sm">
 
             {/* Bagian tanggal */}
-            <div className="flex items-center gap-2">
-                <Calendar size={30} className="text-black"/>
-                <div className="flex flex-col">
-                    <span className="text-lg md:text-xs text-gray-400 font-medium ">Tanggal</span>
-                    <span className="text-base md:text-xl font-bold py-0.5">{formattedDate}</span>
-                    <span className="text-lg md:text-lg font-semibold">{formattedDay}</span>
+            <div className="flex items-center gap-2 md:gap-3 flex-1">
+                <Calendar className="w-5 h-5 md:w-8 md:h-8 text-black shrink-0"/>
+                <div className="flex flex-col items-start">
+                    <span className="text-[10px] md:text-xs text-gray-500 font-semibold uppercase tracking-wider">Tanggal</span>
+                    <span className="text-sm md:text-xl font-bold text-gray-900 leading-tight my-0.5">{formattedDate}</span>
+                    <span className="text-xs md:text-sm font-semibold text-gray-600">{formattedDay}</span>
                 </div>
             </div>
 
+           
             {/* Bagian jam */}
-            <div className="flex items-center gap-2">
-                <Clock size={30} className="text-black"/>
-                <div className="flex flex-col items-center">
-                    <span className="text-lg md:text-xs text-gray-400 font-medium">Jam</span>
-                    <span className="text-base md:text-xl font-bold mb-1">{formattedTime}</span>
+            <div className="flex items-center gap-2 md:gap-3 flex-1 pl-2 md:pl-0">
+                <Clock className="w-5 h-5 md:w-8 md:h-8 text-black shrink-0"/>
+                <div className="flex flex-col items-start md:items-center">
+                    <span className="text-[10px] md:text-xs text-gray-500 font-semibold uppercase tracking-wider">Jam</span>
+                    <span className="text-sm md:text-xl font-bold text-gray-900 leading-tight my-0.5">{formattedTime}</span>
 
-                    <span className={`text-white text-lg font-bold px-3 py-0.5 rounded-full transition-colors ${
+                    <span className={`text-white text-[9px] md:text-xs font-bold px-2 py-0.5 rounded-full transition-colors whitespace-nowrap ${
                         isLoading ? "bg-gray-400 animate-pulse" :
                         activeShift === "Error" || activeShift === "Belum Login" ? "bg-red-500" : "bg-[#ffb702]"
                     }`}>
                         {isLoading ? "Loading..." : activeShift}
                     </span>
-
                 </div>
             </div>
         </div>

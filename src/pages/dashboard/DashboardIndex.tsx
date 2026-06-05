@@ -6,7 +6,7 @@ import TabelDashboard from "../../components/ui/tabel/TabelDashboard";
 
 export default function DashboardIndex() {
     // 1. STATE UNTUK DATA
-    const [currentTime, setCurrentTime] = useState(new Date());
+    const [_currentTime, setCurrentTime] = useState(new Date());
     const [summary, setSummary] = useState({
         total_pegawai: 0,
         hadir_tepat_waktu: 0,
@@ -31,7 +31,7 @@ export default function DashboardIndex() {
 
             if (response.ok && result.success) {
                 setSummary(result.statistik);
-
+                
                 // Format data agar sesuai dengan interface AbsensiData di TabelDashboard
                 const formattedRows = result.data_karyawan.map((karyawan: any, index: number) => {
                     let labelStatus = "Belum Hadir";
@@ -80,10 +80,11 @@ export default function DashboardIndex() {
     const totalHadir = summary.hadir_tepat_waktu + summary.terlambat;
 
     return (
-        <div className="flex flex-col gap-6 w-full">
+        <div className="flex flex-col gap-4 md:gap-6 w-full">
 
             {/* KOTAK STATISTIK */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
+
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 border-b-[6px] border-b-blue-500 p-5 flex flex-col items-center justify-center relative hover:-translate-y-1 transition-transform">
                     <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Total Hadir</h3>
                     <p className="text-4xl font-extrabold text-gray-900 mt-2">{totalHadir}</p>
@@ -102,15 +103,11 @@ export default function DashboardIndex() {
                     <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Belum Hadir</h3>
                     <p className="text-4xl font-extrabold text-gray-900 mt-2">{summary.belum_hadir}</p>
                 </div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 border-b-[6px] border-b-gray-800 p-5 flex flex-col items-center justify-center relative hover:-translate-y-1 transition-transform">
-                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Data Void</h3>
-                    <p className="text-4xl font-extrabold text-gray-900 mt-2">{summary.dibatalkan_void}</p>
-                </div>
             </div>
 
             {/* TABEL MUI DATAGRID */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-4">
-                <div className="flex justify-between items-center mb-2">
+            <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-4 w-full">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-2">
                     <h2 className="text-lg font-bold text-gray-800">Aktivitas Absensi Karyawan Hari Ini</h2>
                     {isLoading && (
                         <div className="flex items-center gap-2 text-sm text-blue-600 font-semibold">
@@ -120,10 +117,12 @@ export default function DashboardIndex() {
                 </div>
                 
                 {/* PEMANGGILAN KOMPONEN ANAK DENGAN PROPS BARU */}
-                <TabelDashboard 
-                    data={rows} 
-                    onRefresh={fetchLiveDashboard} 
-                />
+                <div className="w-full h-100 md:h-125 overflow-hidden">
+                    <TabelDashboard 
+                        data={rows} 
+                        onRefresh={fetchLiveDashboard} 
+                    />
+                </div>
                 
             </div>
         </div>
