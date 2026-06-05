@@ -4,7 +4,7 @@ import TabelDepartemen from "../../../components/ui/tabel/tabelDepartemen/TabelD
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import type { DepartemenData } from "../../../types";
-
+import { useAuthStore } from "../../../store/useAuthStore";
 
 
 export default function DepartemenIndex() {
@@ -17,12 +17,13 @@ export default function DepartemenIndex() {
     const fetchDepartemen = async () => {
         setIsLoading(true);
         try {
-            // Tembak API Backend
-            const response = await fetch("http://localhost:3000/api/v1/departemen", {
+            const token = useAuthStore.getState().token;
+
+            const response = await fetch("https://ppm-sooty.vercel.app/api/v1/departemen", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                    // "Authorization": `Bearer ${localStorage.getItem('token')}` // Gunakan ini nanti jika butuh login
+                    "Authorization": `Bearer ${token}`
                 }
             });
 

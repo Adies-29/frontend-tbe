@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import TabelDashboard from "../../components/ui/tabel/TabelDashboard";
+import { useAuthStore } from "../../store/useAuthStore";
 
 
 
@@ -24,9 +25,17 @@ export default function DashboardIndex() {
     }, []);
 
     // 3. FUNGSI TARIK DATA (Dibungkus useCallback agar bisa dilempar ke Tabel)
+    const token = useAuthStore.getState().token;
     const fetchLiveDashboard = useCallback(async () => {
         try {
-            const response = await fetch("https://ppm-sooty.vercel.app/api/dashboard/live"); 
+            const response = await fetch("https://ppm-sooty.vercel.app/api/dashboard/live", {
+                method: "GET",
+                headers: {
+                    "Content-Type" : "application/json",
+                    "Autorization" : `Bearer${token}`
+                }
+            });
+             
             const result = await response.json();
 
             if (response.ok && result.success) {

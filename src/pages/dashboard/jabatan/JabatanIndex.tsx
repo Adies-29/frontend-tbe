@@ -4,6 +4,7 @@ import { Briefcase, Users, Loader2 } from "lucide-react";
 import Button from "../../../components/ui/Button";
 import TabelJabatan from "../../../components/ui/tabel/tabelJabatan/TabelJabatan";
 import type { JabatanData } from "../../../types";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 export default function JabatanIndex() {
     const navigate = useNavigate();
@@ -17,11 +18,13 @@ export default function JabatanIndex() {
         setIsLoading(true);
         try {
             // Tembak API Backend
-            const response = await fetch("http://localhost:3000/api/v1/jabatan", {
+            
+            const token = useAuthStore.getState().token;
+            const response = await fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                   
+                    "Authorization": `Bearer ${token}`
                 }
             });
 

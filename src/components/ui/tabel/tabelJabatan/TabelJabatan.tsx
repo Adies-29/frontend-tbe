@@ -31,7 +31,13 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     useEffect(() => {
         const fetchDepartemen = async () => {
             try {
-                const response = await fetch("http://localhost:3000/api/v1/departemen"); 
+                const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/departemen/`,{
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    } 
+                });
                 const result = await response.json();const options = result.data.map((dept: any) => ({
                     value: dept.id,
                     label: dept.nama_departemen
@@ -75,7 +81,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
         if (!isConfirm) return;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/v1/jabatan/${id}`, {
+            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/jabatan/${id}`, {
                 method: 'DELETE',
             });
             const result = await response.json();
@@ -100,7 +106,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
         }
 
         try {
-            const response = await fetch (`http://localhost:3000/api/v1/jabatan/${newRow.id}`, {
+            const response = await fetch (`https://ppm-sooty.vercel.app/api/v1/jabatan/${newRow.id}`, {
                 method: "PUT",
                 headers: { 
                     "Content-Type": "application/json",

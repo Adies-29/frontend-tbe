@@ -70,9 +70,9 @@ export default function EditPegawai(){
                 setIsFetchingData(true);
 
                 const[resDept, resJabatan, resShift] = await Promise.all([
-                    fetch("http://localhost:3000/api/v1/departemen", { headers: { "Authorization": `Bearer ${token}` } }),
-                    fetch("http://localhost:3000/api/v1/jabatan", { headers: { "Authorization": `Bearer ${token}` } }),
-                    fetch("http://localhost:3000/api/v1/shifts", { headers: { "Authorization": `Bearer ${token}` } })
+                    fetch("https://ppm-sooty.vercel.app/api/v1/departemen", { headers: { "Authorization": `Bearer ${token}` } }),
+                    fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Authorization": `Bearer ${token}` } }),
+                    fetch("https://ppm-sooty.vercel.app/api/v1/shifts", { headers: { "Authorization": `Bearer ${token}` } })
                 ]);
                 const dataDept = await resDept.json();
                 const dataJabatan = await resJabatan.json();
@@ -88,7 +88,7 @@ export default function EditPegawai(){
                 if(resShift.ok && dataShift.success) setShiftList(dataShift.data)
                     
 
-                const resPegawai = await fetch(`http://localhost:3000/api/v1/pegawai/${id}`, {
+                const resPegawai = await fetch(`https://ppm-sooty.vercel.app/api/v1/pegawai/${id}`, {
                     headers: { "Authorization" : `Bearer ${token}` }
                 });
                 const dataPegawai = await resPegawai.json();
@@ -155,7 +155,7 @@ export default function EditPegawai(){
     const onSubmit = async (data: FormData) => {
         setIsSaving(true);
         try {
-            const response = await fetch(`http://localhost:3000/api/v1/pegawai/${id}`, {
+            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/pegawai/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type" : "application/json",

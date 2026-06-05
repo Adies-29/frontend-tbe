@@ -20,13 +20,6 @@ const schema = z.object({
     BonusLemburTahunan: z.coerce.number().min(1, "Bonus Lembur Tahunan harus diisi"),
 });
 
-const dummyJabatan = [
-    { id: "jbt-1", nama_jabatan: "Admin 1", departemen: "Administrasi" },
-    { id: "jbt-2", nama_jabatan: "Satpam", departemen: "Administrasi" },
-    { id: "jbt-3", nama_jabatan: "Molder 1", departemen: "Produksi" },
-    { id: "jbt-4", nama_jabatan: "Helper", departemen: "Produksi" },
-    { id: "jbt-5", nama_jabatan: "Teknisi Mesin", departemen: "Maintenance" },
-];
 
 type GajiFormValues = z.infer<typeof schema>;
 
