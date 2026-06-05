@@ -48,7 +48,7 @@ export default function GajiTunjanganIndex() {
     const fectchMasterJabatan = useCallback(async () => {
         try {
             setIsLoadingMaster(true)
-            const response = await fetch (`http://localhost:3000/api/v1/jabatan`, {
+            const response = await fetch (`https://ppm-sooty.vercel.app/api/v1/jabatan`, {
                 method: "GET",
                 headers: {
                     "Content-Type" : "application/json",
@@ -77,30 +77,89 @@ export default function GajiTunjanganIndex() {
         }
     }, [token]);
 
-    
-    useEffect(() => {
-        if (activeTab === `master`) {
 
-            if(masterJabatanData.length === 0 ){
+    const fetchRekapGaji = useCallback(async () => {
+        try {
+            setIsLoadingRekap(true);
+            
+            // Tambahkan query parameter untuk filter periode nantinya jika backend sudah siap
+            // let url = `https://ppm-sooty.vercel.app/api/v1/gaji?periode=${periode}&waktu=${filterValue}`;
+            // let url = `https://ppm-sooty.vercel.app/api/gaji`;
+
+            const response = await fetch(`https://ppm-sooty.vercel.app/api/gaji`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                const data = result.data || [];
+
+                // 1. Mapping Data Backend ke Format Tabel UI
+                const formattedData: RekapGajiData[] = data.map((item: any) => ({
+                    id: String(item.id),
+                    nama: item.pegawai?.nama || "Tanpa Nama",
+                    jabatan: item.pegawai?.jabatan?.nama_jabatan || "-", // Asumsi backend akan diupdate mengirim jabatan
+                    
+                    // Karena backend versi awal kita baru mengirim 'total_gaji', kita siapkan fallback
+                    gaji_dasar: item.gaji_dasar || item.total_gaji || 0, 
+                    total_bonus: item.total_bonus || 0,
+                    total_potongan: item.total_potongan || 0,
+                    gaji_bersih: item.total_gaji || 0,
+                    status: item.status_pembayaran || "Pending"
+                }));
+
+                setRekapGajiData(formattedData);
+
+                // 2. Update Widget Finansial Secara Dinamis (Menjumlahkan semua baris)
+                const totalPengeluaran = formattedData.reduce((sum, curr) => sum + curr.gaji_bersih, 0);
+                const totalBonusSemua = formattedData.reduce((sum, curr) => sum + curr.total_bonus, 0);
+                const totalPotonganSemua = formattedData.reduce((sum, curr) => sum + curr.total_potongan, 0);
+
+                setSummaryCards({
+                    estimasiPengeluaran: totalPengeluaran,
+                    totalBonus: totalBonusSemua,
+                    totalPotongan: totalPotonganSemua
+                });
+
+            } else {
+                console.error("Gagal mengambil data gaji:", result.message);
+            }
+        } catch (error) {
+            console.error("Error fetchRekapGaji:", error);
+        } finally {
+            setIsLoadingRekap(false);
+        }
+    }, [token, periode, filterValue]); // Masukkan filter ke dependency
+
+    useEffect(() => {
+        if (activeTab === 'master') {
+            if (masterJabatanData.length === 0) {
                 fectchMasterJabatan();
             }
-        } else if (activeTab === `rekap`) {
-            
+        } else if (activeTab === 'rekap') {
+            // Panggil API saat tab rekap dibuka
+            fetchRekapGaji();
         }
-    }, [activeTab]);
-
-    const handlePeriodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setPeriode(e.target.value);
-        setFilterValue(""); 
-    };
+    }, [activeTab, fectchMasterJabatan, fetchRekapGaji]);
 
     const handleFilter = () => {
         if (!filterValue && periode !== "minggu") {
             alert("Harap pilih tanggal/waktu terlebih dahulu!");
             return;
         }
-        console.log("Siap tembak API:", { jenisPeriode: periode, nilaiWaktu: filterValue });
-        alert(`Memuat data rekap gaji ${periode}...`);
+        
+        // Panggil ulang API dengan nilai filter terbaru
+        fetchRekapGaji(); 
+    };
+
+    const handlePeriodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setPeriode(e.target.value);
+        setFilterValue(""); 
     };
 
     const handleNavigasiAturGaji = (id: number | string) => {
@@ -139,21 +198,30 @@ export default function GajiTunjanganIndex() {
                             <div className="p-3 bg-blue-100 text-blue-600 rounded-lg"><Wallet size={24} /></div>
                             <div>
                                 <p className="text-sm text-gray-500 font-medium">Estimasi Pengeluaran</p>
-                                <h3 className="text-xl font-bold text-gray-800">{formatRupiah(17430000)}</h3>
+                                {/* Gunakan state dinamis, beri efek loading jika data sedang ditarik */}
+                                <h3 className="text-xl font-bold text-gray-800">
+                                    {isLoadingRekap ? "Menghitung..." : formatRupiah(summaryCards.estimasiPengeluaran)}
+                                </h3>
                             </div>
                         </div>
+
                         <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
                             <div className="p-3 bg-green-100 text-green-600 rounded-lg"><TrendingUp size={24} /></div>
                             <div>
                                 <p className="text-sm text-gray-500 font-medium">Total Bonus Disalurkan</p>
-                                <h3 className="text-xl font-bold text-gray-800">{formatRupiah(1650000)}</h3>
+                                <h3 className="text-xl font-bold text-gray-800">
+                                    {isLoadingRekap ? "Menghitung..." : formatRupiah(summaryCards.totalBonus)}
+                                </h3>
                             </div>
                         </div>
+
                         <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
                             <div className="p-3 bg-red-100 text-red-600 rounded-lg"><TrendingDown size={24} /></div>
                             <div>
                                 <p className="text-sm text-gray-500 font-medium">Total Potongan Denda</p>
-                                <h3 className="text-xl font-bold text-gray-800">{formatRupiah(220000)}</h3>
+                                <h3 className="text-xl font-bold text-gray-800">
+                                    {isLoadingRekap ? "Menghitung..." : formatRupiah(summaryCards.totalPotongan)}
+                                </h3>
                             </div>
                         </div>
                     </div>

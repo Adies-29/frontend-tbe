@@ -21,12 +21,12 @@ export default function PegawaiIndex() {
         try {
             // Ambil token dari memori browser
             const token = useAuthStore.getState().token;
-            const response = await fetch ("http://localhost:3000/api/v1/pegawai", {
+            const response = await fetch ("https://ppm-sooty.vercel.app/api/v1/pegawai", {
                 method: "GET",
                 headers: {
-                    "Content-Type" : "application/json",
-                    "Autorization" : `Bearer${token}`
-                }
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                } 
             });
             if (!response.ok){
                 if(response.status === 401 || response.status === 403){

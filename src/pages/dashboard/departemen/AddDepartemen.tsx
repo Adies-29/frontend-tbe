@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "../../../components/ui/InputText";
 import { useState } from "react";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 
 
@@ -34,10 +35,12 @@ export default function AddDepartemen() {
         setIsLoading(true);
 
         try {
-            const response =  await fetch("http://localhost:3000/api/v1/departemen", {
+            const token = useAuthStore.getState().token;
+            const response =  await fetch("https://ppm-sooty.vercel.app/api/v1/departemen", {
                 method: "POST",
                 headers: {
-                    "Content-Type" : "application/json",
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     nama_departemen : data.nama

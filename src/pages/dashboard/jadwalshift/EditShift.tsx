@@ -54,7 +54,7 @@ export default function EditShift() {
             try {
                 setIsFetchingData(true)
 
-                const response = await fetch(`http://localhost:3000/api/v1/shifts/${id}`, {
+                const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/shifts/${id}`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -101,7 +101,7 @@ export default function EditShift() {
     const onSubmit = async (data: FormData) => {
         setIsSaving(true)
         try {
-            const response = await fetch(`http://localhost:3000/api/v1/shifts/${id}`, {
+            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/shifts/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",

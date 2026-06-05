@@ -66,9 +66,9 @@ export default function AddPegawai() {
         const fetctPegawai = async () => {
             try {
                const [resDept, resJabatan, resShift] = await Promise.all([
-                    fetch("http://localhost:3000/api/v1/departemen", { headers: { "Authorization": `Bearer ${token}` } }),
-                    fetch("http://localhost:3000/api/v1/jabatan", { headers: { "Authorization": `Bearer ${token}` } }),
-                    fetch("http://localhost:3000/api/v1/shifts", { headers: { "Authorization": `Bearer ${token}` } })
+                    fetch("https://ppm-sooty.vercel.app/api/v1/departemen", { headers: { "Authorization": `Bearer ${token}` } }),
+                    fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Authorization": `Bearer ${token}` } }),
+                    fetch("https://ppm-sooty.vercel.app/api/v1/shifts", { headers: { "Authorization": `Bearer ${token}` } })
                 ]);
                 const dataDept = await resDept.json();
                 const dataJabatan = await resJabatan.json();
@@ -109,7 +109,7 @@ export default function AddPegawai() {
     const onSubmit = async (data: FormData) => {
         setIsLoading(true)
         try {
-            const response = await fetch ("http://localhost:3000/api/v1/pegawai", {
+            const response = await fetch ("https://ppm-sooty.vercel.app/api/v1/pegawai", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -43,9 +43,12 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
         if (!isConfirm) return;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/v1/pegawai/${id}`, {
+            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/pegawai/${id}`, {
                 method: 'DELETE',
-                headers: { "Authorization" : `Bearer ${token}` }
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                } 
             });
             const result = await response.json();
 
@@ -69,7 +72,7 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
         const { no_hp, email, masakerja } = updatedRow;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/v1/pegawai/${newRow.id}`, {
+            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/pegawai/${newRow.id}`, {
                 method:"PUT",
                 headers:{
                     "Content-Type" : "application/json",

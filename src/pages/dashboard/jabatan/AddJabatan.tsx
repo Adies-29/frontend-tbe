@@ -36,7 +36,7 @@ export default function AddJabatan() {
     useEffect(() => {
         const fetchDepartemen = async () =>{
             try {
-                const response = await fetch(`http://localhost:3000/api/v1/departemen`);
+                const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/departemen`);
                 const result = await response.json();
 
                 if (response.ok){
@@ -54,7 +54,7 @@ export default function AddJabatan() {
    const onSubmit = async (data: FormData) => {
         setIsLoading(true)
         try {
-            const response = await fetch("http://localhost:3000/api/v1/jabatan", {
+            const response = await fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
