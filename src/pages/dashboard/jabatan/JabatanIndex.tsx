@@ -45,6 +45,20 @@ export default function JabatanIndex() {
                 setDataJabatan(mappedData);
             }
 
+            const result = await resJabatan.json();
+            
+            // 4. MAPPING DATA: Sesuaikan bentuk data backend ke bentuk dummy-mu sebelumnya
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const mappedData: JabatanData[] = result.data.map((item: any) => ({
+                id: item.id,
+                nama_jabatan: item.nama_jabatan,
+                departemen: item.departemen || "Tanpa Departemen", 
+                departemen_id: item.departemen_id,
+                jumlah_karyawan: item.jumlah_karyawan || 0
+            }));
+
+            setDataJabatan(mappedData);
+
         } catch (error) {
             console.error("Error fetching jabatan:", error);
             alert("Gagal memuat data jabatan. Pastikan backend berjalan.");
@@ -55,7 +69,10 @@ export default function JabatanIndex() {
 
     // 5. Jalankan Fetch saat halaman dibuka
     useEffect(() => {
-        fetchJabatan();
+        const fetchData = async () => {
+            await fetchJabatan();
+        };
+        fetchData();
     }, []);
 
    

@@ -15,6 +15,7 @@ export default function DashboardIndex() {
         belum_hadir: 0,
         dibatalkan_void: 0
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [rows, setRows] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -42,6 +43,7 @@ export default function DashboardIndex() {
                 setSummary(result.statistik);
                 
                 // Format data agar sesuai dengan interface AbsensiData di TabelDashboard
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const formattedRows = result.data_karyawan.map((karyawan: any, index: number) => {
                     return {
                         // PERBAIKAN UTAMA: Jika karyawan.id kosong, cari id_pegawai. Jika kosong juga, pakai index + 1
@@ -66,10 +68,13 @@ export default function DashboardIndex() {
 
     // 4. AUTO REFRESH (Panggil fungsi tarik data)
     useEffect(() => {
-        fetchLiveDashboard(); // Panggil pertama kali
+        const timeoutId = setTimeout(fetchLiveDashboard, 0); // Panggil pertama kali after a timeout
 
         const refreshInterval = setInterval(fetchLiveDashboard, 30000); // Tiap 30 dtk
-        return () => clearInterval(refreshInterval);
+        return () => {
+            clearInterval(refreshInterval);
+            clearTimeout(timeoutId); // Clear the timeout on cleanup
+        };
     }, [fetchLiveDashboard]);
 
     // Formatting UI

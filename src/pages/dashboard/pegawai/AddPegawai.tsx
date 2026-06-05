@@ -63,8 +63,11 @@ export default function AddPegawai() {
     const token = useAuthStore((state) => state.token);
     const [isSaving, setIsSaving] = useState(false);
     const [departemenList, setDepartemenList] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [shiftList, setShiftList] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [allJabatan, setAllJabatan] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [jabatanList, setJabatanList] = useState<any[]>([]);
     const [kotaList, _setKotaList] = useState<any[]>(MOCK_KOTA); 
     
