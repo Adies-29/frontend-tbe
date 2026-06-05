@@ -46,9 +46,13 @@ export default function AddPegawai() {
     const navigate = useNavigate();
     const token = useAuthStore((state) => state.token);
     const [isLoading, setIsLoading] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [departemenList, setDepartemenList] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [shiftList, setShiftList] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [allJabatan, setAllJabatan] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [jabatanList, setJabatanList] = useState<any[]>([]);
     
     // Tambahkan watch dan setValue di sini

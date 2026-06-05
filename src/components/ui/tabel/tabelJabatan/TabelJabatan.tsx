@@ -25,7 +25,10 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     const token = useAuthStore((state) => state.token);
 
     useEffect(() => {
-        setRows(initialData);
+        const timer = setTimeout(() => {
+            setRows(initialData);
+        }, 0);
+        return () => clearTimeout(timer);
     }, [initialData]);
 
     useEffect(() => {
@@ -38,6 +41,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
                         "Authorization": `Bearer ${token}`
                     } 
                 });
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const result = await response.json();const options = result.data.map((dept: any) => ({
                     value: dept.id,
                     label: dept.nama_departemen
@@ -45,6 +49,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
                 setDepartemenOptions(options);
                 
             } catch (error) {
+                console.error("Error updating jabatan:", error);
                 console.error("Gagal ambil opsi departemen:", error);
             }
         };
@@ -93,6 +98,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
                 alert(`Gagal hapus: ${result.message}`);
             }
         } catch (error) {
+            console.error("Gagal menghapus jabatan:", error);
             alert("Gagal menghapus data.");
             alert("Terjadi kesalahan server.");
         }

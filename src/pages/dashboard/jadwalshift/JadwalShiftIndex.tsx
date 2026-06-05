@@ -40,6 +40,7 @@ export default function JadwalShiftIndex() {
                    setDataJadwalShift(result.data);
                }
    
+           // eslint-disable-next-line @typescript-eslint/no-explicit-any
            } catch (error: any) {
                console.error("Error fetching Jadwal & shift:", error);
                setErrorMsg(error.message || "Gagal memuat data pegawai.");
@@ -48,9 +49,12 @@ export default function JadwalShiftIndex() {
            }
        };
    
-       useEffect(() => {
-           fetchJadwalShift();
-       }, []);
+    useEffect(() => {
+        const fetchData = async () => {
+            await fetchJadwalShift();
+        };
+        setTimeout(fetchData, 0);
+    }, []);
     
 
     

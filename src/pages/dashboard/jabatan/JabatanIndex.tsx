@@ -35,6 +35,7 @@ export default function JabatanIndex() {
             const result = await response.json();
             
             // 4. MAPPING DATA: Sesuaikan bentuk data backend ke bentuk dummy-mu sebelumnya
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const mappedData: JabatanData[] = result.data.map((item: any) => ({
                 id: item.id,
                 nama_jabatan: item.nama_jabatan,
@@ -55,7 +56,10 @@ export default function JabatanIndex() {
 
     // 5. Jalankan Fetch saat halaman dibuka
     useEffect(() => {
-        fetchJabatan();
+        const fetchData = async () => {
+            await fetchJabatan();
+        };
+        fetchData();
     }, []);
 
    

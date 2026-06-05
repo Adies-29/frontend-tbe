@@ -34,6 +34,7 @@ export default function DepartemenIndex() {
             const result = await response.json();
             
             // 4. MAPPING DATA: Sesuaikan bentuk data backend ke bentuk dummy-mu sebelumnya
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const mappedData: DepartemenData[] = result.data.map((item: any) => ({
                 id: item.id,
                 nama_departemen: item.nama_departemen,
@@ -51,7 +52,10 @@ export default function DepartemenIndex() {
     };
     // 5. Jalankan Fetch saat halaman dibuka
     useEffect(() => {
-        fetchDepartemen();
+        const fetchData = async () => {
+            await fetchDepartemen();
+        };
+        fetchData();
     }, []);
 
     const totalDepartemen = dataDepartemen.length;

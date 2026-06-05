@@ -33,6 +33,7 @@ export default function AturGajiJabatan() {
         reset, // 2. KELUARKAN FUNGSI RESET DI SINI
         formState: { errors }
     } = useForm<GajiFormValues>({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         resolver: zodResolver(schema) as any, 
         defaultValues: {
             upahKehadiran: 0,

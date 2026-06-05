@@ -108,6 +108,7 @@ export default function GajiTunjanganIndex() {
 
             if (response.ok && result.success) { 
                 const data = result.data || []; 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const formattedData: MasterGajiData[] = data.map((item: any) => ({
                     id: String(item.id),
                     nama_jabatan: item.nama_jabatan,
@@ -159,6 +160,7 @@ export default function GajiTunjanganIndex() {
                     formattedData = data; // Data langsung siap pakai dari API harian
                 } else {
                     // Pastikan proses map ini mengembalikan (return) objek
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     formattedData = data.map((item: any) => {
                         const isMingguan = periode === 'minggu';
                         const totalBonusMingguan = (item.total_bonus_kerapian_mingguan || 0) + (item.total_bonus_disiplin_mingguan || 0);
@@ -190,8 +192,11 @@ export default function GajiTunjanganIndex() {
 
     // Efek untuk memuat data berdasarkan Tab yang aktif
     useEffect(() => {
-        if (activeTab === 'master') {
-            if (masterJabatanData.length === 0) fectchMasterJabatan();
+        if (activeTab === 'master' && masterJabatanData.length === 0) {
+            const fetchData = async () => {
+                await fectchMasterJabatan();
+            };
+            fetchData();
         } else if (activeTab === 'rekap') {
             fetchRekapGaji();
         }

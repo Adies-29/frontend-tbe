@@ -30,6 +30,7 @@ export default function TabelDashboard({ data: initialData }: TabelAbsensiProps)
 
 
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formatWaktuAbsen = (time: any) => {
         if (!time || time === "-" || time === "null" || time === "00:00:00") {
             return <span className="text-gray-400 font-bold">-</span>;

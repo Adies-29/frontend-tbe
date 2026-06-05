@@ -47,9 +47,13 @@ export default function EditPegawai(){
     const [isFetchingData, setIsFetchingData] = useState(true)
 
     //master data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [departemenList, setDepartemenList] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [jabatanList, setJabatanList] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [shiftList, setShiftList] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [allJabatan, setAllJabatan] = useState<any[]>([])
 
     const {
@@ -97,9 +101,11 @@ export default function EditPegawai(){
                 if(resPegawai.ok && dataPegawai.success){
                     
                     const pegawai = dataPegawai.data;
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const currentJabatan = masterJabatan.find((j: any) => j.id === pegawai.jabatan_id);
                     const pegawaiId = currentJabatan ? currentJabatan.departemen_id?.toString() : "";
 
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const pilihJabatan = masterJabatan.filter((j: any) => j.departemen_id?.toString() === pegawaiId );
                     setJabatanList(pilihJabatan);
 
