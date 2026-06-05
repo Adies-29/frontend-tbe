@@ -38,7 +38,8 @@ export default function AturGajiJabatan() {
         reset, 
         formState: { errors }
     } = useForm<FormData>({
-        resolver: zodResolver(schema), 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolver: zodResolver(schema as any), 
         defaultValues: {
             upah_per_kehadiran: 0,
             upah_lembur_per_jam: 0,

@@ -50,7 +50,10 @@ export default function DepartemenIndex() {
     };
     // 5. Jalankan Fetch saat halaman dibuka
     useEffect(() => {
-        fetchDepartemen();
+        const fetchData = async () => {
+            await fetchDepartemen();
+        };
+        fetchData();
     }, []);
 
     const totalDepartemen = dataDepartemen.length;

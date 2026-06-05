@@ -16,6 +16,7 @@ export default function DashboardIndex() {
         belum_hadir: 0,
         dibatalkan_void: 0
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [rows, setRows] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -43,6 +44,7 @@ export default function DashboardIndex() {
                 setSummary(result.statistik);
                 
                 // Format data agar sesuai dengan interface AbsensiData di TabelDashboard
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const formattedRows = result.data_karyawan.map((karyawan: any, index: number) => {
                     let labelStatus = "Belum Hadir";
                     
@@ -62,7 +64,7 @@ export default function DashboardIndex() {
                         nama: karyawan.nama || "Tanpa Nama",
                         jabatan: karyawan.jabatan || "-",
                         waktu_masuk: karyawan.waktu_masuk || "-",
-                        status_masuk: labelStatus,
+                        status_masuk: karyawan.status_masuk,
                         waktu_pulang: karyawan.waktu_pulang || "-",
                         status_lembur: karyawan.status_lembur || "-",
                         is_kerapian: karyawan.is_kerapian || false
@@ -92,10 +94,13 @@ export default function DashboardIndex() {
 
     // 4. AUTO REFRESH (Panggil fungsi tarik data)
     useEffect(() => {
-        fetchLiveDashboard(); // Panggil pertama kali
+        const timeoutId = setTimeout(fetchLiveDashboard, 0); // Panggil pertama kali after a timeout
 
         const refreshInterval = setInterval(fetchLiveDashboard, 30000); // Tiap 30 dtk
-        return () => clearInterval(refreshInterval);
+        return () => {
+            clearInterval(refreshInterval);
+            clearTimeout(timeoutId); // Clear the timeout on cleanup
+        };
     }, [fetchLiveDashboard]);
 
     // Formatting UI
@@ -147,7 +152,7 @@ export default function DashboardIndex() {
                 </div>
             </section>
 
-            {/* TABEL MUI DATAGRID */}
+           
             
         </div>
     );

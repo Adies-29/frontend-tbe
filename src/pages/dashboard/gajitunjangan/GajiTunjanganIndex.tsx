@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Wallet, TrendingDown, TrendingUp, Loader2 } from 'lucide-react';
+import { Wallet, TrendingDown, TrendingUp, Loader2, PlayCircle } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Button from '../../../components/ui/Button';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -7,25 +7,21 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 
-// IMPORT KOMPONEN TABEL YANG BARU DIBUAT (Sesuaikan nama foldernya jika perlu)
-
+// IMPORT KOMPONEN TABEL
 import { TabelMasterGaji, type MasterGajiData } from '../../../components/ui/tabel/tabelGaji/TabelMasterGaji';
 import { TabelRekapGaji, type RekapGajiData } from '../../../components/ui/tabel/tabelGaji/TabelRekapGaji';
 import { useAuthStore } from '../../../store/useAuthStore';
-import { string, toJSONSchema } from 'zod';
 
 const formatRupiah = (angka: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
 };
-
-
 
 export default function GajiTunjanganIndex() {
     const navigate = useNavigate();
     const location = useLocation();
     const token = useAuthStore((state) => state.token);
     
-    // State tab diubah dari 'payroll' menjadi 'rekap'
+    // State Navigasi & Filter
     const [activeTab, setActiveTab] = useState<'rekap' | 'master'>(location.state?.tab || 'rekap');
     const [periode, setPeriode] = useState("bulan"); 
     const [filterValue, setFilterValue] = useState(""); 
@@ -37,6 +33,7 @@ export default function GajiTunjanganIndex() {
     // State Loading
     const [isLoadingRekap, setIsLoadingRekap] = useState(false);
     const [isLoadingMaster, setIsLoadingMaster] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
 
     // State Finansial Ringkasan (Widgets)
     const [summaryCards, setSummaryCards] = useState({
@@ -45,6 +42,57 @@ export default function GajiTunjanganIndex() {
         totalPotongan: 0
     });
 
+    // ========================================================
+    // FUNGSI GENERATE GAJI (Diarahkan ke Generate Massal)
+    // ========================================================
+    const handleGenerateGaji = async () => {
+        if (!filterValue) {
+            alert("Harap pilih bulan dan tahun di kalender terlebih dahulu sebelum men-generate gaji.");
+            return;
+        }
+
+        // Ekstrak tahun dan bulan dari filterValue (Format YYYY-MM)
+        const [tahun, bulan] = filterValue.split('-');
+
+        const confirmGenerate = window.confirm(`Apakah Anda yakin ingin menghitung dan menerbitkan gaji untuk periode Bulan ${bulan} Tahun ${tahun}?`);
+        if (!confirmGenerate) return;
+    
+        setIsGenerating(true);
+        
+        try {
+            // Kita tembak endpoint massal karena ini tombol global
+            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/gaji/generate`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    periode_bulan: parseInt(bulan),
+                    periode_tahun: parseInt(tahun)
+                })
+            });
+    
+            const result = await response.json();
+    
+            if (response.ok && result.success) {
+                alert(`Sukses! ${result.message}`);
+                // Refresh data tabel agar hasil generate langsung muncul
+                fetchRekapGaji(); 
+            } else {
+                alert(`Gagal: ${result.message}`);
+            }
+        } catch (error) {
+            console.error("Error generate gaji:", error);
+            alert("Terjadi kesalahan koneksi saat menghitung gaji.");
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    // ========================================================
+    // FUNGSI FETCH MASTER JABATAN
+    // ========================================================
     const fectchMasterJabatan = useCallback(async () => {
         try {
             setIsLoadingMaster(true)
@@ -59,15 +107,13 @@ export default function GajiTunjanganIndex() {
             const result = await response.json();
 
             if (response.ok && result.success) { 
-                
                 const data = result.data || []; 
-
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const formattedData: MasterGajiData[] = data.map((item: any) => ({
                     id: String(item.id),
                     nama_jabatan: item.nama_jabatan,
                     departemen: item.departemen?.nama_departemen || item.departemen || "-"
                 }));
-                
                 setMasterJabatanData(formattedData);
             }
         } catch (error) {
@@ -77,54 +123,62 @@ export default function GajiTunjanganIndex() {
         }
     }, [token]);
 
-
-    const fetchRekapGaji = useCallback(async () => {
+    // ========================================================
+    // FUNGSI FETCH REKAP GAJI
+    // ========================================================
+    const fetchRekapGaji = async () => {
         try {
             setIsLoadingRekap(true);
             
-            // Tambahkan query parameter untuk filter periode nantinya jika backend sudah siap
-            // let url = `https://ppm-sooty.vercel.app/api/v1/gaji?periode=${periode}&waktu=${filterValue}`;
-            // let url = `https://ppm-sooty.vercel.app/api/gaji`;
-
-            const response = await fetch(`https://ppm-sooty.vercel.app/api/gaji`, {
+            // 1. Penentuan URL berdasarkan Dropdown Periode
+            let url = `https://ppm-sooty.vercel.app/api/v1/gaji`; 
+            
+            if (periode === 'Mingguan') {
+                url = `https://ppm-sooty.vercel.app/api/v1/gaji/mingguan`;
+            } else if (periode === 'Harian') {
+                const tanggalPilihan = filterValue || new Date().toLocaleDateString('en-CA');
+                url = `https://ppm-sooty.vercel.app/api/v1/gaji/harian?tanggal=${tanggalPilihan}`;
+            }
+    
+            const response = await fetch(url, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 }
             });
-
+    
             const result = await response.json();
-
+    
             if (response.ok && result.success) {
                 const data = result.data || [];
+                
+                let formattedData: RekapGajiData[] = [];
 
-                // 1. Mapping Data Backend ke Format Tabel UI
-                const formattedData: RekapGajiData[] = data.map((item: any) => ({
-                    id: String(item.id),
-                    nama: item.pegawai?.nama || "Tanpa Nama",
-                    jabatan: item.pegawai?.jabatan?.nama_jabatan || "-", // Asumsi backend akan diupdate mengirim jabatan
-                    
-                    // Karena backend versi awal kita baru mengirim 'total_gaji', kita siapkan fallback
-                    gaji_dasar: item.gaji_dasar || item.total_gaji || 0, 
-                    total_bonus: item.total_bonus || 0,
-                    total_potongan: item.total_potongan || 0,
-                    gaji_bersih: item.total_gaji || 0,
-                    status: item.status_pembayaran || "Pending"
-                }));
-
+                // 2. Formatting Data
+                if (periode === 'hari') {
+                    formattedData = data; // Data langsung siap pakai dari API harian
+                } else {
+                    // Pastikan proses map ini mengembalikan (return) objek
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    formattedData = data.map((item: any) => {
+                        const isMingguan = periode === 'minggu';
+                        const totalBonusMingguan = (item.total_bonus_kerapian_mingguan || 0) + (item.total_bonus_disiplin_mingguan || 0);
+        
+                        return {
+                            id: String(item.id),
+                            nama: item.pegawai?.nama || "Tanpa Nama",
+                            jabatan: item.pegawai?.jabatan?.nama_jabatan || "-",
+                            gaji_dasar: isMingguan ? (item.total_gaji_pokok_mingguan || 0) : (item.gaji_dasar || 0),
+                            total_bonus: isMingguan ? totalBonusMingguan : (item.total_bonus || 0),
+                            total_potongan: isMingguan ? (item.total_denda_mingguan || 0) : (item.total_potongan || 0),
+                            gaji_bersih: isMingguan ? (item.total_pendapatan_bersih_mingguan || 0) : (item.total_gaji || 0),
+                            status: isMingguan ? "Lunas/Cair" : (item.status_pembayaran || "Pending")
+                        };
+                    });
+                }
+                
                 setRekapGajiData(formattedData);
-
-                // 2. Update Widget Finansial Secara Dinamis (Menjumlahkan semua baris)
-                const totalPengeluaran = formattedData.reduce((sum, curr) => sum + curr.gaji_bersih, 0);
-                const totalBonusSemua = formattedData.reduce((sum, curr) => sum + curr.total_bonus, 0);
-                const totalPotonganSemua = formattedData.reduce((sum, curr) => sum + curr.total_potongan, 0);
-
-                setSummaryCards({
-                    estimasiPengeluaran: totalPengeluaran,
-                    totalBonus: totalBonusSemua,
-                    totalPotongan: totalPotonganSemua
-                });
 
             } else {
                 console.error("Gagal mengambil data gaji:", result.message);
@@ -134,26 +188,26 @@ export default function GajiTunjanganIndex() {
         } finally {
             setIsLoadingRekap(false);
         }
-    }, [token, periode, filterValue]); // Masukkan filter ke dependency
+    };
 
+    // Efek untuk memuat data berdasarkan Tab yang aktif
     useEffect(() => {
-        if (activeTab === 'master') {
-            if (masterJabatanData.length === 0) {
-                fectchMasterJabatan();
-            }
+        if (activeTab === 'master' && masterJabatanData.length === 0) {
+            const fetchData = async () => {
+                await fectchMasterJabatan();
+            };
+            fetchData();
         } else if (activeTab === 'rekap') {
-            // Panggil API saat tab rekap dibuka
             fetchRekapGaji();
         }
     }, [activeTab, fectchMasterJabatan, fetchRekapGaji]);
 
+    // Handle aksi Filter
     const handleFilter = () => {
         if (!filterValue && periode !== "minggu") {
             alert("Harap pilih tanggal/waktu terlebih dahulu!");
             return;
         }
-        
-        // Panggil ulang API dengan nilai filter terbaru
         fetchRekapGaji(); 
     };
 
@@ -192,13 +246,13 @@ export default function GajiTunjanganIndex() {
             {/* KONTEN TAB 1: REKAP GAJI */}
             {activeTab === 'rekap' && (
                 <div className="flex flex-col gap-6 animate-in fade-in duration-300">
+                    
                     {/* WIDGETS */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
                             <div className="p-3 bg-blue-100 text-blue-600 rounded-lg"><Wallet size={24} /></div>
                             <div>
                                 <p className="text-sm text-gray-500 font-medium">Estimasi Pengeluaran</p>
-                                {/* Gunakan state dinamis, beri efek loading jika data sedang ditarik */}
                                 <h3 className="text-xl font-bold text-gray-800">
                                     {isLoadingRekap ? "Menghitung..." : formatRupiah(summaryCards.estimasiPengeluaran)}
                                 </h3>
@@ -231,7 +285,7 @@ export default function GajiTunjanganIndex() {
                         <div className="p-4 border-b flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50 gap-4">
                             <h2 className="text-lg font-bold text-gray-700">Rincian Gaji Karyawan</h2>
                             
-                            <div className="flex gap-2 w-full md:w-auto">
+                            <div className="flex gap-2 w-full md:w-auto items-center">
                                 <select value={periode} onChange={handlePeriodeChange} className="border border-gray-300 rounded-lg px-3 py-1.5 bg-white outline-none focus:border-red-500 shadow-sm text-sm">
                                     <option value="hari">Harian</option>
                                     <option value="minggu">Mingguan</option>
@@ -252,11 +306,23 @@ export default function GajiTunjanganIndex() {
                                         />
                                     </LocalizationProvider>
                                 )}
+                                
                                 <Button label="Filter" onClick={handleFilter} />
+
+                                {/* TOMBOL GENERATE HANYA MUNCUL SAAT PERIODE BULANAN */}
+                                {periode === "bulan" && (
+                                    <button 
+                                        onClick={handleGenerateGaji}
+                                        disabled={isGenerating || !filterValue}
+                                        className="flex items-center gap-2 bg-red-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm hover:bg-red-700 disabled:bg-gray-400 transition-colors ml-2 border border-transparent"
+                                    >
+                                        {isGenerating ? <Loader2 className="animate-spin" size={16} /> : <PlayCircle size={16} />}
+                                        {isGenerating ? "Memproses..." : "Generate Gaji"}
+                                    </button>
+                                )}
                             </div>
                         </div>
 
-                        {/* PANGGIL KOMPONEN TABEL REKAP GAJI DI SINI */}
                         <TabelRekapGaji data={rekapGajiData} />
 
                     </section>

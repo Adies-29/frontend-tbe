@@ -39,6 +39,7 @@ export default function PegawaiIndex() {
                 setDataPegawai(result.data);
             }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error("Error fetching pegawai:", error);
             setErrorMsg(error.message || "Gagal memuat data pegawai.");
@@ -48,7 +49,10 @@ export default function PegawaiIndex() {
     };
 
     useEffect(() => {
-        fetchPegawai();
+        const fetchData = async () => {
+            await fetchPegawai();
+        };
+        fetchData();
     }, []);
 
     const totalPegawai = dataPegawai.length;

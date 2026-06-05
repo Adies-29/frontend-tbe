@@ -23,7 +23,10 @@ export default function DepartemenTable({ data: initialData = [] }: DepartemenTa
     const navigate = useNavigate(); // <-- Inisialisasi fungsi navigasi
 
     useEffect(() => {
-        setRows(initialData);
+        const timer = setTimeout(() => {
+            setRows(initialData);
+        }, 0);
+        return () => clearTimeout(timer);
     }, [initialData]);
     
     // --- FUNGSI-FUNGSI AKSI (MUI DataGrid) ---
@@ -67,10 +70,6 @@ export default function DepartemenTable({ data: initialData = [] }: DepartemenTa
     };
 
     // Fungsi untuk PINDAH HALAMAN lihat karyawan
-    const handleViewEmployees = (id: GridRowId) => () => {
-        // Mengarahkan user ke halaman detail berdasarkan ID departemen
-        navigate(`/dashboard/departemen/${id}`); 
-    };
 
     const processRowUpdate = async (newRow: GridRowModel, oldRow: GridRowModel) => {
         const updatedRow = { ...newRow } as DepartemenData;

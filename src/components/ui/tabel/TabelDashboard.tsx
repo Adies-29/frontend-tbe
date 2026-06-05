@@ -79,6 +79,8 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
 
     };
 
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formatWaktuAbsen = (time: any) => {
         if (!time || time === "-" || time === "null" || time === "00:00:00") {
             return <span className="text-gray-400 font-bold">-</span>;
@@ -213,13 +215,13 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     ];
 
     return (
-       
+        <div className="w-full bg-white">
             <DataGrid
                 showToolbar
                 rowModesModel={rowModesModel}
                 rows={rows}
                 columns={columns}
-                
+                autoHeight
                 initialState={{
                     pagination: {
                         paginationModel: { page: 0, pageSize: 10 },
@@ -239,6 +241,6 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                     '& .MuiDataGrid-columnHeader:focus': { outline: 'none' },
                 }}
             />
-        
+        </div>
     );
 }
