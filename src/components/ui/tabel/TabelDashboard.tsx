@@ -1,18 +1,10 @@
 import { useEffect, useState } from "react";
 import { 
     DataGrid, 
-    type GridColDef, 
-    type GridRowModesModel, 
-    GridRowModes, 
-    GridActionsCellItem, 
-    type GridRowId, 
-    type GridRowModel,
-
+    type GridColDef
 } from "@mui/x-data-grid";
-import { Pencil, Save,  X } from "lucide-react";
 import type { AbsensiData } from "../../../types";
 import dayjs from "dayjs";
-import { useAuthStore } from "../../../store/useAuthStore";
 
 
 
@@ -22,84 +14,21 @@ interface TabelAbsensiProps {
     
 }
 
-export default function TabelDashboard({ data: initialData, onRefresh }: TabelAbsensiProps) {
+export default function TabelDashboard({ data: initialData }: TabelAbsensiProps) {
 
     // State untuk menyimpan data baris dan mode edit dari MUI DataGrid
     const [rows, setRows] = useState<AbsensiData[]>(initialData);
-    const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
 
     useEffect(() => {
-        setRows(initialData);
+        const timer = setTimeout(() => {
+            setRows(initialData);
+        }, 0);
+        return () => clearTimeout(timer);
     }, [initialData]);
 
     
 
-    // 1. Mulai Edit (Ikon Pencil)
-    const handleEditClick = (id: GridRowId) => () => {
-        setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
-    };
 
-    // 2. Simpan Edit (Ikon Save)
-    const handleSaveClick = (id: GridRowId) => () => {
-        setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
-    };
-
-    // 3. Batal Edit (Ikon X)
-    const handleCancelClick = (id: GridRowId) => () => {
-        setRowModesModel({
-            ...rowModesModel,
-            [id]: { mode: GridRowModes.View, ignoreModifications: true },
-        });
-    };
-
-
-    // --- FUNGSI UPDATE DATA KE STATE ---
-    const processRowUpdate = async (newRow: GridRowModel) => {
-        const updatedRow = { ...newRow } as AbsensiData;
-        const token = useAuthStore((state) => (state.token));
-        setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
-        
-        try {
-            
-            const response = await fetch(`http://localhost:3000/api/v1/absensi/${updatedRow.id}`, {
-                method: "PUT", 
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}` 
-                },
-                body: JSON.stringify({
-                    status: updatedRow.status_masuk,       
-                    lembur: updatedRow.status_lembur,       
-                }),
-            });
-
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                alert("Gagal menyimpan perubahan ke server!");
-                onRefresh(); 
-                return newRow; 
-            }
-            console.log("Sukses update data!", result);
-            onRefresh(); 
-
-            return updatedRow;
-
-        } catch (error) {
-            console.error("Terjadi kesalahan jaringan:", error);
-            alert("Terjadi kesalahan saat menghubungi server.");
-            onRefresh(); 
-            return newRow;
-        }
-    };
-    const handleRowModesModelChange = (newRowModesModel: GridRowModesModel) => {
-        setRowModesModel(newRowModesModel);
-    };
-
-    const handleProcessRowUpdateError = (error: Error) => {
-        console.error("Gagal menyimpan data baris:", error);
-        alert("Gagal mengupdate data! Silakan coba lagi.");
-    };
 
     const formatWaktuAbsen = (time: any) => {
         if (!time || time === "-" || time === "null" || time === "00:00:00") {
@@ -132,7 +61,6 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             headerName: 'Status',
             valueOptions: ["Tepat", "Void", "Terlambat",],
             type: 'singleSelect',
-            editable: true,
             flex: 1, 
             minWidth: 120, 
             align: 'center',
@@ -144,19 +72,6 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                     {params.value}
                 </span>
             ),
-            renderEditCell: (params) => {
-                const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-                    params.api.setEditCellValue({ id: params.id, field: params.field, value: e.target.value });
-                };
-                return (
-                    <div className="flex items-center justify-center w-full h-full px-2">
-                        <select value={params.value || ""} onChange={handleChange} className="w-full px-2 py-1 text-sm border-2 border-blue-400 rounded outline-none bg-white">
-                            <option value="Tepat">Tepat</option>
-                            <option value="Terlambat">Terlambat</option>
-                        </select>
-                    </div>
-                );
-            }
             
         },
         { 
@@ -186,19 +101,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                     </span>
                 );
             },
-            renderEditCell: (params) => {
-                const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-                    params.api.setEditCellValue({ id: params.id, field: params.field, value: e.target.value });
-                };
-                return (
-                    <div className="flex items-center justify-center w-full h-full px-2">
-                        <select value={params.value || ""} onChange={handleChange} className="w-full px-2 py-1 text-sm border-2 border-blue-400 rounded outline-none bg-white">
-                            <option value="">-</option>
-                            <option value="Lembur">Lembur</option>
-                        </select>
-                    </div>
-                );
-            }
+            
         },
         
     ];
@@ -206,12 +109,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     return (
        <div className="w-full bg-white">
             <DataGrid
-                showToolbar 
-                onProcessRowUpdateError={handleProcessRowUpdateError}
-                editMode="row"
-                rowModesModel={rowModesModel}
-                onRowModesModelChange={handleRowModesModelChange}
-                processRowUpdate={processRowUpdate}
+                showToolbar
                 rows={rows}
                 columns={columns}
                 initialState={{
