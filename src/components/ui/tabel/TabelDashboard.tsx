@@ -213,13 +213,13 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     ];
 
     return (
-        <div className="w-full bg-white">
+       
             <DataGrid
                 showToolbar
                 rowModesModel={rowModesModel}
                 rows={rows}
                 columns={columns}
-                autoHeight
+                
                 initialState={{
                     pagination: {
                         paginationModel: { page: 0, pageSize: 10 },
@@ -239,6 +239,6 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                     '& .MuiDataGrid-columnHeader:focus': { outline: 'none' },
                 }}
             />
-        </div>
+        
     );
 }

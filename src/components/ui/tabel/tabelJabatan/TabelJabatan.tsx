@@ -241,7 +241,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
             autoHeight
             rows={rows} 
             columns={columns}
-            showToolbar
+            showToolbar 
 
             // Pengaturan CRUD Inline Editing
             editMode="row"

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import TabelDashboard from "../../components/ui/tabel/TabelDashboard";
 import { useAuthStore } from "../../store/useAuthStore";
+import type { AbsensiData } from "../../types";
 
 
 
@@ -32,7 +33,7 @@ export default function DashboardIndex() {
                 method: "GET",
                 headers: {
                     "Content-Type" : "application/json",
-                    "Autorization" : `Bearer${token}`
+                    "Authorization" : `Bearer ${token}`
                 }
             });
              
@@ -45,8 +46,7 @@ export default function DashboardIndex() {
                 const formattedRows = result.data_karyawan.map((karyawan: any, index: number) => {
                     let labelStatus = "Belum Hadir";
                     
-                    // Perbaikan: Pastikan kita membaca string aslinya dengan huruf kecil untuk pencocokan yang aman
-                    const statusBackend = (karyawan.status_masuk || karyawan.status || "").toLowerCase();
+                    const statusBackend = ( karyawan.status || "").toLowerCase();
                 
                     if (statusBackend === 'intime' || statusBackend === 'ontime') labelStatus = 'Tepat';
                     else if (statusBackend === 'late') labelStatus = 'Terlambat';
@@ -65,10 +65,23 @@ export default function DashboardIndex() {
                         status_masuk: labelStatus,
                         waktu_pulang: karyawan.waktu_pulang || "-",
                         status_lembur: karyawan.status_lembur || "-",
+                        is_kerapian: karyawan.is_kerapian || false
                     };
                 });
+                const sortedRows = formattedRows.sort((a: AbsensiData, b: AbsensiData) => {
+                    // Ambil waktu terakhir pegawai A (prioritaskan waktu pulang, jika "-" pakai waktu masuk)
+                    const jam_A = a.waktu_pulang !== "-" ? a.waktu_pulang : (a.waktu_masuk !== "-" ? a.waktu_masuk : "00:00:00");
+                    
+                    // Ambil waktu terakhir pegawai B
+                    const jam_B = b.waktu_pulang !== "-" ? b.waktu_pulang : (b.waktu_masuk !== "-" ? b.waktu_masuk : "00:00:00");
+
+                    // Urutkan menurun (Descending) - Waktu paling besar/terbaru ada di atas
+                    if (jam_A > jam_B) return -1;
+                    if (jam_A < jam_B) return 1;
+                    return 0; 
+                });
                 
-                setRows(formattedRows);
+                setRows(sortedRows);
             }
         } catch (error) {
             console.error("Gagal menarik data live dashboard:", error);
@@ -114,26 +127,28 @@ export default function DashboardIndex() {
                 </div>
             </div>
 
-            {/* TABEL MUI DATAGRID */}
-            <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-4 w-full">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-2">
+
+            <section className="bg-white border border-gray-300 rounded-2xl p-4 shadow-sm w-full min-h-100">
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-4 w-full">
                     <h2 className="text-lg font-bold text-gray-800">Aktivitas Absensi Karyawan Hari Ini</h2>
-                    {isLoading && (
-                        <div className="flex items-center gap-2 text-sm text-blue-600 font-semibold">
-                            <Loader2 className="animate-spin" size={16} /> Menyinkronkan...
-                        </div>
-                    )}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-2">
+                        
+                        {isLoading ? (
+                            <div className="flex items-center gap-2 text-sm text-blue-600 font-semibold">
+                                <Loader2 className="animate-spin" size={16} /> Menyinkronkan...
+                            </div>
+                        ) : (
+                            <TabelDashboard
+                                data={rows}
+                                onRefresh={fetchLiveDashboard}
+                            />
+                        )}
+                    </div>
                 </div>
-                
-                {/* PEMANGGILAN KOMPONEN ANAK DENGAN PROPS BARU */}
-                <div className="w-full h-100 md:h-125 overflow-hidden">
-                    <TabelDashboard 
-                        data={rows} 
-                        onRefresh={fetchLiveDashboard} 
-                    />
-                </div>
-                
-            </div>
+            </section>
+
+            {/* TABEL MUI DATAGRID */}
+            
         </div>
     );
 }

@@ -1,7 +1,7 @@
 
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
-import { CalendarDays, DollarSign, File, LaptopMinimal, Layers, LogOut,  Rows2,  Users, X } from "lucide-react";
+import { CalendarDays, Coffee, DollarSign, File, LaptopMinimal, Layers, LogOut,  Rows2,  Users, X } from "lucide-react";
 
 interface SidebarProps {
     isOpen: boolean;
@@ -21,12 +21,15 @@ export default function Sidebar({ isOpen, closeSidebar }: SidebarProps) {
 
     const navItems = [
         { title: "Monitoring", path: "/dashboard", isEnd: true, icon: LaptopMinimal },
-        { title: "Data Pegawai", path: "/dashboard/data-pegawai", isEnd: false, icon: Users },
-        { title: "Data Departemen", path: "/dashboard/departemen", isEnd: false, icon: Layers },
-        { title: "Data Jabatan", path: "/dashboard/jabatan", isEnd: false, icon: Rows2 },
-        { title: "Rekap Data", path: "/dashboard/rekap-data", isEnd: false, icon: File },
-        { title: "Jadwal & Shift", path: "/dashboard/jadwal-shift", isEnd: false, icon: CalendarDays },
-        { title: "Gaji & Tunjangan", path: "/dashboard/gaji-tunjangan", isEnd: false, icon: DollarSign },
+
+        { title: "Data Pegawai", path: "/dashboard/data-pegawai", icon: Users },
+
+        { title: "Data Departemen", path: "/dashboard/departemen", icon: Layers },
+        { title: "Data Jabatan", path: "/dashboard/jabatan", icon: Rows2 },
+        { title: "Rekap Data", path: "/dashboard/rekap-data", icon: File },
+        { title: "Jadwal & Shift", path: "/dashboard/jadwal-shift", icon: CalendarDays },
+        { title: "Gaji & Tunjangan", path: "/dashboard/gaji-tunjangan", icon: DollarSign },
+        { title: "Lembur", path: "/dashboard/lembur", icon: Coffee },
     ];
 
     return (

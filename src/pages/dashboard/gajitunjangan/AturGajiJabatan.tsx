@@ -273,14 +273,15 @@ export default function AturGajiJabatan() {
                         Reset ke 0
                     </button>
                     <div className="flex gap-3">
-                        <Button type="button" variant="secondary" label="Batal" 
-                            onClick={() => navigate('/dashboard/gaji-tunjangan', { state: { tab: 'master' } })} />
                         <Button 
+                            variant="success"
                             type="submit" 
                             disabled={isSaving}
                             label={isSaving ? "Menyimpan..." : "Simpan Pengaturan"}
                             icon={isSaving ? <Loader2 className="animate-spin" size={16} /> : undefined} 
                             />
+                        <Button type="button" variant="secondary" label="Batal" 
+                            onClick={() => navigate('/dashboard/gaji-tunjangan', { state: { tab: 'master' } })} />
                     </div>
                 </div>
             </form>

@@ -44,26 +44,34 @@ export default function Header() {
         "/": { title: "Monitoring Absensi", showDate: true },
         "/dashboard": { title: "Monitoring Absensi", showDate: true },
 
-        "/dashboard/data-karyawan": { title: "Data Karyawan", showDate: false },
-        "/dashboard/data-karyawan/tambah-karyawan": { title: "Tambah Karyawan", showDate: false },
-        "/dashboard/data-karyawan/:id": { title: "Detail Karyawan", showDate: false },
+        "/dashboard/data-pegawai": { title: "Data Pegawai", showDate: false },
+        "/dashboard/data-pegawai/tambah-pegawai": { title: "Tambah Pegawai", showDate: false },
+        "/dashboard/data-pegawai/:id": { title: "Detail Pegawai", showDate: false },
 
         "/dashboard/departemen": { title: "Departemen", showDate: false },
-        "/dashboard/departemen/tambah-departemen": { title: "Tambah Departemen", showDate: false },
-        "/dashboard/departemen/:id": { title: "Detail Departemen", showDate: false },
+        "/dashboard/departemen/tambah-departemen": { title: "Departemen", showDate: false },
+        "/dashboard/departemen/:id": { title: "Departemen", showDate: false },
 
 
         "/dashboard/jabatan": { title: "Jabatan", showDate: false },
+        "/dashboard/jabatan/tambah-jabatan": { title: "Jabatan", showDate: false },
 
 
         "/dashboard/rekap-data": { title: "Rekap Data", showDate: false },
 
 
         "/dashboard/jadwal-shift": { title: "Jadwal & Shift", showDate: false },
+        "/dashboard/jadwal-shift/tambah": { title: "Jadwal & Shift", showDate: false },
+        "/dashboard/jadwal-shift/edit/:id": { title: "Jadwal & Shift", showDate: false },
         
 
 
         "/dashboard/gaji-tunjangan":{ title: "Gaji & Tunjangan", showDate: false },
+        "/dashboard/gaji-tunjangan/master-gaji/:id":{ title: "Gaji & Tunjangan", showDate: false },
+
+
+        "/dashboard/lembur":{ title: "Lembur", showDate: false },
+        "/dashboard/lembur/tambah-lembur":{ title: "Lembur", showDate: false },
     };
 
     // 3. DIUBAH: Cari pengaturan berdasarkan URL menggunakan matchPath

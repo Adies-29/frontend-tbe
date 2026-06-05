@@ -25,6 +25,8 @@ import EditPegawai from './pages/dashboard/pegawai/EditPegawai';
 import DetailPegawai from './pages/dashboard/pegawai/DetailPegawai';
 import AddPegawai from './pages/dashboard/pegawai/AddPegawai';
 import PegawaiIndex from './pages/dashboard/pegawai/PegawaiIndex';
+import LemburIndex from './pages/dashboard/lembur/LemburIndex';
+import AddLembur from './pages/dashboard/lembur/AddLembur';
 
 function App() {
   return (
@@ -71,6 +73,9 @@ function App() {
 
             <Route path="/dashboard/gaji-tunjangan" element={<GajiTunjanganIndex />} />
             <Route path="/dashboard/gaji-tunjangan/master-gaji/:id" element={<AturGajiJabatan />} />
+
+            <Route path="/dashboard/lembur" element={<LemburIndex />} />
+            <Route path="/dashboard/lembur/tambah-lembur" element={<AddLembur />} />
 
 
           </Route>
