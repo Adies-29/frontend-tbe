@@ -9,8 +9,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '../../../components/ui/InputText'; 
 import { useAuthStore } from '../../../store/useAuthStore';
 
-// Skema validasi Zod (Nama kunci ini WAJIB sama dengan prop 'nama' di Input)
+// 1. UPDATE SCHEMA: Tambahkan tipe_penggajian dan gaji_pokok_bulanan
 const schema = z.object({
+    tipe_penggajian: z.enum(["Harian", "Bulanan"]),
+    gaji_pokok_bulanan: z.coerce.number().min(0, "Tidak boleh minus"),
     upah_per_kehadiran: z.coerce.number().min(0, "Tidak boleh minus"),
     upah_lembur_per_jam: z.coerce.number().min(0, "Tidak boleh minus"),
     bonus_disiplin_harian: z.coerce.number().min(0, "Tidak boleh minus"),
@@ -36,11 +38,13 @@ export default function AturGajiJabatan() {
         register,
         handleSubmit,
         reset, 
+        watch, // Tarik fungsi watch untuk memantau perubahan input secara realtime
         formState: { errors }
     } = useForm<FormData>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(schema as any), 
+        resolver: zodResolver(schema), 
         defaultValues: {
+            tipe_penggajian: "Bulanan", // Default value
+            gaji_pokok_bulanan: 0,
             upah_per_kehadiran: 0,
             upah_lembur_per_jam: 0,
             bonus_disiplin_harian: 0,
@@ -51,6 +55,9 @@ export default function AturGajiJabatan() {
             bonus_lembur_tahunan: 0,
         }
     });
+
+    // Pantau dropdown tipe penggajian untuk mengubah UI
+    const tipePenggajianAktif = watch("tipe_penggajian");
 
     useEffect(() => {
         const loadGajiJabatan = async () => {
@@ -75,6 +82,8 @@ export default function AturGajiJabatan() {
                     });
                     
                     reset({
+                        tipe_penggajian: gaji.tipe_penggajian || "Bulanan", // Ambil dari database
+                        gaji_pokok_bulanan: gaji.gaji_pokok_bulanan || 0,
                         upah_per_kehadiran: gaji.upah_per_kehadiran || 0,
                         upah_lembur_per_jam: gaji.upah_lembur_per_jam || 0,
                         bonus_disiplin_harian: gaji.bonus_disiplin_harian || 0, 
@@ -102,13 +111,25 @@ export default function AturGajiJabatan() {
     const onSubmit = async (data: FormData) => {   
         setIsSaving(true);
         try {
+            // 2. LOGIKA OTOMATISASI SEBELUM KIRIM KE BACKEND
+            const payloadKiriman = { ...data };
+
+            if (payloadKiriman.tipe_penggajian === "Bulanan") {
+                // Jika bulanan, otomatis hitung upah_per_kehadiran (dibagi 30)
+                // Gunakan Math.round agar angkanya bulat tidak ada koma (desimal)
+                payloadKiriman.upah_per_kehadiran = Math.round(payloadKiriman.gaji_pokok_bulanan / 30);
+            } else {
+                // Jika harian, pastikan gaji pokok bulanan di-reset ke 0 agar data tetap bersih
+                payloadKiriman.gaji_pokok_bulanan = 0;
+            }
+
             const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/jabatan/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type" : "application/json",
                     "Authorization" : `Bearer ${token}`
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(payloadKiriman) // Kirim payload yang sudah dimodifikasi
             });
 
             const result = await response.json();
@@ -131,6 +152,8 @@ export default function AturGajiJabatan() {
         const confirmReset = window.confirm("Yakin ingin mereset angka ke 0? (Anda tetap harus klik Simpan untuk mengunci di database)");
         if (confirmReset) {
             reset({
+                // tipe_penggajian dibiarkan tidak di-reset agar tidak bingung
+                gaji_pokok_bulanan: 0,
                 upah_per_kehadiran: 0,
                 upah_lembur_per_jam: 0,
                 bonus_disiplin_harian: 0,
@@ -182,26 +205,51 @@ export default function AturGajiJabatan() {
                         <div className="flex items-center gap-2 mb-2 text-green-700 font-bold border-b border-gray-300 pb-2">
                             <Banknote size={20} /> <h2>Upah Dasar & Lembur</h2>
                         </div>
+
+                        {/* 3. DROPDOWN TIPE PENGGAJIAN */}
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-semibold text-gray-700">Tipe Penggajian</label>
+                            <select 
+                                {...register("tipe_penggajian")}
+                                className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 shadow-sm text-sm bg-white"
+                            >
+                                <option value="Bulanan">Gaji Bulanan</option>
+                                <option value="Harian">Gaji Harian</option>
+                            </select>
+                        </div>
                         
-                        <Input 
-                            label="Upah Kehadiran (Rp/Hari)" 
-                            nama="upah_per_kehadiran" // PERBAIKAN: Harus match dengan Zod
-                            type="number" 
-                            placeholder="Masukkan upah kehadiran"
-                            register={register} 
-                            error={errors.upah_per_kehadiran?.message} 
-                        />
+                        {/* 4. RENDER KONDISIONAL INPUT BERDASARKAN TIPE */}
+                        {tipePenggajianAktif === "Bulanan" ? (
+                            <Input 
+                                label="Gaji Pokok Bulanan (Rp)" 
+                                nama="gaji_pokok_bulanan" 
+                                type="number" 
+                                placeholder="Misal: 5000000"
+                                register={register} 
+                                error={errors.gaji_pokok_bulanan?.message} 
+                            />
+                        ) : (
+                            <Input 
+                                label="Upah Kehadiran (Rp/Hari)" 
+                                nama="upah_per_kehadiran" 
+                                type="number" 
+                                placeholder="Misal: 150000"
+                                register={register} 
+                                error={errors.upah_per_kehadiran?.message} 
+                            />
+                        )}
+
                         <Input 
                             label="Upah Lembur (Rp/Jam)" 
-                            nama="upah_lembur_per_jam" // PERBAIKAN
+                            nama="upah_lembur_per_jam" 
                             type="number" 
                             placeholder="Masukkan upah lembur"
                             register={register} 
                             error={errors.upah_lembur_per_jam?.message} 
                         />
-                         <Input 
+                        <Input 
                             label="Bonus Lembur Tahunan (Rp)" 
-                            nama="bonus_lembur_tahunan" // PERBAIKAN
+                            nama="bonus_lembur_tahunan" 
                             type="number" 
                             placeholder="Masukkan bonus tahunan"
                             register={register} 
@@ -218,7 +266,7 @@ export default function AturGajiJabatan() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input 
                                 label="Disiplin Harian (Rp)" 
-                                nama="bonus_disiplin_harian" // PERBAIKAN
+                                nama="bonus_disiplin_harian" 
                                 type="number" 
                                 placeholder="Rp"
                                 register={register}
@@ -226,7 +274,7 @@ export default function AturGajiJabatan() {
                             />
                             <Input 
                                 label="Kerapian Harian (Rp)" 
-                                nama="bonus_kerapian_harian" // PERBAIKAN
+                                nama="bonus_kerapian_harian" 
                                 type="number" 
                                 placeholder="Rp"
                                 register={register} 
@@ -234,11 +282,10 @@ export default function AturGajiJabatan() {
                             />
                         </div>
                         
-                        {/* PERBAIKAN: Diubah jadi 3 kolom agar rapi */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <Input 
                                 label="Bonus Full (5 Hari)" 
-                                nama="bonus_minggu_5_hari" // PERBAIKAN
+                                nama="bonus_minggu_5_hari" 
                                 type="number" 
                                 placeholder="Rp"
                                 register={register} 
@@ -246,7 +293,7 @@ export default function AturGajiJabatan() {
                             />
                             <Input 
                                 label="Bonus Full (6 Hari)" 
-                                nama="bonus_minggu_6_hari" // PERBAIKAN
+                                nama="bonus_minggu_6_hari" 
                                 type="number" 
                                 placeholder="Rp"
                                 register={register} 
@@ -254,7 +301,7 @@ export default function AturGajiJabatan() {
                             />
                             <Input 
                                 label="Bonus Harian" 
-                                nama="bonus_minggu_harian" // PERBAIKAN
+                                nama="bonus_minggu_harian" 
                                 type="number" 
                                 placeholder="Rp"
                                 register={register} 
