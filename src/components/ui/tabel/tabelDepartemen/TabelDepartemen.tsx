@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
     DataGrid, 
     type GridColDef, 
@@ -9,7 +8,7 @@ import {
     type GridRowId, 
     type GridRowModel 
 } from '@mui/x-data-grid';
-import { Pencil, Trash2, Save, X, Eye,} from 'lucide-react';
+import { Pencil, Trash2, Save, X} from 'lucide-react';
 import type { DepartemenData } from '../../../../types';
 
 // --- INTERFACES ---
@@ -20,7 +19,7 @@ interface DepartemenTableProps {
 export default function DepartemenTable({ data: initialData = [] }: DepartemenTableProps) {
     const [rows, setRows] = useState<DepartemenData[]>(initialData);
     const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
-    const navigate = useNavigate(); // <-- Inisialisasi fungsi navigasi
+
 
     useEffect(() => {
         const timer = setTimeout(() => {
