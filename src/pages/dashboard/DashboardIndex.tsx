@@ -63,7 +63,7 @@ export default function DashboardIndex() {
                         nama: karyawan.nama || "Tanpa Nama",
                         jabatan: karyawan.jabatan || "-",
                         waktu_masuk: karyawan.waktu_masuk || "-",
-                        status_masuk: karyawan.status_masuk,
+                        status_masuk: karyawan.status_masuk || labelStatus ,
                         waktu_pulang: karyawan.waktu_pulang || "-",
                         status_lembur: karyawan.status_lembur || "-",
                         is_kerapian: karyawan.is_kerapian || false
@@ -92,7 +92,7 @@ export default function DashboardIndex() {
     }, []);
 
 
-    
+
     // 4. AUTO REFRESH (Panggil fungsi tarik data)
     useEffect(() => {
         const timeoutId = setTimeout(fetchLiveDashboard, 0); // Panggil pertama kali after a timeout
