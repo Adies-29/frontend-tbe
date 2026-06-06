@@ -12,21 +12,20 @@ export default function PegawaiIndex() {
     const [dataPegawai, setDataPegawai] = useState<PegawaiData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState("");
+    const token = useAuthStore((state) => state.token);
 
     // Fungsi FETCH dari Backend ( Kunci Token)
     const fetchPegawai = async () => {
         setIsLoading(true);
         setErrorMsg("");
 
-        try {
-            // Ambil token dari memori browser
-            const token = useAuthStore.getState().token;
+        try {            
             const response = await fetch ("https://ppm-sooty.vercel.app/api/v1/pegawai", {
                 method: "GET",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                } 
+                    "Content-Type" : "application/json",
+                    "Authorization" : `Bearer ${token}`
+                }
             });
             if (!response.ok){
                 if(response.status === 401 || response.status === 403){
@@ -59,48 +58,50 @@ export default function PegawaiIndex() {
     const totalPegawai = dataPegawai.length;
 
     return (
-        <div className="flex flex-col gap-6 w-full">
+        <div className="flex flex-col gap-4 md:gap-6 w-full">
             
             {/* 1. BAGIAN STATISTIK (Meniru desain kotak di gambarmu) */}
-            <div className="flex gap-4">
-                <div className="bg-white border border-gray-300 rounded-xl p-4 w-48 shadow-sm flex flex-col items-center justify-center">
-                    <span className="text-gray-800 text-sm md:text-base font-medium">Total Karyawan</span>
+            <div className="flex flex-col md:flex-row gap-4 w-full">
+                <div className="bg-white border border-gray-300 rounded-xl p-4 w-full md:w-48 shadow-sm flex flex-col items-center justify-center">
+                    <span className="text-gray-800 text-sm md:text-base font-medium">Total Pegawai</span>
                     <span className="text-4xl font-bold mt-2 text-black">{totalPegawai}</span>
                 </div>
             </div>
 
             {/* 2. BAGIAN TABEL DAN TOMBOL */}
-            <section className="bg-white border border-gray-300 rounded-2xl p-4 shadow-sm w-full">
+            <section className="bg-white border border-gray-300 rounded-2xl p-3 md:p-5 shadow-sm w-full">
                 
                 {/* Header Tabel & Kumpulan Tombol */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-start mb-6 gap-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4">
                     <h2 className="text-lg font-bold text-black border-l-4 border-red-600 pl-2 mt-1">
-                        Data Karyawan Aktif
+                        Data Pegawai Aktif
                     </h2>
                     
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-3 w-full md:w-auto">
                         <Button 
-                            variant="add" 
-                            label="Tambah Karyawan" 
+                            label="Tambah Pegawai" 
                             onClick={() => navigate("/dashboard/data-pegawai/tambah-pegawai")} 
                         />
                     </div>
                 </div>
                 
                 {/* 3. PEMANGGILAN KOMPONEN TABEL */}
-                {errorMsg ? (
-                    <div className="bg-red-50 text-red-600 p-4 rounded-lg text-center font-medium">
-                        {errorMsg}
-                    </div>
-                ) : isLoading ? (
-                    <div className="flex flex-col items-center justify-center h-64 text-gray-400">
-                        <Loader2 className="animate-spin mb-4 text-red-600" size={32} />
-                        <p>Memuat data karyawan...</p>
-                    </div>
-                ) : (
-                    // Panggil komponen tabelnya
-                    <TabelPegawai data={dataPegawai} onRefresh={fetchPegawai} />
-                )} 
+        
+                <div className="w-full">
+                    {errorMsg ? (
+                        <div className="bg-red-50 text-red-600 p-4 rounded-lg text-center font-medium text-sm md:text-base">
+                            {errorMsg}
+                        </div>
+                    ) : isLoading ? (
+                        <div className="flex flex-col items-center justify-center h-48 md:h-64 text-gray-400">
+                            <Loader2 className="animate-spin mb-4 text-red-600" size={32} />
+                            <p className="text-sm md:text-base">Memuat data karyawan...</p>
+                        </div>
+                    ) : (
+                        // Panggil komponen tabelnya
+                        <TabelPegawai data={dataPegawai} onRefresh={fetchPegawai} />
+                    )} 
+                </div>
             </section>
         </div>
     );

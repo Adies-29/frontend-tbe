@@ -38,7 +38,7 @@ export const TabelMasterGaji = ({ data, onAturGaji }: TabelMasterGajiProps) => {
             renderCell: (params) => (
                 <button 
                     onClick={() => onAturGaji(params.row.id)}
-                    className="flex items-center gap-1 text-sm text-red-600 font-medium hover:text-red-800 bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
+                    className="flex items-center  text-sm text-yellow-600 font-medium hover:text-yellow-800 bg-red-50 px-2 py-1 rounded-lg transition-colors"
                 >
                     <Settings size={16} /> Atur Gaji
                 </button>
@@ -58,7 +58,7 @@ export const TabelMasterGaji = ({ data, onAturGaji }: TabelMasterGajiProps) => {
                 autoHeight
                 rows={data}
                 columns={columns}
-                initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
+                initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
                 pageSizeOptions={[10, 25]}
                 disableRowSelectionOnClick
             />

@@ -67,8 +67,7 @@ export default function JadwalShiftIndex() {
                     <h1 className="text-2xl font-bold text-gray-800">Jadwal & Shift Kerja</h1>
                     <p className="text-sm text-gray-500 mt-1">Kelola master data jam kerja, toleransi, dan denda.</p>
                 </div>
-                <Button 
-                    variant="add" 
+                <Button  
                     label="Tambah Jadwal & Shift" 
                     onClick={() => navigate('/dashboard/jadwal-shift/tambah')} 
                 />

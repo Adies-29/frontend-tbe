@@ -8,7 +8,7 @@ import { useAuthStore } from "../../../store/useAuthStore";
 
 export default function JabatanIndex() {
     const navigate = useNavigate();
-
+    const token = useAuthStore((state) => state.token)
     // 2. State untuk menyimpan data dari Database & status Loading
     const [dataJabatan, setDataJabatan] = useState<JabatanData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -18,21 +18,34 @@ export default function JabatanIndex() {
         setIsLoading(true);
         try {
             // Tembak API Backend
-            
-            const token = useAuthStore.getState().token;
-            const response = await fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                }
-            });
+            const [resJabatan, resPegawai] = await Promise.all([
+                fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
+                fetch("https://ppm-sooty.vercel.app/api/v1/pegawai", { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
+            ]);
 
-            if (!response.ok) {
-                throw new Error("Gagal memuat data dari server");
+            const resultJabatan = await resJabatan.json();
+            const resultPegawai = await resPegawai.json();
+
+            if (resJabatan.ok && resPegawai.ok) {
+               
+                const mappedData: JabatanData[] = resultJabatan.data.map((jab: any) => {
+                   
+                    const jumlah = resultPegawai.data.filter(
+                        (peg: any) => peg.jabatan_id === jab.id
+                    ).length;
+
+                    return {
+                        id: jab.id,
+                        nama_jabatan: jab.nama_jabatan,
+                        departemen: jab.departemen?.nama_departemen || "Tanpa Departemen",
+                        departemen_id: jab.departemen_id,
+                        jumlah_pegawai: jumlah 
+                    };
+                });
+                setDataJabatan(mappedData);
             }
 
-            const result = await response.json();
+            const result = await resJabatan.json();
             
             // 4. MAPPING DATA: Sesuaikan bentuk data backend ke bentuk dummy-mu sebelumnya
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,7 +77,7 @@ export default function JabatanIndex() {
 
    
     const totalJabatan = dataJabatan.length;
-    const totalPegawai = dataJabatan.reduce((acc, curr) => acc + (curr.jumlah_karyawan || 0), 0);
+    const totalPegawai = dataJabatan.reduce((acc, curr) => acc + (curr.jumlah_pegawai || 0), 0);
 
     return (
         <div className="flex flex-col gap-6 w-full">
@@ -102,7 +115,6 @@ export default function JabatanIndex() {
 
                     <div className="flex flex-col gap-3">
                         <Button
-                            variant="add"
                             label="Tambah Jabatan"
                             onClick={() => navigate("/dashboard/jabatan/tambah-jabatan")}
                         />
