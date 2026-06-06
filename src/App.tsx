@@ -6,14 +6,10 @@ import DashboardLayout from './layouts/DashboardLayout';
 import DashboardIndex from './pages/dashboard/DashboardIndex';
 import AuthLayout from './layouts/AuthLayout';
 import Login from './pages/Login';
-
-import RekapDataIndex from './pages/dashboard/rekapdata/RekapDataIndex';
 import JadwalShiftIndex from './pages/dashboard/jadwalshift/JadwalShiftIndex';
 import DepartemenIndex from './pages/dashboard/departemen/DepartemenIndex';
-
 import AddDepartemen from './pages/dashboard/departemen/AddDepartemen';
 import DetailDepartemen from './pages/dashboard/departemen/DetailDepartemen';
-
 import GajiTunjanganIndex from './pages/dashboard/gajitunjangan/GajiTunjanganIndex';
 import JabatanIndex from './pages/dashboard/jabatan/JabatanIndex';
 import AturGajiJabatan from './pages/dashboard/gajitunjangan/AturGajiJabatan';
@@ -25,6 +21,8 @@ import EditPegawai from './pages/dashboard/pegawai/EditPegawai';
 import DetailPegawai from './pages/dashboard/pegawai/DetailPegawai';
 import AddPegawai from './pages/dashboard/pegawai/AddPegawai';
 import PegawaiIndex from './pages/dashboard/pegawai/PegawaiIndex';
+import LemburIndex from './pages/dashboard/lembur/LemburIndex';
+import AddLembur from './pages/dashboard/lembur/AddLembur';
 
 function App() {
   return (
@@ -66,15 +64,21 @@ function App() {
             <Route path="/dashboard/jadwal-shift/edit/:id" element={<EditShift />} />
 
 
-            <Route path="/dashboard/rekap-data" element={<RekapDataIndex />} />
-
-
             <Route path="/dashboard/gaji-tunjangan" element={<GajiTunjanganIndex />} />
             <Route path="/dashboard/gaji-tunjangan/master-gaji/:id" element={<AturGajiJabatan />} />
+
+            <Route path="/dashboard/lembur" element={<LemburIndex />} />
+            <Route path="/dashboard/lembur/tambah-lembur" element={<AddLembur />} />
 
 
           </Route>
         </Route>
+
+        <Route path="/tv" element={
+          <div className="p-6 bg-gray-50 min-h-screen">
+            <DashboardIndex />
+          </div>
+        } />
 
 
       </Routes>

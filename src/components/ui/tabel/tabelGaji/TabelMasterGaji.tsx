@@ -37,7 +37,12 @@ export const TabelMasterGaji = ({ data, onAturGaji }: TabelMasterGajiProps) => {
             align: 'center',
             renderCell: (params) => (
                 <button 
-                    onClick={() => onAturGaji(params.row.id)}
+                    
+                    onClick={() => {
+                        console.log("klik", params.row.id);
+                        onAturGaji(params.row.id);
+                    }}
+
                     className="flex items-center  text-sm text-yellow-600 font-medium hover:text-yellow-800 bg-red-50 px-2 py-1 rounded-lg transition-colors"
                 >
                     <Settings size={16} /> Atur Gaji

@@ -87,10 +87,11 @@ export default function AddPegawai() {
     useEffect(() =>{
         const fetctPegawai = async () => {
             try {
-               const [resDept, resJabatan, resShift] = await Promise.all([
+               const [resDept, resJabatan, resShift, ] = await Promise.all([
                     fetch("https://ppm-sooty.vercel.app/api/v1/departemen", { headers: { "Authorization": `Bearer ${token}` } }),
                     fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Authorization": `Bearer ${token}` } }),
-                    fetch("https://ppm-sooty.vercel.app/api/v1/shifts", { headers: { "Authorization": `Bearer ${token}` } })
+                    fetch("https://ppm-sooty.vercel.app/api/v1/shifts", { headers: { "Authorization": `Bearer ${token}` } }),
+                    // fetch("https://ppm-sooty.vercel.appapi/v1/kota",{ headers: { "Authorization": `Bearer ${token}` } })
                 ]);
                 const dataDept = await resDept.json();
                 const dataJabatan = await resJabatan.json();

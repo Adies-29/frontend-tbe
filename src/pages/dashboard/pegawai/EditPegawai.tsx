@@ -92,9 +92,9 @@ export default function EditPegawai(){
                 setIsFetchingData(true);
 
                 const[resDept, resJabatan, resShift] = await Promise.all([
-                    fetch("https://ppm-sooty.vercel.app/api/v1/departemen", { headers: { "Authorization": `Bearer ${token}` } }),
-                    fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Authorization": `Bearer ${token}` } }),
-                    fetch("https://ppm-sooty.vercel.app/api/v1/shifts", { headers: { "Authorization": `Bearer ${token}` } })
+                    fetch("https://ppm-sooty.vercel.app/api/v1/departemen", { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
+                    fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
+                    fetch("https://ppm-sooty.vercel.app/api/v1/shifts", { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
                 ]);
                 const dataDept = await resDept.json();
                 const dataJabatan = await resJabatan.json();

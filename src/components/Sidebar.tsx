@@ -1,15 +1,16 @@
 
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
-import { CalendarDays, DollarSign, File, LaptopMinimal, Layers, LogOut,  Rows2,  Users, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, Coffee, DollarSign, File, LaptopMinimal, Layers, LogOut,  Menu,  Rows2,  Users, X } from "lucide-react";
 
 interface SidebarProps {
     isOpen: boolean;
     closeSidebar: () => void;
+    toggleSidebar?: () => void;
 }
 
 
-export default function Sidebar({ isOpen, closeSidebar }: SidebarProps) {
+export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: SidebarProps) {
     const logout = useAuthStore((state) => state.logout);
     const navigate = useNavigate();
     const currentYear = new Date().getFullYear();
@@ -18,44 +19,65 @@ export default function Sidebar({ isOpen, closeSidebar }: SidebarProps) {
         logout();
         navigate('/'); 
     };
+    const handleMenuClick = () => {
+
+        if (window.innerWidth < 768) {
+            closeSidebar();
+        }
+    };
 
     const navItems = [
         { title: "Monitoring", path: "/dashboard", isEnd: true, icon: LaptopMinimal },
-        { title: "Data Pegawai", path: "/dashboard/data-pegawai", isEnd: false, icon: Users },
-        { title: "Data Departemen", path: "/dashboard/departemen", isEnd: false, icon: Layers },
-        { title: "Data Jabatan", path: "/dashboard/jabatan", isEnd: false, icon: Rows2 },
-        { title: "Rekap Data", path: "/dashboard/rekap-data", isEnd: false, icon: File },
-        { title: "Jadwal & Shift", path: "/dashboard/jadwal-shift", isEnd: false, icon: CalendarDays },
-        { title: "Gaji & Tunjangan", path: "/dashboard/gaji-tunjangan", isEnd: false, icon: DollarSign },
+
+        { title: "Data Pegawai", path: "/dashboard/data-pegawai", icon: Users },
+
+        { title: "Data Departemen", path: "/dashboard/departemen", icon: Layers },
+        { title: "Data Jabatan", path: "/dashboard/jabatan", icon: Rows2 },
+        { title: "Jadwal & Shift", path: "/dashboard/jadwal-shift", icon: CalendarDays },
+        { title: "Gaji & Tunjangan", path: "/dashboard/gaji-tunjangan", icon: DollarSign },
+        { title: "Lembur", path: "/dashboard/lembur", icon: Coffee },
     ];
 
     return (
         <div className={`
-            bg-[#C90003] w-64 flex flex-col justify-between p-6 shadow-xl z-50
-            fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out
-            md:relative md:translate-x-0
-            ${isOpen ? "translate-x-0" : "-translate-x-full"}
+            bg-[#C90003] flex flex-col justify-between py-6 px-4 shadow-xl z-50
+            fixed top-0 left-0 h-screen transition-all duration-300 ease-in-out
+            ${isOpen ? "w-65 translate-x-0" : "w-65 -translate-x-full md:w-20 md:translate-x-0"}
         `}>
             
             {/* Bagian Atas */}
             <div>
-                <div className="mb-10 relative flex items-center justify-center w-full cursor-pointer">
-                    <div className="p-6 md:pt-8">
-                        <h1 className="font-bold text-3xl text-center text-white tracking-wider w-full">
+                {/* 3. Header Sidebar dengan Tombol Toggle Desktop */}
+                <div className={`mb-10 flex items-center ${isOpen ? "justify-between px-2" : "justify-center flex-col gap-4"}`}>
+                    
+                    {/* Teks Logo T-Be (Disembunyikan saat tertutup) */}
+                    <div className={`transition-all duration-300 ${isOpen ? "opacity-100 block" : "hidden"}`}>
+                        <h1 className="font-bold text-3xl text-center text-white tracking-wider">
                             T-Be
                         </h1>
-                        <span className="text-white text-sm font-light">(tiga berlian)</span>
+                        <span className="text-white text-[11px] font-light text-center block leading-none mt-1">
+                            (tiga berlian)
+                        </span>
                     </div>
 
-                    <button className="md:hidden text-white absolute right-0" onClick={closeSidebar}>
+                    {/* Tombol Close untuk Mobile */}
+                    <button className="md:hidden text-white hover:bg-white/20 p-1 rounded" onClick={closeSidebar}>
                         <X size={28} />
+                    </button>
+
+                    {/* Tombol Toggle untuk Desktop */}
+                    <button
+                        className="hidden md:block text-white hover:bg-white/20 p-1.5 rounded-lg transition-colors"
+                        onClick={toggleSidebar}
+                        title={isOpen ? "Tutup Sidebar" : "Buka Sidebar"}
+                    >
+                        {isOpen ? <ChevronLeft size={24} /> : <Menu size={24} />}
                     </button>
                 </div>
 
                 <nav>
-                    <ul className="flex flex-col gap-3 w-full font-medium">
+                    <ul className="flex flex-col gap-2 w-full font-medium">
                         {navItems.map((item, index) => {
-                            
                             const Icon = item.icon; 
                             
                             return (
@@ -63,17 +85,23 @@ export default function Sidebar({ isOpen, closeSidebar }: SidebarProps) {
                                     <NavLink 
                                         to={item.path} 
                                         end={item.isEnd} 
-                                        onClick={closeSidebar} 
+                                        onClick={handleMenuClick}
+                                        title={!isOpen ? item.title : ""}
                                         className={({ isActive }) => 
-                                            `transition-colors flex items-center gap-3 p-3 rounded-md ${
-                                                isActive 
+                                            `transition-colors flex items-center p-3 rounded-md group
+                                            ${isActive 
                                                 ? "bg-white/20 text-yellow-300 font-bold border-l-4 border-yellow-300" 
                                                 : "text-white hover:bg-white/10 hover:text-amber-200"
-                                            }`
+                                            }
+                                            ${!isOpen ? "justify-center" : "px-4"}` 
                                         }>
                                    
-                                        <Icon size={20} /> 
-                                        <span>{item.title}</span>
+                                        <Icon size={20} className="shrink-0" /> 
+                                      
+                                        <span className={`whitespace-nowrap transition-all duration-300 
+                                            ${isOpen ? "opacity-100 w-auto ml-4" : "opacity-0 w-0 overflow-hidden ml-0"}`}>
+                                            {item.title}
+                                        </span>
                                     </NavLink>
                                 </li>
                             );
@@ -82,23 +110,35 @@ export default function Sidebar({ isOpen, closeSidebar }: SidebarProps) {
                 </nav>
             </div>
 
-        
-            <div className="flex flex-col items-center gap-8 mt-16">
+            {/* Bagian Bawah */}
+            <div className={`flex flex-col items-center mt-10 transition-all ${isOpen ? "gap-6" : "gap-4"}`}>
+                
+                {/* Tombol Logout */}
                 <button 
                     type="button" 
                     onClick={handleLogout}
-                    className="w-full mx-auto pb-2 flex justify-center items-center gap-3 border-b-[3px] border-white text-white font-semibold cursor-pointer hover:text-yellow-300 hover:border-yellow-200 transition-all"
+                    title={!isOpen ? "Logout" : ""}
+                    className={`flex items-center p-2 text-white font-semibold cursor-pointer hover:text-yellow-300 transition-colors w-full
+                        ${isOpen ? "justify-center gap-3 border-b border-white/30 pb-4" : "justify-center"}`}
                 >
-                    <LogOut size={24} strokeWidth={2.5} />
-                    <span className="text-lg">Logout</span>
+                    <LogOut size={24} strokeWidth={2.5} className="shrink-0" />
+                    
+                    {/* Teks Logout (Disembunyikan saat tertutup) */}
+                    <span className={`text-lg whitespace-nowrap transition-all duration-300 
+                        ${isOpen ? "opacity-100 w-auto block" : "opacity-0 w-0 overflow-hidden hidden"}`}>
+                        Logout
+                    </span>
                 </button>
                 
-                <div className="w-full text-center">
-                    <p className="text-[10px] md:text-[12px] font-light text-white/80 leading-tight">
+                {/* Copyright (Disembunyikan saat tertutup) */}
+                <div className={`w-full text-center transition-all duration-300 
+                    ${isOpen ? "opacity-100 block" : "opacity-0 hidden"}`}>
+                    <p className="text-[10px] md:text-[11px] font-light text-white/70 leading-tight">
                         &copy; {currentYear} T-Be (tiga berlian)<br/>All Right Reserved
                     </p>
                 </div>
             </div>
+            
         </div>
     );
 }

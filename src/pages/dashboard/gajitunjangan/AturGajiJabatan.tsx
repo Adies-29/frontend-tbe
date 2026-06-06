@@ -38,8 +38,7 @@ export default function AturGajiJabatan() {
         reset, 
         formState: { errors }
     } = useForm<FormData>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(schema as any), 
+        resolver: zodResolver(schema) as any, 
         defaultValues: {
             upah_per_kehadiran: 0,
             upah_lembur_per_jam: 0,
@@ -144,7 +143,7 @@ export default function AturGajiJabatan() {
     };
 
     return (
-        <div className="flex flex-col gap-6 w-full relative min-h-[500px]">
+        <div className="flex flex-col gap-6 w-full relative min-h-125">
             {isFetchingData && (
                 <div className="absolute inset-0 z-50 bg-white/60 flex items-center justify-center rounded-xl backdrop-blur-sm">
                     <Loader2 className="animate-spin text-blue-600" size={40} />
@@ -237,20 +236,20 @@ export default function AturGajiJabatan() {
                         {/* PERBAIKAN: Diubah jadi 3 kolom agar rapi */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <Input 
-                                label="Bonus Full (5 Hari)" 
-                                nama="bonus_minggu_5_hari" // PERBAIKAN
-                                type="number" 
-                                placeholder="Rp"
-                                register={register} 
-                                error={errors.bonus_minggu_5_hari?.message}
-                            />
-                            <Input 
                                 label="Bonus Full (6 Hari)" 
                                 nama="bonus_minggu_6_hari" // PERBAIKAN
                                 type="number" 
                                 placeholder="Rp"
                                 register={register} 
                                 error={errors.bonus_minggu_6_hari?.message}
+                            />
+                            <Input 
+                                label="Bonus Full (5 Hari)" 
+                                nama="bonus_minggu_5_hari" // PERBAIKAN
+                                type="number" 
+                                placeholder="Rp"
+                                register={register} 
+                                error={errors.bonus_minggu_5_hari?.message}
                             />
                             <Input 
                                 label="Bonus Harian" 
@@ -274,14 +273,15 @@ export default function AturGajiJabatan() {
                         Reset ke 0
                     </button>
                     <div className="flex gap-3">
-                        <Button type="button" variant="secondary" label="Batal" 
-                            onClick={() => navigate('/dashboard/gaji-tunjangan', { state: { tab: 'master' } })} />
                         <Button 
+                            variant="success"
                             type="submit" 
                             disabled={isSaving}
                             label={isSaving ? "Menyimpan..." : "Simpan Pengaturan"}
                             icon={isSaving ? <Loader2 className="animate-spin" size={16} /> : undefined} 
                             />
+                        <Button type="button" variant="secondary" label="Batal" 
+                            onClick={() => navigate('/dashboard/gaji-tunjangan', { state: { tab: 'master' } })} />
                     </div>
                 </div>
             </form>
