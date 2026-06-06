@@ -36,7 +36,7 @@ export default function GajiTunjanganIndex() {
     const [isGenerating, setIsGenerating] = useState(false);
 
     // State Finansial Ringkasan (Widgets)
-    const [summaryCards, setSummaryCards] = useState({
+    const [summaryCards, _setSummaryCards] = useState({
         estimasiPengeluaran: 0,
         totalBonus: 0,
         totalPotongan: 0
@@ -77,7 +77,6 @@ export default function GajiTunjanganIndex() {
     
             if (response.ok && result.success) {
                 alert(`Sukses! ${result.message}`);
-                // Refresh data tabel agar hasil generate langsung muncul
                 fetchRekapGaji(); 
             } else {
                 alert(`Gagal: ${result.message}`);

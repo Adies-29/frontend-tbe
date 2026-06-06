@@ -81,6 +81,12 @@ function App() {
           </Route>
         </Route>
 
+        <Route path="/tv" element={
+          <div className="p-6 bg-gray-50 min-h-screen">
+            <DashboardIndex />
+          </div>
+        } />
+
 
       </Routes>
     </BrowserRouter>

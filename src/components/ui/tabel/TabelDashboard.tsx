@@ -8,7 +8,8 @@ import {
 import type { AbsensiData } from "../../../types";
 import dayjs from "dayjs";
 import { useAuthStore } from "../../../store/useAuthStore";
-import { Loader2 } from "lucide-react";
+import { Loader2, PlusCircle } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 
 
@@ -26,7 +27,10 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     const [rowModesModel] = useState<GridRowModesModel>({});
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const token = useAuthStore((state) => state.token);
+    const navigate = useNavigate();
+    const location = useLocation();
 
+    const isTvMode = location.pathname === '/tv';
     useEffect(() => {
         const timer = setTimeout(() => {
             setRows(initialData);
@@ -34,7 +38,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
         return () => clearTimeout(timer);
     }, [initialData]);
 
-    const cekKerapihan = async (row: any, newStatus: boolean) =>{
+    const cekKerapihan = async (row: any, newStatus: boolean) => {
         setUpdatingId(row.id);
         try {
             const hariIni = new Date().toISOString().split("T")[0];
@@ -48,8 +52,8 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             const response = await fetch("https://ppm-sooty.vercel.app/api/kerapian", {
                 method: "PUT",
                 headers: {
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify(payload)
             });
@@ -58,29 +62,27 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             console.log("RESPONS BACKEND:", result);
             console.log("PAYLOAD YANG DIKIRIM:", payload);
 
-            if(!response.ok || !result.success){
-                throw new Error (result.message || "Gagal memperbarui status kerapihan");
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Gagal memperbarui status kerapihan");
             }
-            setRows((prevRows) => 
-                prevRows.map((r) => 
+            setRows((prevRows) =>
+                prevRows.map((r) =>
                     r.id === row.id ? { ...r, is_kerapian: newStatus } : r
                 )
             );
 
-            if (onRefresh){
+            if (onRefresh) {
                 onRefresh();
             }
         } catch (error: any) {
             console.error("Gagal update kerapihan:", error);
             alert(`Gagal menyimpan: ${error.message}`);
-        } finally{
+        } finally {
             setUpdatingId(null);
         }
 
     };
 
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formatWaktuAbsen = (time: any) => {
         if (!time || time === "-" || time === "null" || time === "00:00:00") {
             return <span className="text-gray-400 font-bold">-</span>;
@@ -96,7 +98,24 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     };
 
     const columns: GridColDef[] = [
-        { field: "nama", headerName: "Nama", flex: 1, minWidth: 150 },
+        {
+            field: "nama",
+            headerName: "Nama Pegawai",
+            flex: 1,
+            minWidth: 150,
+            renderCell: (params) => {
+                const namaLengkap = params.value || "Tanpa Nama";
+                return (
+
+                    <div className="flex flex-col w-full h-full justify-center leading-tight">
+                        <span className="text-sm font-semibold text-gray-800">
+                            {namaLengkap}
+                        </span>
+                    </div>
+
+                )
+            }
+        },
         {
             field: "waktu_masuk",
             headerName: "Waktu Masuk",
@@ -109,31 +128,36 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
         {
             field: 'status_masuk',
             headerName: 'Status',
-            valueOptions: ["Tepat", "Void", "Terlambat",],
             type: 'singleSelect',
             flex: 1,
             minWidth: 120,
             align: 'center',
             headerAlign: 'center',
-            renderCell: (params) => (
-                <span className={`px-3 py-0.5 rounded text-[13px] font-bold text-white ${params.value === "Tepat" ? "bg-green-500" : "bg-red-600"
-                    }`}>
-                    {params.value}
-                </span>
-            ),
-            renderEditCell: (params) => {
-                const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-                    params.api.setEditCellValue({ id: params.id, field: params.field, value: e.target.value });
-                };
+            renderCell: (params) => {
+                const statusText = params.value || "Belum Hadir";
+
+                let colorClass = "bg-gray-100 text-gray-500";
+
+                if (statusText === "Tepat Waktu") {
+                    colorClass = "bg-green-100 text-green-700";
+                } else if (statusText === "Terlambat") {
+                    colorClass = "bg-red-100 text-red-700";
+                } else if (statusText === "Pulang Awal") {
+                    colorClass = "bg-orange-100 text-orange-700";
+                } else if (statusText === "Tidak Scan Pulang") {
+                    colorClass = "bg-yellow-100 text-yellow-700";
+                } else if (statusText === "Absensi di Batalkan") {
+                    colorClass = "bg-slate-200 text-slate-700 line-through decoration-slate-400";
+                }
+
                 return (
-                    <div className="flex items-center justify-center w-full h-full px-2">
-                        <select value={params.value || ""} onChange={handleChange} className="w-full px-2 py-1 text-sm border-2 border-blue-400 rounded outline-none bg-white">
-                            <option value="Tepat">Tepat</option>
-                            <option value="Terlambat">Terlambat</option>
-                        </select>
-                    </div>
+
+                    <span className={`w-36 inline-flex justify-center items-center px-6 py-1 rounded text-sm font-bold ${colorClass}`}>
+                        {statusText}
+                    </span>
                 );
-            }
+            },
+
 
         },
         {
@@ -157,7 +181,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                     status = null;
                 }
 
-                // Jika baris ini sedang mengirim data ke API, tampilkan loading muter
+                //  mengirim data ke API, tampilkan loading muter
                 if (isUpdating) {
                     return (
                         <div className="flex items-center h-full gap-2 text-blue-500">
@@ -166,16 +190,36 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                         </div>
                     );
                 }
+                if (isTvMode) {
+                    return (
+                        <div className="flex items-center justify-center h-full">
+                            {status === true ? (
+                                <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold border border-green-200">
+                                    Rapi
+                                </span>
+                            ) : status === false ? (
+                                <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-bold border border-red-200">
+                                    Tidak rapi
+                                </span>
+                            ) : (
+                                <span className="text-gray-400 text-xs font-medium italic">
+                                    Belum dinilai
+                                </span>
+                            )}
+                        </div>
+                    );
+                }
+
                 return (
                     <label className="flex items-center gap-3 cursor-pointer h-full group">
-                        <input 
-                            type="checkbox" 
-                            checked={status === true} 
+                        <input
+                            type="checkbox"
+                            checked={status === true}
                             onChange={(e) => cekKerapihan(params.row, e.target.checked)}
                             className="w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2 cursor-pointer transition-all disabled:opacity-50"
                             disabled={params.row.waktu_masuk === "-"}
                         />
-                        
+
                         {status === true ? (
                             <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold border border-green-200">
                                 Rapi
@@ -203,13 +247,36 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             align: "center",
             headerAlign: "center",
             renderCell: (params) => {
-                if (!params.value) return null;
+                // Cek apakah statusnya kosong, null, atau strip "-"
+                const tidakAdaLembur = !params.value || params.value === "-";
+
+                // Jika SEDANG lembur atau sudah ada statusnya, tampilkan teks/badge biasa
+                if (!tidakAdaLembur) {
+                    return (
+                        <span className="bg-purple-600 text-white font-bold px-2 py-1 rounded text-xs">
+                            {params.value}
+                        </span>
+                    );
+                }
+                if (isTvMode) {
+                    return <span className="text-gray-400 font-bold">-</span>;
+                }
+
+                // Jika TIDAK ADA lembur ("-"), tampilkan tombol + Lembur
                 return (
-                    <span className="px-3 py-0.5 rounded text-[13px] font-bold text-white bg-purple-400">
-                        {params.value}
-                    </span>
+                    <div className="flex justify-center w-full">
+                        <button
+                            onClick={() => navigate(`/dashboard/lembur/tambah-lembur?pegawai_id=${params.row.id}&nama=${params.row.nama}`)}
+                            className=" w-25 flex justify-center items-center gap-1  text-purple-600 px-2 hover:text-black cursor-pointer semibold "
+                        >
+                            <PlusCircle size={14} />
+                            Lembur
+                        </button>
+
+                    </div>
+
                 );
-            },
+            }
         },
 
     ];
@@ -236,7 +303,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                         color: "black",
                         fontWeight: "bold",
                         borderBottom: "1px solid #9ca3af",
-                    }, // PENUTUP HEADER DIPERBAIKI DI SINI
+                    },
                     '& .MuiDataGrid-cell:focus': { outline: 'none' },
                     '& .MuiDataGrid-columnHeader:focus': { outline: 'none' },
                 }}

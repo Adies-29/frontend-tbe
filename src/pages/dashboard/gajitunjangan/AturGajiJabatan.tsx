@@ -38,7 +38,7 @@ export default function AturGajiJabatan() {
         reset, 
         formState: { errors }
     } = useForm<FormData>({
-        resolver: zodResolver(schema), 
+        resolver: zodResolver(schema) as any, 
         defaultValues: {
             upah_per_kehadiran: 0,
             upah_lembur_per_jam: 0,
@@ -143,7 +143,7 @@ export default function AturGajiJabatan() {
     };
 
     return (
-        <div className="flex flex-col gap-6 w-full relative min-h-[500px]">
+        <div className="flex flex-col gap-6 w-full relative min-h-125">
             {isFetchingData && (
                 <div className="absolute inset-0 z-50 bg-white/60 flex items-center justify-center rounded-xl backdrop-blur-sm">
                     <Loader2 className="animate-spin text-blue-600" size={40} />
