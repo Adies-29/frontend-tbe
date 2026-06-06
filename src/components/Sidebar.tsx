@@ -19,6 +19,12 @@ export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: Sidebar
         logout();
         navigate('/'); 
     };
+    const handleMenuClick = () => {
+
+        if (window.innerWidth < 768) {
+            closeSidebar();
+        }
+    };
 
     const navItems = [
         { title: "Monitoring", path: "/dashboard", isEnd: true, icon: LaptopMinimal },
@@ -80,7 +86,7 @@ export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: Sidebar
                                     <NavLink 
                                         to={item.path} 
                                         end={item.isEnd} 
-                                        onClick={closeSidebar} 
+                                        onClick={handleMenuClick}
                                         title={!isOpen ? item.title : ""}
                                         className={({ isActive }) => 
                                             `transition-colors flex items-center p-3 rounded-md group

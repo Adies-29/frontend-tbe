@@ -36,7 +36,7 @@ export default function GajiTunjanganIndex() {
     const [isGenerating, setIsGenerating] = useState(false);
 
     // State Finansial Ringkasan (Widgets)
-    const [summaryCards, _setSummaryCards] = useState({
+    const [summaryCards, setSummaryCards] = useState({
         estimasiPengeluaran: 0,
         totalBonus: 0,
         totalPotongan: 0
@@ -61,13 +61,15 @@ export default function GajiTunjanganIndex() {
         
         try {
             // Kita tembak endpoint massal karena ini tombol global
-            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/gaji/generate`, {
+            // PASTIKAN URL-NYA SEPERTI INI:
+            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/gaji/generate-massal`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
+                    // Kita hanya mengirim bulan dan tahun, tanpa pegawai_id
                     periode_bulan: parseInt(bulan),
                     periode_tahun: parseInt(tahun)
                 })
@@ -77,6 +79,7 @@ export default function GajiTunjanganIndex() {
     
             if (response.ok && result.success) {
                 alert(`Sukses! ${result.message}`);
+                // Refresh data tabel agar hasil generate langsung muncul
                 fetchRekapGaji(); 
             } else {
                 alert(`Gagal: ${result.message}`);
@@ -132,9 +135,16 @@ export default function GajiTunjanganIndex() {
             // 1. Penentuan URL berdasarkan Dropdown Periode
             let url = `https://ppm-sooty.vercel.app/api/v1/gaji`; 
             
-            if (periode === 'Mingguan') {
-                url = `https://ppm-sooty.vercel.app/api/v1/gaji/mingguan`;
-            } else if (periode === 'Harian') {
+            if (periode === 'bulan' && filterValue) {
+                url = `https://ppm-sooty.vercel.app/api/v1/gaji?filter=${filterValue}`;
+            } else if (periode === 'minggu') {
+                // TAMBAHKAN KIRIMAN FILTER DI SINI
+                if (filterValue) {
+                    url = `https://ppm-sooty.vercel.app/api/v1/gaji/mingguan?filter=${filterValue}`;
+                } else {
+                    url = `https://ppm-sooty.vercel.app/api/v1/gaji/mingguan`;
+                }
+            } else if (periode === 'hari') {
                 const tanggalPilihan = filterValue || new Date().toLocaleDateString('en-CA');
                 url = `https://ppm-sooty.vercel.app/api/v1/gaji/harian?tanggal=${tanggalPilihan}`;
             }
@@ -179,6 +189,18 @@ export default function GajiTunjanganIndex() {
                 
                 setRekapGajiData(formattedData);
 
+                // 3. Kalkulasi Widget dengan Sabuk Pengaman (Optional Chaining & Fallback)
+                // Jika 'curr' tidak sengaja undefined, ia akan menganggap nilainya 0, bukan crash.
+                const totalPengeluaran = formattedData.reduce((sum, curr) => sum + (curr?.gaji_bersih || 0), 0);
+                const totalBonusSemua = formattedData.reduce((sum, curr) => sum + (curr?.total_bonus || 0), 0);
+                const totalPotonganSemua = formattedData.reduce((sum, curr) => sum + (curr?.total_potongan || 0), 0);
+
+                setSummaryCards({
+                    estimasiPengeluaran: totalPengeluaran,
+                    totalBonus: totalBonusSemua,
+                    totalPotongan: totalPotonganSemua
+                });
+
             } else {
                 console.error("Gagal mengambil data gaji:", result.message);
             }
@@ -191,16 +213,17 @@ export default function GajiTunjanganIndex() {
 
     // Efek untuk memuat data berdasarkan Tab yang aktif
     useEffect(() => {
-        if (activeTab === 'master' && masterJabatanData.length === 0) {
-            const fetchData = async () => {
-                await fectchMasterJabatan();
-            };
-            fetchData();
+        if (activeTab === 'master') {
+            if (masterJabatanData.length === 0) {
+                fectchMasterJabatan();
+            }
         } else if (activeTab === 'rekap') {
+            // Panggil API saat tab rekap dibuka
             fetchRekapGaji();
         }
-    }, [activeTab, fectchMasterJabatan, fetchRekapGaji]);
-
+    // HANYA activeTab yang boleh ada di dalam array ini!
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab]);
     // Handle aksi Filter
     const handleFilter = () => {
         if (!filterValue && periode !== "minggu") {

@@ -44,7 +44,6 @@ export default function DashboardIndex() {
                 setSummary(result.statistik);
                 
                 // Format data agar sesuai dengan interface AbsensiData di TabelDashboard
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const formattedRows = result.data_karyawan.map((karyawan: any, index: number) => {
                     let labelStatus = "Belum Hadir";
                     
@@ -92,6 +91,8 @@ export default function DashboardIndex() {
         }
     }, []);
 
+
+    
     // 4. AUTO REFRESH (Panggil fungsi tarik data)
     useEffect(() => {
         const timeoutId = setTimeout(fetchLiveDashboard, 0); // Panggil pertama kali after a timeout
@@ -99,11 +100,11 @@ export default function DashboardIndex() {
         const refreshInterval = setInterval(fetchLiveDashboard, 30000); // Tiap 30 dtk
         return () => {
             clearInterval(refreshInterval);
-            clearTimeout(timeoutId); // Clear the timeout on cleanup
+            clearTimeout(timeoutId); 
         };
     }, [fetchLiveDashboard]);
 
-    // Formatting UI
+  
     const totalHadir = summary.hadir_tepat_waktu + summary.terlambat;
 
     return (

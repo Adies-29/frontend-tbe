@@ -8,8 +8,9 @@ import {
 import type { AbsensiData } from "../../../types";
 import dayjs from "dayjs";
 import { useAuthStore } from "../../../store/useAuthStore";
-import { Loader2, PlusCircle } from "lucide-react";
+import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import ButtonNuklir from "../ButtonNuklir";
 
 
 
@@ -29,6 +30,9 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     const token = useAuthStore((state) => state.token);
     const navigate = useNavigate();
     const location = useLocation();
+
+    const [isNuklirOpen, setIsNuklirOpen] = useState(false);
+    const [targetNuklir, setTargetNuklir] = useState({ id: "", nama: "" });
 
     const isTvMode = location.pathname === '/tv';
     useEffect(() => {
@@ -83,6 +87,12 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
 
     };
 
+    const handleBukaPopUp = (id: string | number, nama: string) => {
+        setTargetNuklir({ id: String(id), nama: nama });
+        setIsNuklirOpen(true);
+    };
+
+
     const formatWaktuAbsen = (time: any) => {
         if (!time || time === "-" || time === "null" || time === "00:00:00") {
             return <span className="text-gray-400 font-bold">-</span>;
@@ -105,12 +115,18 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             minWidth: 150,
             renderCell: (params) => {
                 const namaLengkap = params.value || "Tanpa Nama";
+                const isNuklir = params.row.status_masuk === 'void';
                 return (
 
                     <div className="flex flex-col w-full h-full justify-center leading-tight">
                         <span className="text-sm font-semibold text-gray-800">
                             {namaLengkap}
                         </span>
+                        {isNuklir && (
+                            <span className="text-[10px] text-red-500 font-bold uppercase tracking-tighter">
+                                Void: Absensi Dibatalkan
+                            </span>
+                        )}
                     </div>
 
                 )
@@ -135,8 +151,17 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             headerAlign: 'center',
             renderCell: (params) => {
                 const statusText = params.value || "Belum Hadir";
+                const isNuklir = params.row.status_masuk === 'void';
+                let colorClass = "bg-gray-200 text-gray-500 font-bold px-2 py-1 rounded text-xs";
 
-                let colorClass = "bg-gray-100 text-gray-500";
+                if (isNuklir || statusText === "Absensi di Batalkan") {
+                    colorClass = "bg-red-600 text-white font-bold px-2 py-1 rounded text-xs";
+                    return (
+                        <span className={`w-36 inline-flex justify-center   ${colorClass}`}>
+                            Absensi di Batalkan
+                        </span>
+                    );
+                }
 
                 if (statusText === "Tepat Waktu") {
                     colorClass = "bg-green-100 text-green-700";
@@ -176,9 +201,11 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             sortable: false,
             renderCell: (params) => {
                 let status = params.row.is_kerapian;
+                const isNuklir = params.row.status_masuk === "Absensi di Batalkan";  
                 const isUpdating = updatingId === params.row.id;
-                if (params.row.waktu_masuk === "-") {
-                    status = null;
+
+                if (params.row.waktu_masuk === "-" || !params.row.waktu_masuk) {
+                    return <span className="text-gray-400 text-xs italic">Belum Hadir</span>;
                 }
 
                 //  mengirim data ke API, tampilkan loading muter
@@ -202,9 +229,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                                     Tidak rapi
                                 </span>
                             ) : (
-                                <span className="text-gray-400 text-xs font-medium italic">
-                                    Belum dinilai
-                                </span>
+                                <span></span>
                             )}
                         </div>
                     );
@@ -217,7 +242,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                             checked={status === true}
                             onChange={(e) => cekKerapihan(params.row, e.target.checked)}
                             className="w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2 cursor-pointer transition-all disabled:opacity-50"
-                            disabled={params.row.waktu_masuk === "-"}
+                           disabled={params.row.waktu_masuk === "-" || isNuklir}
                         />
 
                         {status === true ? (
@@ -240,8 +265,6 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
         {
             field: "status_lembur",
             headerName: "Status Lembur",
-            valueOptions: ["Lembur", "-",],
-            type: 'singleSelect',
             flex: 1,
             minWidth: 130,
             align: "center",
@@ -249,7 +272,15 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             renderCell: (params) => {
                 // Cek apakah statusnya kosong, null, atau strip "-"
                 const tidakAdaLembur = !params.value || params.value === "-";
+                const isNuklir = params.row.status_masuk === "Absensi di Batalkan";  
 
+                if (isNuklir) {
+                    return (
+                        <span className="bg-gray-200 text-gray-500 font-bold px-2 py-1 rounded text-xs italic">
+                            Tidak Berlaku
+                        </span>
+                    );
+                }
                 // Jika SEDANG lembur atau sudah ada statusnya, tampilkan teks/badge biasa
                 if (!tidakAdaLembur) {
                     return (
@@ -261,23 +292,66 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                 if (isTvMode) {
                     return <span className="text-gray-400 font-bold">-</span>;
                 }
+                 if (params.row.waktu_masuk === "-" || !params.row.waktu_masuk) {
+                    return <span className="text-gray-400 text-xs italic">Belum Hadir</span>;
+                }
 
                 // Jika TIDAK ADA lembur ("-"), tampilkan tombol + Lembur
                 return (
                     <div className="flex justify-center w-full">
                         <button
                             onClick={() => navigate(`/dashboard/lembur/tambah-lembur?pegawai_id=${params.row.id}&nama=${params.row.nama}`)}
-                            className=" w-25 flex justify-center items-center gap-1  text-purple-600 px-2 hover:text-black cursor-pointer semibold "
-                        >
+                            className=" w-25 flex justify-center items-center gap-1  text-purple-600 px-2 hover:text-black cursor-pointer semibold ">
+                                
                             <PlusCircle size={14} />
                             Lembur
+                            
                         </button>
+                        
 
                     </div>
 
                 );
             }
         },
+        {
+            field: "aksi_void",
+            headerName: "Hapus Absensi",
+            flex: 1,
+            align: "center",
+            headerAlign: "center",
+            width: 100,
+            renderCell: (params) => {
+                // 1. CEK STATUS VOID: Kalau sudah di-void, matikan tombolnya!
+               const isNuklir = params.row.status_masuk === "Absensi di Batalkan";  
+                if (isNuklir) {
+                    return (
+                        <div className="flex justify-center items-center w-full h-full">
+                            <span className="bg-red-600 text-white font-bold px-2 py-1 rounded text-xs">
+                                Dibatalkan
+                            </span>
+                        </div>
+                    );
+                }
+
+                // 2. CEK BELUM HADIR
+                if (params.row.waktu_masuk === "-" || !params.row.waktu_masuk) {
+                    return <span className="text-gray-400 text-xs italic">Belum Hadir</span>;
+                }
+
+                // 3. JIKA NORMAL: Tampilkan tombol hapus
+                return (
+                    <div className="flex justify-center items-center w-full h-full">
+                        <button
+                            onClick={() => handleBukaPopUp(params.row.id, params.row.nama)}
+                            className="flex justify-center items-center gap-1 text-black hover:text-red-600 font-bold px-2 py-1 rounded text-xs cursor-pointer"
+                        >
+                            <Trash2 size={18} /> Hapus
+                        </button>
+                    </div>
+                );
+            }
+        }
 
     ];
 
@@ -295,6 +369,9 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                     },
                 }}
                 pageSizeOptions={[10, 20]}
+                getRowClassName={(params) =>
+                    params.row.status === 'Absensi di Batalkan' ? 'bg-gray-50 text-gray-400 transition-all' : ''
+                }
                 disableRowSelectionOnClick
                 sx={{
                     border: "1px solid #e5e7eb",
@@ -306,8 +383,21 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                     },
                     '& .MuiDataGrid-cell:focus': { outline: 'none' },
                     '& .MuiDataGrid-columnHeader:focus': { outline: 'none' },
+                    '& .bg-gray-500': {
+                        backgroundColor: '#f9fafb !important',
+                        '&:hover': { backgroundColor: '#f3f4f6 !important' }
+                    },
                 }}
             />
+            <ButtonNuklir
+                isOpen={isNuklirOpen}
+                onClose={() => setIsNuklirOpen(false)}
+                voidTarget={targetNuklir}
+                token={token || ""}
+                onSuccess={onRefresh} // Panggil fungsi refresh dari parent setelah sukses void
+
+            />
+
         </div>
     );
 }
