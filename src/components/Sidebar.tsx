@@ -1,7 +1,7 @@
 
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
-import { CalendarDays, ChevronLeft, Coffee, DollarSign, File, LaptopMinimal, Layers, LogOut,  Menu,  Rows2,  Users, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, Coffee, DollarSign, LaptopMinimal, Layers, LogOut,  Menu,  Rows2,  Users, X } from "lucide-react";
 
 interface SidebarProps {
     isOpen: boolean;
