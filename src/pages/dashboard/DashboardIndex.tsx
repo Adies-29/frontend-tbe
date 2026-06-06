@@ -54,6 +54,7 @@ export default function DashboardIndex() {
                         status_masuk: karyawan.status_masuk,
                         waktu_pulang: karyawan.waktu_pulang || "-",
                         status_lembur: karyawan.status_lembur || "-",
+                        is_kerapian: karyawan.is_kerapian || false,
                     };
                 });
                 

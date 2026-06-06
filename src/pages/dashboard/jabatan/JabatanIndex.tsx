@@ -19,18 +19,27 @@ export default function JabatanIndex() {
         try {
             // Tembak API Backend
             const [resJabatan, resPegawai] = await Promise.all([
-                fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
-                fetch("https://ppm-sooty.vercel.app/api/v1/pegawai", { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
+                fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", 
+                    { headers: { 
+                        "Content-Type": "application/json", 
+                        "Authorization": `Bearer ${token}` } }),
+                fetch("https://ppm-sooty.vercel.app/api/v1/pegawai", 
+                    { headers: { 
+                        "Content-Type": "application/json", 
+                        "Authorization": `Bearer ${token}` } })
             ]);
 
+            // ✅ Baca stream SATU KALI saja
             const resultJabatan = await resJabatan.json();
             const resultPegawai = await resPegawai.json();
 
             if (resJabatan.ok && resPegawai.ok) {
-               
+                // 4. MAPPING DATA
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const mappedData: JabatanData[] = resultJabatan.data.map((jab: any) => {
                    
                     const jumlah = resultPegawai.data.filter(
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (peg: any) => peg.jabatan_id === jab.id
                     ).length;
 
@@ -42,22 +51,13 @@ export default function JabatanIndex() {
                         jumlah_pegawai: jumlah 
                     };
                 });
+                
+                // Simpan ke state
                 setDataJabatan(mappedData);
+            } else {
+                // Opsional: Handle jika response dari backend tidak 'ok' (misal 401 atau 500)
+                console.error("Gagal mengambil data:", resultJabatan, resultPegawai);
             }
-
-            const result = await resJabatan.json();
-            
-            // 4. MAPPING DATA: Sesuaikan bentuk data backend ke bentuk dummy-mu sebelumnya
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const mappedData: JabatanData[] = result.data.map((item: any) => ({
-                id: item.id,
-                nama_jabatan: item.nama_jabatan,
-                departemen: item.departemen || "Tanpa Departemen", 
-                departemen_id: item.departemen_id,
-                jumlah_karyawan: item.jumlah_karyawan || 0
-            }));
-
-            setDataJabatan(mappedData);
 
         } catch (error) {
             console.error("Error fetching jabatan:", error);
