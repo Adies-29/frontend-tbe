@@ -33,7 +33,6 @@ export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: Sidebar
 
         { title: "Data Departemen", path: "/dashboard/departemen", icon: Layers },
         { title: "Data Jabatan", path: "/dashboard/jabatan", icon: Rows2 },
-        { title: "Rekap Data", path: "/dashboard/rekap-data", icon: File },
         { title: "Jadwal & Shift", path: "/dashboard/jadwal-shift", icon: CalendarDays },
         { title: "Gaji & Tunjangan", path: "/dashboard/gaji-tunjangan", icon: DollarSign },
         { title: "Lembur", path: "/dashboard/lembur", icon: Coffee },

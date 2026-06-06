@@ -57,9 +57,6 @@ export default function Header() {
         "/dashboard/jabatan/tambah-jabatan": { title: "Jabatan", showDate: false },
 
 
-        "/dashboard/rekap-data": { title: "Rekap Data", showDate: false },
-
-
         "/dashboard/jadwal-shift": { title: "Jadwal & Shift", showDate: false },
         "/dashboard/jadwal-shift/tambah": { title: "Jadwal & Shift", showDate: false },
         "/dashboard/jadwal-shift/edit/:id": { title: "Jadwal & Shift", showDate: false },

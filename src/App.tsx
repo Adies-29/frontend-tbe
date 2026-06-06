@@ -6,14 +6,10 @@ import DashboardLayout from './layouts/DashboardLayout';
 import DashboardIndex from './pages/dashboard/DashboardIndex';
 import AuthLayout from './layouts/AuthLayout';
 import Login from './pages/Login';
-
-import RekapDataIndex from './pages/dashboard/rekapdata/RekapDataIndex';
 import JadwalShiftIndex from './pages/dashboard/jadwalshift/JadwalShiftIndex';
 import DepartemenIndex from './pages/dashboard/departemen/DepartemenIndex';
-
 import AddDepartemen from './pages/dashboard/departemen/AddDepartemen';
 import DetailDepartemen from './pages/dashboard/departemen/DetailDepartemen';
-
 import GajiTunjanganIndex from './pages/dashboard/gajitunjangan/GajiTunjanganIndex';
 import JabatanIndex from './pages/dashboard/jabatan/JabatanIndex';
 import AturGajiJabatan from './pages/dashboard/gajitunjangan/AturGajiJabatan';
@@ -66,9 +62,6 @@ function App() {
             <Route path="/dashboard/jadwal-shift" element={<JadwalShiftIndex />} />
             <Route path="/dashboard/jadwal-shift/tambah" element={<AddShift />} />
             <Route path="/dashboard/jadwal-shift/edit/:id" element={<EditShift />} />
-
-
-            <Route path="/dashboard/rekap-data" element={<RekapDataIndex />} />
 
 
             <Route path="/dashboard/gaji-tunjangan" element={<GajiTunjanganIndex />} />
