@@ -5,7 +5,7 @@ import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 
 export default function DashboardLayout() {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
     const closeSidebar = () => setIsSidebarOpen(false);
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -39,7 +39,7 @@ export default function DashboardLayout() {
             {/* --- KANAN (Main Content) --- */}
             <div 
                 className={`flex-1 bg-gray-50 flex flex-col h-screen min-w-0 transition-all duration-300 ease-in-out
-                ${isSidebarOpen ? "md:ml-65" : "md:ml-20"}`}
+                ${isSidebarOpen ? "md:ml-64" : "md:ml-20"}`}
             >
                 
                 <div className="pt-20 md:pt-0"> 
@@ -47,7 +47,7 @@ export default function DashboardLayout() {
                 </div>
 
                 {/* Area Konten Dinamis (Tabel, Grafik, dll nanti masuk ke sini) */}
-                <div className="flex-1 p-6 md:p-8 overflow-y-auto overflow-x-hidden min-w-0">
+                <div className="flex-1 p-3 sm:p-4 md:p-8 overflow-y-auto overflow-x-hidden min-w-0">
                     <Outlet />
                 </div>
                 

@@ -8,6 +8,7 @@ import Button from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/InputText';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { useState } from 'react';
+import Notif from '../../../components/ui/Notif';
 
 // 1. SCHEMA ZOD - Disesuaikan dengan penamaan presisi dari Database
 const schema = z.object({
@@ -36,6 +37,12 @@ export default function AddShift() {
     const navigate = useNavigate();
     const token = useAuthStore((state) => state.token);
     const [isSaving, setIsSaving] = useState(false);
+
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
 
     const {
         register,
@@ -75,15 +82,17 @@ export default function AddShift() {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                alert(`Sukses! Jadwal Shift baru telah disimpan.`);
-                navigate("/dashboard/jadwal-shift");
+                setNotif({ show: true, message: "Jadwal & Shift berhasil disimpan!", type: "success" });
+                setTimeout(() => {
+                    navigate("/dashboard/jadwal-shift");
+                }, 2000);
             } else {
-                alert(result.message || "Gagal menambahkan shift.");
+                setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });
             }
 
         } catch (error) {
-            console.error("Error:", error);
-            alert("Terjadi kesalahan saat menghubungi server.");
+            console.error("Error Submit:", error);
+            setNotif({ show: true, message: "Terjadi kesalahan jaringan.", type: "error" });
         } finally {
             setIsSaving(false)
         }
@@ -267,6 +276,12 @@ export default function AddShift() {
                     </div>
                 </form>
             </div>
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+            />
         </div>
     );
 }

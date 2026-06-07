@@ -10,15 +10,28 @@ import {
 } from '@mui/x-data-grid';
 import { Pencil, Trash2, Save, X} from 'lucide-react';
 import type { DepartemenData } from '../../../../types';
+import { useAuthStore } from '../../../../store/useAuthStore';
+import ConfirmPopUp from '../../ConfirmPopUp';
+import Notif from '../../Notif';
 
 // --- INTERFACES ---
 interface DepartemenTableProps {
     data?: DepartemenData[];
+    onRefresh: () => void; 
 }
 
-export default function DepartemenTable({ data: initialData = [] }: DepartemenTableProps) {
+export default function DepartemenTable({ data: initialData = [], onRefresh }: DepartemenTableProps) {
     const [rows, setRows] = useState<DepartemenData[]>(initialData);
     const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
+    const token = useAuthStore((state) => state.token)
+
+    const [showPopUp, setShowPopUp] = useState(false);
+    const [hapusId, setHapusId] = useState<GridRowId | null>(null);
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
 
 
     useEffect(() => {
@@ -46,27 +59,40 @@ export default function DepartemenTable({ data: initialData = [] }: DepartemenTa
     };
 
     const handleDeleteClick = (id: GridRowId) =>  async () => {
-       const isConfirm = window.confirm("Yakin gak??")
+        setHapusId(id);
+        setShowPopUp(true);
+    };
 
-        if (!isConfirm) return;
-
+    const hapus = async () =>{
+        if (!hapusId) return;
         try {
-            const response =await fetch(`https://ppm-sooty.vercel.app/api/v1/departemen/${id}`, {
-                method:"DELETE"
+            const response =await fetch(`https://ppm-sooty.vercel.app/api/v1/departemen/${hapusId}`, {
+                method:"DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                } 
             });
             const result = await response.json();
 
-            if (response.ok){
-                alert("Departemen berhasil dihapus");
-                setRows(rows.filter((row) => row.id !== id));
+            if (response.ok && result.success){
+                setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(hapusId)));
+                setNotif({ show: true, message: "Data berhasil dihapus!", type: "success" });
+                setTimeout(() => {
+                    onRefresh();
+                }, 2000);
             }else{
-                alert(`Gagal hapus: ${result.message}`);
+                setNotif({ show: true, message: `Gagal hapus: ${result.message}`, type: "error" });
             }
         } catch (error) {
             console.error("Error delete :", error);
-            alert("Error server");
+            setNotif({ show: true, message: "Gagal menghapus data. Periksa koneksi.", type: "error" });
+        } finally{
+            setShowPopUp(false);
+            setHapusId(null);
         }
-    };
+
+    }
 
     // Fungsi untuk PINDAH HALAMAN lihat karyawan
 
@@ -81,6 +107,7 @@ export default function DepartemenTable({ data: initialData = [] }: DepartemenTa
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization" : `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     nama_departemen: newRow.nama_departemen
@@ -92,15 +119,15 @@ export default function DepartemenTable({ data: initialData = [] }: DepartemenTa
             if (response.ok){
                 setRows(rows.map((row) =>
                 (row.id === newRow.id ? updatedRow : row)));
-                alert("Departemen berhasil diperbarui!");
+                setNotif({ show: true, message: "Perubahan data berhasil diperbarui", type: "success" });
                 return updatedRow;
             }else{
-                alert(`Departemen gagal diperbarui!: ${result.message}`);
+                setNotif({ show: true, message: `Gagal gagal diperbarui: ${result.message}`, type: "error" });
                 return oldRow;
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error updating departemen:", error);
-            alert("Terjadi kesalahan saat menghubungi server.");
+            setNotif({ show: true, message: `Gagal menyimpan: ${error.message}`, type: "error" });
             return oldRow; 
         }    
     };
@@ -203,6 +230,24 @@ export default function DepartemenTable({ data: initialData = [] }: DepartemenTa
                         borderBottom: '1px solid #9ca3af',
                     },
                 }}
+            />
+            <ConfirmPopUp
+                isOpen={showPopUp}
+                onClose={() => {
+                    setShowPopUp(false);
+                    setHapusId(null);
+                }}
+                onConfirm={hapus}
+                title="Hapus Data Pegawai?"
+                message="Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus data pegawai ini dari sistem?"
+                confirmText="Ya, Hapus"
+                variant="danger"
+            />
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
             />
             
             

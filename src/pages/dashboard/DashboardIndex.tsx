@@ -16,9 +16,10 @@ export default function DashboardIndex() {
         belum_hadir: 0,
         dibatalkan_void: 0
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
     const [rows, setRows] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    
 
     // 2. JAM BERDETAK
     useEffect(() => {
