@@ -14,6 +14,7 @@ import InputSelect from "../../../components/ui/InputSelect";
 import { Input } from "../../../components/ui/InputText";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../../../store/useAuthStore";
+import Notif from "../../../components/ui/Notif";
 
 
 
@@ -63,13 +64,18 @@ export default function AddPegawai() {
     const token = useAuthStore((state) => state.token);
     const [isSaving, setIsSaving] = useState(false);
     const [departemenList, setDepartemenList] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
     const [shiftList, setShiftList] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
     const [allJabatan, setAllJabatan] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    
     const [jabatanList, setJabatanList] = useState<any[]>([]);
     const [kotaList, _setKotaList] = useState<any[]>(MOCK_KOTA); 
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
     
     // Tambahkan watch dan setValue di sini
     const {
@@ -158,15 +164,17 @@ export default function AddPegawai() {
             const result = await response.json();
 
             if(response.ok && result.success){
-                alert(`Sukses! Pegawai baru telah disimpan dengan ID: ${result.data.id}`);
-                navigate("/dashboard/data-pegawai");
+                setNotif({ show: true, message: `Sukses! Pegawai baru telah disimpan dengan ID: ${result.data.id}`, type: "success" });
+                setTimeout(() => {
+                    navigate("/dashboard/data-pegawai");
+                }, 2000);
             }else{
-                alert(result.message || "Gagal menambahkan pegawai.");
+                setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });
             }
 
         } catch (error) {
-            console.error("Error:", error);
-            alert("Terjadi kesalahan saat menghubungi server.");
+            console.error("Error Submit:", error);
+            setNotif({ show: true, message: "Terjadi kesalahan jaringan.", type: "error" });
         }finally{
             setIsSaving(false);
         }
@@ -298,6 +306,12 @@ export default function AddPegawai() {
 
                 </form>
             </div>
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+            />
         </div>
     )
 }

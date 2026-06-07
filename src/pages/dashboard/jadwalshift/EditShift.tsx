@@ -8,6 +8,7 @@ import { z } from 'zod';
 import Button from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/InputText';
 import { useAuthStore } from '../../../store/useAuthStore';
+import Notif from '../../../components/ui/Notif';
 
 // 1. SCHEMA ZOD 
 const schema = z.object({
@@ -38,6 +39,11 @@ export default function EditShift() {
     const token = useAuthStore((state) => (state.token));
     const [isSaving, setIsSaving] = useState(false);
     const [isFetchingData, setIsFetchingData] = useState(true)
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
 
     const { register,
         handleSubmit,
@@ -113,15 +119,17 @@ export default function EditShift() {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                alert(`Sukses! Perubahan konfigurasi shift berhasil diperbarui.`);
-                navigate("/dashboard/jadwal-shift");
+               setNotif({ show: true, message: "Perubahan konfigurasi Jadwal & Shift berhasil diperbarui", type: "success" });
+               setTimeout(() => {
+                   navigate("/dashboard/jadwal-shift");
+               }, 2000);
             } else {
-                alert(result.message || "Gagal memperbarui konfigurasi shift.");
+                setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });
             }
 
         } catch (error) {
-            console.error("Error:", error);
-            alert("Terjadi kesalahan saat menghubungi server.");
+            console.error("Error Submit:", error);
+            setNotif({ show: true, message: "Terjadi kesalahan jaringan.", type: "error" });
         } finally {
             setIsSaving(false);
         }
@@ -312,6 +320,12 @@ export default function EditShift() {
                     </div>
                 </form>
             </div>
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+            />
         </div>
     );
 }

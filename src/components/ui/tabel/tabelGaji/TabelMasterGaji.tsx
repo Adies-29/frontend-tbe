@@ -35,6 +35,7 @@ export const TabelMasterGaji = ({ data, onAturGaji }: TabelMasterGajiProps) => {
             width: 150,
             sortable: false,
             align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
                 <button 
                     
@@ -43,7 +44,7 @@ export const TabelMasterGaji = ({ data, onAturGaji }: TabelMasterGajiProps) => {
                         onAturGaji(params.row.id);
                     }}
 
-                    className="flex items-center  text-sm text-yellow-600 font-medium hover:text-yellow-800 bg-red-50 px-2 py-1 rounded-lg transition-colors"
+                    className="w-25 flex justify-center items-center gap-1  text-yellow-500 px-2 hover:text-yellow-800 cursor-pointer semibold "
                 >
                     <Settings size={16} /> Atur Gaji
                 </button>

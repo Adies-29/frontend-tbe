@@ -12,6 +12,8 @@ import {
 import { Pencil, Trash2, Clock } from "lucide-react";
 import type { JadwalShiftData } from '../../../../types';
 import { useAuthStore } from '../../../../store/useAuthStore';
+import ConfirmPopUp from '../../ConfirmPopUp';
+import Notif from '../../Notif';
 
 
 
@@ -28,33 +30,54 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
 
     const token = useAuthStore((state) => state.token);
     const navigate = useNavigate();
+
+    const [showPopUp, setShowPopUp] = useState(false);
+    const [hapusId, setHapusId] = useState<GridRowId | null>(null);
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
+
     useEffect(() => {
         setRows(initialData);
     }, [initialData]);
 
     const handleDeleteClick = (id: GridRowId) => async () => {
-        const isConfirm = window.confirm("Apakah anda yakin ingin menghpus data Jadwal & Shift ini ?")
-        if (!isConfirm) return;
+       setHapusId(id);
+        setShowPopUp(true);
+    };
+
+    const hapus = async () => {
+        if (!hapusId) return;
 
         try {
-            const response = await fetch (`https://ppm-sooty.vercel.app/api/v1/shifts/${id}`, {
+            const response = await fetch (`https://ppm-sooty.vercel.app/api/v1/shifts/${hapusId}`, {
                 method: "DELETE",
-                headers: {"Authorization" : `Bearer ${token}` }
+                headers: {
+                    "Authorization" : `Bearer ${token}`,
+                    "Content-Type" : "application/json"
+                }
             });
             const result = await response.json()
 
             if(response.ok && result.success){
-                alert("Jadwal & Shift berhasil dihapus")
-                setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(id)))
-                onRefresh();
+                setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(hapusId)));
+                setNotif({ show: true, message: "Data berhasil dihapus!", type: "success" });
+                setTimeout(() => {
+                    onRefresh();
+                }, 2000);
             } else{
-                alert(`Gagal hapus : ${result.message}`)
+                setNotif({ show: true, message: `Gagal hapus: ${result.message}`, type: "error" });
             }
         } catch (error) {
-            alert("Gagal menghapus data.");
-            console.error("Terjadi kesalahan server:", error);
+            console.error("Error delete :", error);
+            setNotif({ show: true, message: "Gagal menghapus data. Periksa koneksi.", type: "error" });
+        } finally{
+            setShowPopUp(false);
+            setHapusId(null);
         }
-    };
+    }
 
     const processRowUpdate = async (newRow: GridRowModel, oldRow: GridRowModel) => {
         const updatedRow = {...newRow} as JadwalShiftData;
@@ -72,7 +95,7 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
             });
             const result = await response.json()
 
-            if(!response.ok && !result.success){
+            if(!response.ok || !result.success){
                 throw new Error(result.message || "Server Error")
             }
 
@@ -80,7 +103,7 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
             return updatedRow;
         } catch (error : any) {
             console.error("Gagal update:", error);
-            alert(`Gagal menyimpan perubahan: ${error.message}`);
+            setNotif({ show: true, message: `Gagal menyimpan: ${error.message}`, type: "error" });
             throw error;
         }
     };
@@ -163,7 +186,7 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
         
 
     return(
-        <div className="w-full bg-white">
+        <div className="w-full bg-white relative">
             <DataGrid
                 showToolbar
                 autoHeight
@@ -199,6 +222,24 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
                         borderBottom: "1px solid #F3F4F6",
                     },
                 }}
+            />
+            <ConfirmPopUp
+                isOpen={showPopUp}
+                onClose={() => {
+                    setShowPopUp(false);
+                    setHapusId(null);
+                }}
+                onConfirm={hapus}
+                title="Hapus Data Pegawai?"
+                message="Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus data pegawai ini dari sistem?"
+                confirmText="Ya, Hapus"
+                variant="danger"
+            />
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
             />
         </div>
     );

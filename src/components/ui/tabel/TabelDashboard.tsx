@@ -11,6 +11,7 @@ import { useAuthStore } from "../../../store/useAuthStore";
 import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ButtonNuklir from "../ButtonNuklir";
+import { useMediaQuery, useTheme } from "@mui/material";
 
 
 
@@ -22,6 +23,9 @@ interface TabelAbsensiProps {
 }
 
 export default function TabelDashboard({ data: initialData, onRefresh }: TabelAbsensiProps) {
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm')); 
 
     // State untuk menyimpan data baris dan mode edit dari MUI DataGrid
     const [rows, setRows] = useState<AbsensiData[]>(initialData);
@@ -146,7 +150,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             headerName: 'Status',
             type: 'singleSelect',
             flex: 1,
-            minWidth: 120,
+            minWidth: 160,
             align: 'center',
             headerAlign: 'center',
             renderCell: (params) => {
@@ -197,7 +201,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
         {
             field: "is_kerapian",
             headerName: "Cek Kerapihan",
-            width: 180,
+            width: 110,
             sortable: false,
             renderCell: (params) => {
                 let status = params.row.is_kerapian;
@@ -356,7 +360,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     ];
 
     return (
-        <div className="w-full bg-white">
+        <div className="w-full bg-white ">
             <DataGrid
                 showToolbar
                 rowModesModel={rowModesModel}
@@ -372,6 +376,11 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                 getRowClassName={(params) =>
                     params.row.status === 'Absensi di Batalkan' ? 'bg-gray-50 text-gray-400 transition-all' : ''
                 }
+                columnVisibilityModel={{
+                    // Kolom ini akan disembunyikan (!isMobile) saat di HP, tapi muncul di Laptop
+                    waktu_masuk: !isMobile,
+                    waktu_pulang: !isMobile,
+                }}
                 disableRowSelectionOnClick
                 sx={{
                     border: "1px solid #e5e7eb",
@@ -380,6 +389,11 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                         color: "black",
                         fontWeight: "bold",
                         borderBottom: "1px solid #9ca3af",
+                    },
+                    width: '100%',
+                    minWidth: 0,
+                    '& .MuiDataGrid-virtualScroller': {
+                        overflowX: 'auto',
                     },
                     '& .MuiDataGrid-cell:focus': { outline: 'none' },
                     '& .MuiDataGrid-columnHeader:focus': { outline: 'none' },

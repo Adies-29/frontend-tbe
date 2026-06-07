@@ -41,8 +41,8 @@ export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: Sidebar
     return (
         <div className={`
             bg-[#C90003] flex flex-col justify-between py-6 px-4 shadow-xl z-50
-            fixed top-0 left-0 h-screen transition-all duration-300 ease-in-out
-            ${isOpen ? "w-65 translate-x-0" : "w-65 -translate-x-full md:w-20 md:translate-x-0"}
+            fixed top-0 left-0 h-screen transition-all duration-300 ease-in-out overflow-y-auto overflow-x-hidden
+            ${isOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full md:w-20 md:translate-x-0"}
         `}>
             
             {/* Bagian Atas */}

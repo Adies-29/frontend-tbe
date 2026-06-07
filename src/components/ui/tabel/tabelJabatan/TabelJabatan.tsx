@@ -11,17 +11,28 @@ import {
 import { Pencil, Trash2, Save, X } from 'lucide-react';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import type { JabatanData } from '../../../../types';
+import ConfirmPopUp from '../../ConfirmPopUp';
+import Notif from '../../Notif';
 
 interface TabelJabatanProps {
     data: JabatanData[];
+    onRefresh: () => void; 
 }
 
 
-export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
+export default function TabelJabatan({ data: initialData, onRefresh }: TabelJabatanProps) {
     const [departemenOptions, setDepartemenOptions] = useState<{value: number, label: string}[]>([]);
     const [rows, setRows] = useState(initialData);
     const [rowModesModel, setRowModesModel] = useState<GridRowModel>({});
     const token = useAuthStore((state) => state.token);
+
+    const [showPopUp, setShowPopUp] = useState(false);
+    const [hapusId, setHapusId] = useState<GridRowId | null>(null);
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -81,27 +92,41 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
 
     //tombol Delete 
     const handleDeleteClick = (id: GridRowId) => async () => {
-        const isConfirm = window.confirm("Apakah Anda yakin ingin menghapus jabatan ini?");
-        if (!isConfirm) return;
+        setHapusId(id);
+        setShowPopUp(true);
+    };
+
+    const hapus = async () =>{
+        if (!hapusId) return;
 
         try {
-            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/jabatan/${id}`, {
+            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/jabatan/${hapusId}`, {
                 method: 'DELETE',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                } 
             });
             const result = await response.json();
 
             if (response.ok && result.success) {
-                alert("Jabatan berhasil dihapus!");
-                setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(id)))
+                setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(hapusId)));
+                setNotif({ show: true, message: "Data berhasil dihapus!", type: "success" });
+                setTimeout(() => {
+                    onRefresh();
+                }, 2000);
             } else {
-                alert(`Gagal hapus: ${result.message}`);
+                setNotif({ show: true, message: `Gagal hapus: ${result.message}`, type: "error" });
             }
         } catch (error) {
-            console.error("Gagal menghapus jabatan:", error);
-            alert("Gagal menghapus data.");
-            alert("Terjadi kesalahan server.");
+            console.error("Error delete :", error);
+            setNotif({ show: true, message: "Gagal menghapus data. Periksa koneksi.", type: "error" });
+        } finally{
+            setShowPopUp(false);
+            setHapusId(null);
         }
-    };
+
+    }
 
     // Fungsi penting yang dijalankan MUI setelah data selesai diedit di tabel
     const processRowUpdate = async (newRow: GridRowModel, oldRow: GridRowModel) => {
@@ -138,12 +163,12 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
                 );
                 return updatedRow; 
             } else {
-                alert(`Jabatan gagal diperbarui: ${result.message}`);
+                setNotif({ show: true, message: `Gagal menyimpan: ${result.message}`, type: "error" });
                 return oldRow;
             }
-        } catch (error) {
+        } catch (error : any) {
             console.error("Error updating jabatan:", error);
-            alert("Terjadi kesalahan saat menghubungi server.");
+            setNotif({ show: true, message: `Gagal menyimpan: ${error.message}`, type: "error" });
             return oldRow;
         } 
     };
@@ -243,39 +268,62 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     ];
 
     return (
-        <DataGrid
-            autoHeight
-            rows={rows} 
-            columns={columns}
-            showToolbar 
+        <div className='w-full bg-white relative'>
+            <DataGrid
+                autoHeight
+                rows={rows}
+                columns={columns}
+                showToolbar
 
-            // Pengaturan CRUD Inline Editing
-            editMode="row"
-            rowModesModel={rowModesModel}
-            onRowModesModelChange={(newModel) => setRowModesModel(newModel)}
-            processRowUpdate={processRowUpdate}
+                // Pengaturan CRUD Inline Editing
+                editMode="row"
+                rowModesModel={rowModesModel}
+                onRowModesModelChange={(newModel) => setRowModesModel(newModel)}
+                processRowUpdate={processRowUpdate}
 
-            onProcessRowUpdateError={(error) => {
-                console.error("Gagal saat update baris:", error);
-            }}
+                onProcessRowUpdateError={(error) => {
+                    console.error("Gagal saat update baris:", error);
+                }}
 
-            initialState={{
-                pagination: { paginationModel: { page: 0, pageSize: 10 } },
-            }}
-            pageSizeOptions={[10, 20]}   
-            disableRowSelectionOnClick
-            sx={{
-                border: 'none',
-                '& .MuiDataGrid-columnHeaders': {
-                    backgroundColor: '#f9fafb',
-                    color: 'black',
-                    fontWeight: 'bold',
-                    borderBottom: '1px solid #e5e7eb',
-                },
-                '& .MuiDataGrid-cell': {
-                    borderBottom: '1px solid #f3f4f6',
-                },
-            }}
-        />
+                initialState={{
+                    pagination: { paginationModel: { page: 0, pageSize: 10 } },
+                }}
+                pageSizeOptions={[10, 20]}
+                disableRowSelectionOnClick
+                sx={{
+                    border: 'none',
+                    '& .MuiDataGrid-columnHeaders': {
+                        backgroundColor: '#f9fafb',
+                        color: 'black',
+                        fontWeight: 'bold',
+                        borderBottom: '1px solid #e5e7eb',
+                    },
+                    '& .MuiDataGrid-cell': {
+                        borderBottom: '1px solid #f3f4f6',
+                    },
+                }}
+            />
+            <ConfirmPopUp
+                isOpen={showPopUp}
+                onClose={() => {
+                    setShowPopUp(false);
+                    setHapusId(null);
+                }}
+                onConfirm={hapus}
+                title="Hapus Data Pegawai?"
+                message="Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus data pegawai ini dari sistem?"
+                confirmText="Ya, Hapus"
+                variant="danger"
+            />
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+            />
+        </div>
+
+
+
     );
 }
