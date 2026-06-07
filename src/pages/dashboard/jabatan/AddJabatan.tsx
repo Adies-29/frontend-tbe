@@ -143,7 +143,7 @@ export default function AddJabatan() {
                             />
                             <Button
                                 type="button"
-                                variant="back"
+                                variant="danger"
                                 label="Batal"
                                 onClick={() => navigate(-1)}
                             />

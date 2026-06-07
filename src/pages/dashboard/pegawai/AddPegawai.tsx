@@ -278,7 +278,6 @@ export default function AddPegawai() {
                     </div>
 
                     {/* --- TOMBOL SUBMIT --- */}
-                    {/* Trik Khusus Mobile: flex-col-reverse membuat tombol numpuk atas-bawah di HP */}
                     <div className="flex justify-end gap-3 mt-8 pt-5 border-t border-gray-100">
                         <Button 
                             variant="success"
@@ -289,7 +288,7 @@ export default function AddPegawai() {
                         />
                         <Button 
                             type="button" 
-                            variant="secondary" 
+                            variant="danger" 
                             label="Batal" 
                             onClick={() => navigate(-1)} 
                             disabled={isSaving} 
