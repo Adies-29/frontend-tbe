@@ -113,7 +113,7 @@ export default function JabatanIndex() {
                         <p>Memuat data dari database...</p>
                     </div>
                 ) : (
-                    <TabelJabatan data={dataJabatan} />
+                    <TabelJabatan data={dataJabatan} onRefresh={fetchJabatan} />
                 )}
             </section>
         </div>
