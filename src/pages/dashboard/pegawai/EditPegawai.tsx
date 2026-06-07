@@ -338,7 +338,7 @@ export default function EditPegawai(){
                         />
                         <Button 
                             type="button" 
-                            variant="secondary" 
+                            variant="danger" 
                             label="Batal" 
                             onClick={() => navigate(-1)} 
                         />
