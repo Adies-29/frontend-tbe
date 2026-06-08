@@ -40,7 +40,7 @@ export const TabelMasterGaji = ({ data, onAturGaji }: TabelMasterGajiProps) => {
                 <button 
                     
                     onClick={() => {
-                        console.log("klik", params.row.id);
+
                         onAturGaji(params.row.id);
                     }}
 

@@ -5,6 +5,7 @@ import Button from "../../../components/ui/Button";
 import TabelJabatan from "../../../components/ui/tabel/tabelJabatan/TabelJabatan";
 import type { JabatanData } from "../../../types";
 import { useAuthStore } from "../../../store/useAuthStore";
+import { apiFetch } from "../../../utils/apiFetch";
 
 export default function JabatanIndex() {
     const navigate = useNavigate();
@@ -19,8 +20,8 @@ export default function JabatanIndex() {
         try {
             // Tembak API Backend
             const [resJabatan, resPegawai] = await Promise.all([
-                fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
-                fetch("https://ppm-sooty.vercel.app/api/v1/pegawai", { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
+                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
+                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
             ]);
 
             const resultJabatan = await resJabatan.json();

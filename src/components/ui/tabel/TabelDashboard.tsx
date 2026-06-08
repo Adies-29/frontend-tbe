@@ -12,6 +12,8 @@ import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ButtonNuklir from "../ButtonNuklir";
 import { useMediaQuery, useTheme } from "@mui/material";
+import { getSafeErrorMessage } from "../../../utils/errorHandler";
+import { apiFetch } from "../../../utils/apiFetch";
 
 
 
@@ -57,7 +59,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                 is_kerapian: newStatus
             };
 
-            const response = await fetch("https://ppm-sooty.vercel.app/api/kerapian", {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/kerapian`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -67,8 +69,6 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             });
 
             const result = await response.json();
-            console.log("RESPONS BACKEND:", result);
-            console.log("PAYLOAD YANG DIKIRIM:", payload);
 
             if (!response.ok || !result.success) {
                 throw new Error(result.message || "Gagal memperbarui status kerapihan");
@@ -84,7 +84,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             }
         } catch (error: any) {
             console.error("Gagal update kerapihan:", error);
-            alert(`Gagal menyimpan: ${error.message}`);
+            alert(getSafeErrorMessage());
         } finally {
             setUpdatingId(null);
         }

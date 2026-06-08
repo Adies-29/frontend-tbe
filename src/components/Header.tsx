@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, matchPath } from "react-router-dom"; 
 import DateTime from "./ui/DateTime";
 import { useAuthStore } from "../store/useAuthStore";
+import { apiFetch } from "../utils/apiFetch";
 
 export default function Header() {
     // --- LOGIKA SHIFT ---
@@ -14,7 +15,7 @@ export default function Header() {
         const fetchShiftData = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetch("https://ppm-sooty.vercel.app/api/v1/shifts", {
+                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, {
                     method: "GET",
                     headers: {
                         "Authorization": `Bearer ${token}`, 

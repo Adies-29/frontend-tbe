@@ -14,6 +14,7 @@ import { TextArea } from "../../../components/ui/TextArea";
 import { Input } from "../../../components/ui/InputText";
 import { InputSelect } from "../../../components/ui/InputSelect";
 import Notif from "../../../components/ui/Notif";
+import { apiFetch } from "../../../utils/apiFetch";
 
 const schema = z.object({
     nik: z.string()
@@ -99,9 +100,9 @@ export default function EditPegawai(){
                 setIsFetchingData(true);
 
                 const[resDept, resJabatan, resShift] = await Promise.all([
-                    fetch("https://ppm-sooty.vercel.app/api/v1/departemen", { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
-                    fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
-                    fetch("https://ppm-sooty.vercel.app/api/v1/shifts", { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
+                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
+                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
+                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
                 ]);
                 const dataDept = await resDept.json();
                 const dataJabatan = await resJabatan.json();
@@ -117,11 +118,11 @@ export default function EditPegawai(){
                 if(resShift.ok && dataShift.success) setShiftList(dataShift.data)
                     
 
-                const resPegawai = await fetch(`https://ppm-sooty.vercel.app/api/v1/pegawai/${id}`, {
+                const resPegawai = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${id}`, {
                     headers: { "Authorization" : `Bearer ${token}` }
                 });
                 const dataPegawai = await resPegawai.json();
-                console.log("CEK DATA PEGAWAI DARI BACKEND:", dataPegawai.data);
+                
                 
                 if(resPegawai.ok && dataPegawai.success){
                     
@@ -185,7 +186,7 @@ export default function EditPegawai(){
     const onSubmit = async (data: FormData) => {
         setIsSaving(true);
         try {
-            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/pegawai/${id}`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type" : "application/json",
@@ -251,7 +252,7 @@ export default function EditPegawai(){
                     />
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit, (err) => console.log("ZOD ERROR:", err))} className="space-y-8">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                     
                     {/* --- SEKSI 1: INFORMASI PRIBADI --- */}
                     <div>

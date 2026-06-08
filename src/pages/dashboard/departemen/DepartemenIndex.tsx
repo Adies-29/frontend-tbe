@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import type { DepartemenData } from "../../../types";
 import { useAuthStore } from "../../../store/useAuthStore";
+import { apiFetch } from "../../../utils/apiFetch";
 
 
 export default function DepartemenIndex() {
@@ -20,8 +21,8 @@ export default function DepartemenIndex() {
         try {
             // Tembak API Backend
             const [resDept, resJabatan] = await Promise.all([
-                fetch("https://ppm-sooty.vercel.app/api/v1/departemen", { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
-                fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
+                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
+                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
             ])
 
             const resultDept = await resDept.json();

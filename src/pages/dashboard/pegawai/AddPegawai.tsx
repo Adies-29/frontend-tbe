@@ -15,6 +15,7 @@ import { Input } from "../../../components/ui/InputText";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import Notif from "../../../components/ui/Notif";
+import { apiFetch } from "../../../utils/apiFetch";
 
 
 
@@ -94,10 +95,10 @@ export default function AddPegawai() {
         const fetctPegawai = async () => {
             try {
                const [resDept, resJabatan, resShift, ] = await Promise.all([
-                    fetch("https://ppm-sooty.vercel.app/api/v1/departemen", { headers: { "Authorization": `Bearer ${token}` } }),
-                    fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Authorization": `Bearer ${token}` } }),
-                    fetch("https://ppm-sooty.vercel.app/api/v1/shifts", { headers: { "Authorization": `Bearer ${token}` } }),
-                    // fetch("https://ppm-sooty.vercel.appapi/v1/kota",{ headers: { "Authorization": `Bearer ${token}` } })
+                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, { headers: { "Authorization": `Bearer ${token}` } }),
+                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Authorization": `Bearer ${token}` } }),
+                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, { headers: { "Authorization": `Bearer ${token}` } }),
+                    // apiFetch(`${import.meta.env.VITE_API_BASE_URL}api/v1/kota`,{ headers: { "Authorization": `Bearer ${token}` } })
                 ]);
                 const dataDept = await resDept.json();
                 const dataJabatan = await resJabatan.json();
@@ -118,13 +119,10 @@ export default function AddPegawai() {
 
     useEffect(() => {
         if(selectedDept) {
-            console.log("--- PROSES FILTER DIJALANKAN ---");
-            console.log("ID Dept Yang Dipilih HRD:", selectedDept);
-            console.log("Data Semua Jabatan Yang Tersedia:", allJabatan);
 
             const pilih = allJabatan.filter((j) => {
                
-                console.log("Membandingkan ID Dept di Jabatan:", j.departemen_id, "dengan", selectedDept);
+
                 return j.departemen_id?.toString() === selectedDept.toString()      
             });
 
@@ -138,7 +136,7 @@ export default function AddPegawai() {
     const onSubmit = async (data: FormData) => {
         setIsSaving(true)
         try {
-            const response = await fetch ("https://ppm-sooty.vercel.app/api/v1/pegawai", {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -201,7 +199,7 @@ export default function AddPegawai() {
                     />
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit, (err) => console.log("ZOD ERROR:", err))} className="space-y-8">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                     
                     {/* --- SEKSI 1: INFORMASI PRIBADI --- */}
                     <div>

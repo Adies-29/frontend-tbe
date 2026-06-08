@@ -9,6 +9,7 @@ import { Input } from '../../../components/ui/InputText';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { useState } from 'react';
 import Notif from '../../../components/ui/Notif';
+import { apiFetch } from "../../../utils/apiFetch";
 
 // 1. SCHEMA ZOD - Disesuaikan dengan penamaan presisi dari Database
 const schema = z.object({
@@ -70,7 +71,7 @@ export default function AddShift() {
     const onSubmit = async (data: FormData) => {
         setIsSaving(true);
         try {
-            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/shifts`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

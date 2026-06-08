@@ -4,8 +4,23 @@ import { ArrowLeft, Clock } from "lucide-react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import Button from "../../../components/ui/Button";
 import Notif from "../../../components/ui/Notif";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { apiFetch } from "../../../utils/apiFetch";
 
+const lemburSchema = z.object({
+    pegawai_id: z.string().min(1, "ID Pegawai wajib diisi")
+        .regex(/^\d+$/, "ID Pegawai harus berupa angka"),
+    tanggal: z.string().min(1, "Tanggal wajib diisi")
+        .regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal tidak valid"),
+    menit_lembur_diizinkan: z.coerce.number()
+        .min(1, "Minimal 1 menit")
+        .max(720, "Maksimal 12 jam (720 menit)"), // Batas wajar
+    alasan_lembur: z.string().max(500, "Alasan maksimal 500 karakter").optional(),
+});
 
+type FormData = z.infer<typeof lemburSchema>;
 
 export default function AddLembur() {
     const navigate = useNavigate();
@@ -18,31 +33,41 @@ export default function AddLembur() {
     const idPegwai = searchParams.get("pegawai_id") || "";
     const namaPegawai = searchParams.get("nama") || "";
 
-    const [formData, setFormData] = useState({
-        pegawai_id: idPegwai,
-        tanggal: "",
-        menit_lembur_diizinkan: "",
-        disetujui_oleh: userToken || "",
-        alasan_lembur: ""
+    const {
+        register,
+        handleSubmit,
+        formState: { errors }
+    } = useForm<FormData>({
+        resolver: zodResolver(lemburSchema) as any,
+        defaultValues: {
+            pegawai_id: idPegwai,
+            tanggal: "",
+            alasan_lembur: ""
+        }
     });
+
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
         show: false,
         message: "",
         type: "success"
     });
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const onSubmit = async (data: FormData) => {
         setIsLoading(true);
 
         try {
-            const response = await fetch("https://ppm-sooty.vercel.app/api/lembur/spl", {
+            const payload = {
+                ...data,
+                disetujui_oleh: userToken || ""
+            };
+
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/lembur/spl`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(payload)
             });
 
             const result = await response.json();
@@ -72,17 +97,16 @@ export default function AddLembur() {
                 <Clock className="text-red-600" /> Buat Perintah Lembur Baru
             </h1>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
 
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">ID Pegawai <span className="text-red-500">*</span></label>
                     <input
-                        required
+                        {...register("pegawai_id")}
                         className={`w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:outline-none ${idPegwai ? "bg-gray-100 text-gray-600" : ""}`}
-                        value={formData.pegawai_id}
                         readOnly={!!idPegwai}
-                        onChange={(e) => setFormData({ ...formData, pegawai_id: e.target.value })}
                     />
+                    {errors.pegawai_id && <p className="text-xs text-red-500 mt-1">{errors.pegawai_id.message}</p>}
                     {namaPegawai && (
                         <p className="text-xs text-green-600 mt-1.5 font-medium flex items-center gap-1">
                             Membuat SPL untuk: <strong>{namaPegawai}</strong>
@@ -95,11 +119,10 @@ export default function AddLembur() {
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Tanggal Lembur <span className="text-red-500">*</span></label>
                     <input
                         type="date"
-                        required
+                        {...register("tanggal")}
                         className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:outline-none"
-                        value={formData.tanggal}
-                        onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
                     />
+                    {errors.tanggal && <p className="text-xs text-red-500 mt-1">{errors.tanggal.message}</p>}
                 </div>
 
 
@@ -107,23 +130,22 @@ export default function AddLembur() {
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Lama Lembur (Menit) <span className="text-red-500">*</span></label>
                     <input
                         type="number"
-                        required
                         min="1"
+                        {...register("menit_lembur_diizinkan")}
                         className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:outline-none"
                         placeholder="Contoh: 120"
-                        value={formData.menit_lembur_diizinkan}
-                        onChange={(e) => setFormData({ ...formData, menit_lembur_diizinkan: e.target.value })}
                     />
+                    {errors.menit_lembur_diizinkan && <p className="text-xs text-red-500 mt-1">{errors.menit_lembur_diizinkan.message}</p>}
                 </div>
 
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Alasan Lembur <span className="text-gray-400 font-normal text-xs">(Opsional)</span></label>
                     <textarea
+                        {...register("alasan_lembur")}
                         className="w-full p-2.5 border border-gray-300 rounded-lg h-24 focus:ring-2 focus:ring-red-200 focus:outline-none resize-none"
                         placeholder="Tuliskan alasan lembur di sini jika ada..."
-                        value={formData.alasan_lembur}
-                        onChange={(e) => setFormData({ ...formData, alasan_lembur: e.target.value })}
                     />
+                    {errors.alasan_lembur && <p className="text-xs text-red-500 mt-1">{errors.alasan_lembur.message}</p>}
                 </div>
 
                 <Button

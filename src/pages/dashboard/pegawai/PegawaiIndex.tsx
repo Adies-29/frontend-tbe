@@ -5,6 +5,8 @@ import { useAuthStore } from "../../../store/useAuthStore";
 import { Loader2 } from "lucide-react";
 import TabelPegawai from "../../../components/ui/tabel/tabelPegawai/TabelPegawai";
 import type { PegawaiData } from "../../../types";
+import { getSafeErrorMessage } from "../../../utils/errorHandler";
+import { apiFetch } from "../../../utils/apiFetch";
 
 
 export default function PegawaiIndex() {
@@ -20,7 +22,7 @@ export default function PegawaiIndex() {
         setErrorMsg("");
 
         try {            
-            const response = await fetch ("https://ppm-sooty.vercel.app/api/v1/pegawai", {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
                 method: "GET",
                 headers: {
                     "Content-Type" : "application/json",
@@ -42,7 +44,7 @@ export default function PegawaiIndex() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error("Error fetching pegawai:", error);
-            setErrorMsg(error.message || "Gagal memuat data pegawai.");
+            setErrorMsg(getSafeErrorMessage());
         }finally{
             setIsLoading(false);
         }

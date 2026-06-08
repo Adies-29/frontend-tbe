@@ -8,6 +8,7 @@ import { Input } from '../../../components/ui/InputText';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../../../store/useAuthStore';
 import Notif from '../../../components/ui/Notif';
+import { apiFetch } from "../../../utils/apiFetch";
 
 
 const schema = z.object({
@@ -45,7 +46,7 @@ export default function AddJabatan() {
     useEffect(() => {
         const fetchDepartemen = async () =>{
             try {
-                const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/departemen`, {
+                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, {
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`
@@ -69,7 +70,7 @@ export default function AddJabatan() {
    const onSubmit = async (data: FormData) => {
         setIsSaving(true)
         try {
-            const response = await fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

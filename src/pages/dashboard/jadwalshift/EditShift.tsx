@@ -9,6 +9,7 @@ import Button from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/InputText';
 import { useAuthStore } from '../../../store/useAuthStore';
 import Notif from '../../../components/ui/Notif';
+import { apiFetch } from "../../../utils/apiFetch";
 
 // 1. SCHEMA ZOD 
 const schema = z.object({
@@ -60,7 +61,7 @@ export default function EditShift() {
             try {
                 setIsFetchingData(true)
 
-                const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/shifts/${id}`, {
+                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${id}`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -107,7 +108,7 @@ export default function EditShift() {
     const onSubmit = async (data: FormData) => {
         setIsSaving(true)
         try {
-            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/shifts/${id}`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
