@@ -10,6 +10,7 @@ import { Input } from '../../../components/ui/InputText';
 import { useAuthStore } from '../../../store/useAuthStore';
 import ConfirmPopUp from '../../../components/ui/ConfirmPopUp';
 import Notif from '../../../components/ui/Notif';
+import { apiFetch } from "../../../utils/apiFetch";
 
 // 1. UPDATE SCHEMA: Tambahkan tipe_penggajian dan gaji_pokok_bulanan
 const schema = z.object({
@@ -73,7 +74,7 @@ export default function AturGajiJabatan() {
             try {
                 setIsFetchingData(true);
 
-                const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/jabatan/${id}`, {
+                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${id}`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -132,7 +133,7 @@ export default function AturGajiJabatan() {
                 payloadKiriman.gaji_pokok_bulanan = 0;
             }
 
-            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/jabatan/${id}`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",

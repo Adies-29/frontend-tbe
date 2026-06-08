@@ -2,6 +2,7 @@ import { Calendar, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 // 1. Import useAuthStore untuk mengambil token
 import { useAuthStore } from "../../store/useAuthStore"; 
+import { apiFetch } from "../../utils/apiFetch";
 
 interface ShiftData {
     kode_shift: string; // 2. Ubah dari kode_shift menjadi kode_shift agar sesuai dengan database
@@ -54,7 +55,7 @@ export default function DateTime() {
                 setIsLoading(true);
                 
                 // 4. Tambahkan Headers Authorization Bearer
-                const response = await fetch("https://ppm-sooty.vercel.app/api/v1/shifts", {
+                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, {
                     method: "GET",
                     headers: {
                         "Authorization": `Bearer ${token}`, // <-- Kunci masuknya di sini

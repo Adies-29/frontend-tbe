@@ -7,6 +7,9 @@ import { useAuthStore } from "../store/useAuthStore";
 import { Input } from "../components/ui/InputText";
 import { InputPassword } from "../components/ui/InputPassword";
 import { useState } from "react";
+import { getSafeErrorMessage } from "../utils/errorHandler";
+import { apiFetch } from "../utils/apiFetch";
+
 
 // 1. Ubah email menjadi username agar sesuai dengan backend
 type FormData = {
@@ -38,7 +41,7 @@ export default function Login() {
         setIsLoading(true);
         try {
             // Tembak API Login yang ada di backend
-            const response = await fetch("https://ppm-sooty.vercel.app/api/login", {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -60,11 +63,10 @@ export default function Login() {
                 navigate("/dashboard");
             } else {
                 // Tampilkan pesan error dari backend (misal: "Username salah")
-                alert(result.message || "Login gagal, periksa kembali data Anda.");
+                alert(getSafeErrorMessage(response.status));
             }
 
         } catch (error) {
-            console.error("Error saat login:", error);
             alert("Terjadi kesalahan saat login. Silakan coba lagi.");
         } finally {
             setIsLoading(false);

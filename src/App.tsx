@@ -37,6 +37,11 @@ function App() {
 
         {/* halaman khusus login */}
         <Route element={<ProtectedRoute />}>
+          <Route path="/tv" element={
+            <div className="p-6 bg-gray-50 min-h-screen">
+              <DashboardIndex /> 
+            </div>
+          } />
           <Route element={<DashboardLayout />}>
 
             <Route path="/dashboard" element={<DashboardIndex />} />
@@ -73,14 +78,6 @@ function App() {
 
           </Route>
         </Route>
-
-        <Route path="/tv" element={
-          <div className="p-6 bg-gray-50 min-h-screen">
-            <DashboardIndex />
-          </div>
-        } />
-
-
       </Routes>
     </BrowserRouter>
   );

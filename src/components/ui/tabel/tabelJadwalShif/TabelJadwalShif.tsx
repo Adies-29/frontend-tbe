@@ -14,6 +14,8 @@ import type { JadwalShiftData } from '../../../../types';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import ConfirmPopUp from '../../ConfirmPopUp';
 import Notif from '../../Notif';
+import { getSafeErrorMessage } from '../../../../utils/errorHandler';
+import { apiFetch } from "../../../../utils/apiFetch";
 
 
 
@@ -52,7 +54,7 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
         if (!hapusId) return;
 
         try {
-            const response = await fetch (`https://ppm-sooty.vercel.app/api/v1/shifts/${hapusId}`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${hapusId}`, {
                 method: "DELETE",
                 headers: {
                     "Authorization" : `Bearer ${token}`,
@@ -68,7 +70,7 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
                     onRefresh();
                 }, 2000);
             } else{
-                setNotif({ show: true, message: `Gagal hapus: ${result.message}`, type: "error" });
+                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
             }
         } catch (error) {
             console.error("Error delete :", error);
@@ -85,7 +87,7 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
         const { kode_shift, jam_masuk, jam_pulang } = updatedRow;
 
         try {
-            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/shifts/${newRow.id}`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${newRow.id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type" : "application/json",
@@ -103,7 +105,7 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
             return updatedRow;
         } catch (error : any) {
             console.error("Gagal update:", error);
-            setNotif({ show: true, message: `Gagal menyimpan: ${error.message}`, type: "error" });
+            setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
             throw error;
         }
     };

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Trash2, AlertTriangle, X, Loader2 } from "lucide-react";
+import { getSafeErrorMessage } from "../../utils/errorHandler";
+import { apiFetch } from "../../utils/apiFetch";
 
 
 
@@ -29,7 +31,7 @@ export default function ButtonNuklir({ isOpen, onClose, voidTarget, token,onSucc
         const hariIni = new Date().toISOString().split('T')[0];
 
         try {
-            const response = await fetch("https://ppm-sooty.vercel.app/api/absen/void", {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/absen/void`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -49,7 +51,7 @@ export default function ButtonNuklir({ isOpen, onClose, voidTarget, token,onSucc
                 onSuccess(); 
                 onClose();   
             } else {
-                alert(` Gagal: ${result.message}`);
+                alert(getSafeErrorMessage(response.status));
             }
         } catch (error) {
             console.error("Error trigger void:", error);

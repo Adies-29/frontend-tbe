@@ -13,6 +13,8 @@ import type { DepartemenData } from '../../../../types';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import ConfirmPopUp from '../../ConfirmPopUp';
 import Notif from '../../Notif';
+import { getSafeErrorMessage } from '../../../../utils/errorHandler';
+import { apiFetch } from "../../../../utils/apiFetch";
 
 // --- INTERFACES ---
 interface DepartemenTableProps {
@@ -66,7 +68,7 @@ export default function DepartemenTable({ data: initialData = [], onRefresh }: D
     const hapus = async () =>{
         if (!hapusId) return;
         try {
-            const response =await fetch(`https://ppm-sooty.vercel.app/api/v1/departemen/${hapusId}`, {
+            const response =await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen/${hapusId}`, {
                 method:"DELETE",
                 headers: {
                     "Content-Type": "application/json",
@@ -82,7 +84,7 @@ export default function DepartemenTable({ data: initialData = [], onRefresh }: D
                     onRefresh();
                 }, 2000);
             }else{
-                setNotif({ show: true, message: `Gagal hapus: ${result.message}`, type: "error" });
+                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
             }
         } catch (error) {
             console.error("Error delete :", error);
@@ -103,7 +105,7 @@ export default function DepartemenTable({ data: initialData = [], onRefresh }: D
         }
 
         try {
-            const response = await fetch (`https://ppm-sooty.vercel.app/api/v1/departemen/${newRow.id}`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen/${newRow.id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -116,18 +118,18 @@ export default function DepartemenTable({ data: initialData = [], onRefresh }: D
 
             const result = await response.json();
 
-            if (response.ok){
+            if (response.ok && result.success){
                 setRows(rows.map((row) =>
                 (row.id === newRow.id ? updatedRow : row)));
                 setNotif({ show: true, message: "Perubahan data berhasil diperbarui", type: "success" });
                 return updatedRow;
             }else{
-                setNotif({ show: true, message: `Gagal gagal diperbarui: ${result.message}`, type: "error" });
+                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
                 return oldRow;
             }
         } catch (error: any) {
             console.error("Error updating departemen:", error);
-            setNotif({ show: true, message: `Gagal menyimpan: ${error.message}`, type: "error" });
+            setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
             return oldRow; 
         }    
     };

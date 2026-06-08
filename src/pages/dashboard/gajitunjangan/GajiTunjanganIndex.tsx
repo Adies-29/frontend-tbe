@@ -11,6 +11,8 @@ import dayjs, { Dayjs } from 'dayjs';
 import { TabelMasterGaji, type MasterGajiData } from '../../../components/ui/tabel/tabelGaji/TabelMasterGaji';
 import { TabelRekapGaji, type RekapGajiData } from '../../../components/ui/tabel/tabelGaji/TabelRekapGaji';
 import { useAuthStore } from '../../../store/useAuthStore';
+import { getSafeErrorMessage } from '../../../utils/errorHandler';
+import { apiFetch } from "../../../utils/apiFetch";
 
 const formatRupiah = (angka: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
@@ -62,7 +64,7 @@ export default function GajiTunjanganIndex() {
         try {
             // Kita tembak endpoint massal karena ini tombol global
             // PASTIKAN URL-NYA SEPERTI INI:
-            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/gaji/generate-massal`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/gaji/generate-massal`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -82,7 +84,7 @@ export default function GajiTunjanganIndex() {
                 // Refresh data tabel agar hasil generate langsung muncul
                 fetchRekapGaji(); 
             } else {
-                alert(`Gagal: ${result.message}`);
+                alert(getSafeErrorMessage(response.status));
             }
         } catch (error) {
             console.error("Error generate gaji:", error);
@@ -98,7 +100,7 @@ export default function GajiTunjanganIndex() {
     const fectchMasterJabatan = useCallback(async () => {
         try {
             setIsLoadingMaster(true)
-            const response = await fetch (`https://ppm-sooty.vercel.app/api/v1/jabatan`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, {
                 method: "GET",
                 headers: {
                     "Content-Type" : "application/json",
@@ -133,23 +135,23 @@ export default function GajiTunjanganIndex() {
             setIsLoadingRekap(true);
             
             // 1. Penentuan URL berdasarkan Dropdown Periode
-            let url = `https://ppm-sooty.vercel.app/api/v1/gaji`; 
+            let url = `${import.meta.env.VITE_API_BASE_URL}/api/v1/gaji`; 
             
             if (periode === 'bulan' && filterValue) {
-                url = `https://ppm-sooty.vercel.app/api/v1/gaji?filter=${filterValue}`;
+                url = `${import.meta.env.VITE_API_BASE_URL}/api/v1/gaji?filter=${filterValue}`;
             } else if (periode === 'minggu') {
                 // TAMBAHKAN KIRIMAN FILTER DI SINI
                 if (filterValue) {
-                    url = `https://ppm-sooty.vercel.app/api/v1/gaji/mingguan?filter=${filterValue}`;
+                    url = `${import.meta.env.VITE_API_BASE_URL}/api/v1/gaji/mingguan?filter=${filterValue}`;
                 } else {
-                    url = `https://ppm-sooty.vercel.app/api/v1/gaji/mingguan`;
+                    url = `${import.meta.env.VITE_API_BASE_URL}/api/v1/gaji/mingguan`;
                 }
             } else if (periode === 'hari') {
                 const tanggalPilihan = filterValue || new Date().toLocaleDateString('en-CA');
-                url = `https://ppm-sooty.vercel.app/api/v1/gaji/harian?tanggal=${tanggalPilihan}`;
+                url = `${import.meta.env.VITE_API_BASE_URL}/api/v1/gaji/harian?tanggal=${tanggalPilihan}`;
             }
     
-            const response = await fetch(url, {
+            const response = await apiFetch(url, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",

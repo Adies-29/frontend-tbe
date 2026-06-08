@@ -13,6 +13,8 @@ import { useAuthStore } from '../../../../store/useAuthStore';
 import type { JabatanData } from '../../../../types';
 import ConfirmPopUp from '../../ConfirmPopUp';
 import Notif from '../../Notif';
+import { getSafeErrorMessage } from '../../../../utils/errorHandler';
+import { apiFetch } from "../../../../utils/apiFetch";
 
 interface TabelJabatanProps {
     data: JabatanData[];
@@ -44,7 +46,7 @@ export default function TabelJabatan({ data: initialData, onRefresh }: TabelJaba
     useEffect(() => {
         const fetchDepartemen = async () => {
             try {
-                const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/departemen/`,{
+                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen/`,{
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -100,7 +102,7 @@ export default function TabelJabatan({ data: initialData, onRefresh }: TabelJaba
         if (!hapusId) return;
 
         try {
-            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/jabatan/${hapusId}`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${hapusId}`, {
                 method: 'DELETE',
                 headers: {
                     "Content-Type": "application/json",
@@ -116,7 +118,7 @@ export default function TabelJabatan({ data: initialData, onRefresh }: TabelJaba
                     onRefresh();
                 }, 2000);
             } else {
-                setNotif({ show: true, message: `Gagal hapus: ${result.message}`, type: "error" });
+                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
             }
         } catch (error) {
             console.error("Error delete :", error);
@@ -136,7 +138,7 @@ export default function TabelJabatan({ data: initialData, onRefresh }: TabelJaba
         }
 
         try {
-            const response = await fetch (`https://ppm-sooty.vercel.app/api/v1/jabatan/${newRow.id}`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${newRow.id}`, {
                 method: "PUT",
                 headers: { 
                     "Content-Type": "application/json",
@@ -150,7 +152,7 @@ export default function TabelJabatan({ data: initialData, onRefresh }: TabelJaba
             
             const result = await response.json();
 
-            if (response.ok){
+            if (response.ok && result.success){
                 // Update UI Lokal
                 const selectedDeptName = departemenOptions.find(opt => opt.value === Number(newRow.departemen_id))?.label;
                 if (selectedDeptName) {
@@ -163,12 +165,12 @@ export default function TabelJabatan({ data: initialData, onRefresh }: TabelJaba
                 );
                 return updatedRow; 
             } else {
-                setNotif({ show: true, message: `Gagal menyimpan: ${result.message}`, type: "error" });
+                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
                 return oldRow;
             }
         } catch (error : any) {
             console.error("Error updating jabatan:", error);
-            setNotif({ show: true, message: `Gagal menyimpan: ${error.message}`, type: "error" });
+            setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
             return oldRow;
         } 
     };

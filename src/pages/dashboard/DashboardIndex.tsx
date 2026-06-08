@@ -3,8 +3,7 @@ import { Loader2 } from "lucide-react";
 import TabelDashboard from "../../components/ui/tabel/TabelDashboard";
 import { useAuthStore } from "../../store/useAuthStore";
 import type { AbsensiData } from "../../types";
-
-
+import { apiFetch } from "../../utils/apiFetch";
 
 export default function DashboardIndex() {
     // 1. STATE UNTUK DATA
@@ -19,7 +18,6 @@ export default function DashboardIndex() {
    
     const [rows, setRows] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    
 
     // 2. JAM BERDETAK
     useEffect(() => {
@@ -31,7 +29,7 @@ export default function DashboardIndex() {
     const token = useAuthStore.getState().token;
     const fetchLiveDashboard = useCallback(async () => {
         try {
-            const response = await fetch("https://ppm-sooty.vercel.app/api/dashboard/live", {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/dashboard/live`, {
                 method: "GET",
                 headers: {
                     "Content-Type" : "application/json",
@@ -70,6 +68,7 @@ export default function DashboardIndex() {
                         is_kerapian: karyawan.is_kerapian || false
                     };
                 });
+                
                 const sortedRows = formattedRows.sort((a: AbsensiData, b: AbsensiData) => {
                     // Ambil waktu terakhir pegawai A (prioritaskan waktu pulang, jika "-" pakai waktu masuk)
                     const jam_A = a.waktu_pulang !== "-" ? a.waktu_pulang : (a.waktu_masuk !== "-" ? a.waktu_masuk : "00:00:00");
@@ -90,9 +89,7 @@ export default function DashboardIndex() {
         } finally {
             setIsLoading(false);
         }
-    }, []);
-
-
+    }, [token]);
 
     // 4. AUTO REFRESH (Panggil fungsi tarik data)
     useEffect(() => {
