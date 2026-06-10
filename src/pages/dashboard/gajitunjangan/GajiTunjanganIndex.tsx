@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Wallet, TrendingDown, TrendingUp, Loader2, PlayCircle } from 'lucide-react';
+// 1. Tambahkan Printer di sini
+import { Wallet, TrendingDown, TrendingUp, Loader2, PlayCircle, Printer } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Button from '../../../components/ui/Button';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
+import 'dayjs/locale/id'; // Pastikan locale bahasa indonesia tersedia untuk format tanggal print
 
 // IMPORT KOMPONEN TABEL
 import { TabelMasterGaji, type MasterGajiData } from '../../../components/ui/tabel/tabelGaji/TabelMasterGaji';
@@ -45,6 +47,17 @@ export default function GajiTunjanganIndex() {
     });
 
     // ========================================================
+    // 2. FUNGSI CETAK SLIP GAJI
+    // ========================================================
+    const handleCetakSemuaSlip = () => {
+        if (rekapGajiData.length === 0) {
+            alert("Tidak ada data gaji yang bisa dicetak!");
+            return;
+        }
+        window.print();
+    };
+
+    // ========================================================
     // FUNGSI GENERATE GAJI (Diarahkan ke Generate Massal)
     // ========================================================
     const handleGenerateGaji = async () => {
@@ -53,7 +66,6 @@ export default function GajiTunjanganIndex() {
             return;
         }
 
-        // Ekstrak tahun dan bulan dari filterValue (Format YYYY-MM)
         const [tahun, bulan] = filterValue.split('-');
 
         const confirmGenerate = window.confirm(`Apakah Anda yakin ingin menghitung dan menerbitkan gaji untuk periode Bulan ${bulan} Tahun ${tahun}?`);
@@ -62,8 +74,6 @@ export default function GajiTunjanganIndex() {
         setIsGenerating(true);
         
         try {
-            // Kita tembak endpoint massal karena ini tombol global
-            // PASTIKAN URL-NYA SEPERTI INI:
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/gaji/generate-massal`, {
                 method: "POST",
                 headers: {
@@ -71,7 +81,6 @@ export default function GajiTunjanganIndex() {
                     "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    // Kita hanya mengirim bulan dan tahun, tanpa pegawai_id
                     periode_bulan: parseInt(bulan),
                     periode_tahun: parseInt(tahun)
                 })
@@ -81,7 +90,6 @@ export default function GajiTunjanganIndex() {
     
             if (response.ok && result.success) {
                 alert(`Sukses! ${result.message}`);
-                // Refresh data tabel agar hasil generate langsung muncul
                 fetchRekapGaji(); 
             } else {
                 alert(getSafeErrorMessage(response.status));
@@ -134,13 +142,11 @@ export default function GajiTunjanganIndex() {
         try {
             setIsLoadingRekap(true);
             
-            // 1. Penentuan URL berdasarkan Dropdown Periode
             let url = `${import.meta.env.VITE_API_BASE_URL}/api/v1/gaji`; 
             
             if (periode === 'bulan' && filterValue) {
                 url = `${import.meta.env.VITE_API_BASE_URL}/api/v1/gaji?filter=${filterValue}`;
             } else if (periode === 'minggu') {
-                // TAMBAHKAN KIRIMAN FILTER DI SINI
                 if (filterValue) {
                     url = `${import.meta.env.VITE_API_BASE_URL}/api/v1/gaji/mingguan?filter=${filterValue}`;
                 } else {
@@ -166,11 +172,9 @@ export default function GajiTunjanganIndex() {
                 
                 let formattedData: RekapGajiData[] = [];
 
-                // 2. Formatting Data
                 if (periode === 'hari') {
-                    formattedData = data; // Data langsung siap pakai dari API harian
+                    formattedData = data;
                 } else {
-                    // Pastikan proses map ini mengembalikan (return) objek
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     formattedData = data.map((item: any) => {
                         const isMingguan = periode === 'minggu';
@@ -191,8 +195,6 @@ export default function GajiTunjanganIndex() {
                 
                 setRekapGajiData(formattedData);
 
-                // 3. Kalkulasi Widget dengan Sabuk Pengaman (Optional Chaining & Fallback)
-                // Jika 'curr' tidak sengaja undefined, ia akan menganggap nilainya 0, bukan crash.
                 const totalPengeluaran = formattedData.reduce((sum, curr) => sum + (curr?.gaji_bersih || 0), 0);
                 const totalBonusSemua = formattedData.reduce((sum, curr) => sum + (curr?.total_bonus || 0), 0);
                 const totalPotonganSemua = formattedData.reduce((sum, curr) => sum + (curr?.total_potongan || 0), 0);
@@ -213,20 +215,19 @@ export default function GajiTunjanganIndex() {
         }
     };
 
-    // Efek untuk memuat data berdasarkan Tab yang aktif
     useEffect(() => {
         if (activeTab === 'master') {
             if (masterJabatanData.length === 0) {
-                fectchMasterJabatan();
+                setTimeout(() => {
+                    fectchMasterJabatan();
+                }, 0);
             }
         } else if (activeTab === 'rekap') {
-            // Panggil API saat tab rekap dibuka
             fetchRekapGaji();
         }
-    // HANYA activeTab yang boleh ada di dalam array ini!
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab]);
-    // Handle aksi Filter
+
     const handleFilter = () => {
         if (!filterValue && periode !== "minggu") {
             alert("Harap pilih tanggal/waktu terlebih dahulu!");
@@ -247,8 +248,8 @@ export default function GajiTunjanganIndex() {
     return (
         <div className="flex flex-col gap-6 w-full p-2">
             
-            {/* SISTEM TAB NAVIGASI */}
-            <div className="flex gap-6 border-b border-gray-200 px-2">
+            {/* SISTEM TAB NAVIGASI - Ditambah print:hidden */}
+            <div className="flex gap-6 border-b border-gray-200 px-2 print:hidden">
                 <button
                     onClick={() => setActiveTab('rekap')}
                     className={`pb-3 text-sm font-bold border-b-2 transition-all duration-200 ${
@@ -271,8 +272,8 @@ export default function GajiTunjanganIndex() {
             {activeTab === 'rekap' && (
                 <div className="flex flex-col gap-6 animate-in fade-in duration-300">
                     
-                    {/* WIDGETS */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* WIDGETS - Ditambah print:hidden */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print:hidden">
                         <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
                             <div className="p-3 bg-blue-100 text-blue-600 rounded-lg"><Wallet size={24} /></div>
                             <div>
@@ -304,12 +305,21 @@ export default function GajiTunjanganIndex() {
                         </div>
                     </div>
 
-                    {/* TABEL DATA GAJI */}
-                    <section className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+                    {/* TABEL DATA GAJI - Ditambah print:hidden */}
+                    <section className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col print:hidden">
                         <div className="p-4 border-b flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50 gap-4">
                             <h2 className="text-lg font-bold text-gray-700">Rincian Gaji Karyawan</h2>
                             
-                            <div className="flex gap-2 w-full md:w-auto items-center">
+                            <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
+                                {/* 3. TOMBOL CETAK SLIP GAJI DISISIPKAN DI SINI */}
+                                <button
+                                    onClick={handleCetakSemuaSlip}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 shadow-sm transition-colors mr-2"
+                                >
+                                    <Printer size={16} />
+                                    Cetak Slip Gaji
+                                </button>
+
                                 <select value={periode} onChange={handlePeriodeChange} className="border border-gray-300 rounded-lg px-3 py-1.5 bg-white outline-none focus:border-red-500 shadow-sm text-sm">
                                     <option value="hari">Harian</option>
                                     <option value="minggu">Mingguan</option>
@@ -353,9 +363,9 @@ export default function GajiTunjanganIndex() {
                 </div>
             )}
 
-            {/* KONTEN TAB 2: MASTER GAJI JABATAN */}
+            {/* KONTEN TAB 2: MASTER GAJI JABATAN - Ditambah print:hidden */}
             {activeTab === 'master' && (
-                <div className="flex flex-col gap-6 animate-in fade-in duration-300 relative min-h-50 w-full">
+                <div className="flex flex-col gap-6 animate-in fade-in duration-300 relative min-h-50 w-full print:hidden">
                     {isLoadingMaster && (
                         <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center rounded-xl">
                             <Loader2 className="animate-spin text-red-600" size={32} />
@@ -370,6 +380,114 @@ export default function GajiTunjanganIndex() {
                     </div>
                 </div>
             )}
+
+            {/* ================================================================== */}
+            {/* 4. TEMPLATE SLIP GAJI TERSEMBUNYI (HANYA MUNCUL SAAT PRINT)        */}
+            {/* ================================================================== */}
+            <div className="hidden print:block w-full text-black font-sans printable-area">
+                <style>{`
+                    @media print {
+                        @page { 
+                            size: A4 portrait; 
+                            margin: 4mm 4mm; 
+                        }
+                        /* TRICK: Sembunyikan TOTAL seluruh elemen halaman web */
+                        body * {
+                            visibility: hidden;
+                        }
+                        /* Kembalikan visibilitas khusus untuk area slip gaji ini saja */
+                        .printable-area, .printable-area * {
+                            visibility: visible;
+                        }
+                        /* Posisikan slip di pojok paling atas kertas */
+                        .printable-area {
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            width: 100%;
+                        }
+                        body { 
+                            -webkit-print-color-adjust: exact; 
+                            background: white; 
+                        }
+                    }
+                `}</style>
+
+                {/* Grid 3 Kolom Kesamping */}
+                <div className="grid grid-cols-3 gap-1.5">
+                    {rekapGajiData.map((karyawan) => (
+                        <div 
+                            key={karyawan.id} 
+                            className="border border-dashed border-gray-400 p-2 bg-white print:break-inside-avoid flex flex-col justify-between"
+                            style={{ height: '35mm', width: '100%', boxSizing: 'border-box' }}
+                        >
+                            {/* Kop Slip Mini */}
+                            <div className="flex justify-between items-center border-b border-gray-800 pb-0.5 mb-1">
+                                <div>
+                                    <h4 className="text-[8.5px] font-extrabold uppercase tracking-tight text-gray-900">SLIP GAJI</h4>
+                                    <p className="text-[6.5px] text-gray-500 font-medium leading-none">
+                                        {/* Format bulan menggunakan Dayjs locale indonesia */}
+                                        {dayjs(filterValue || undefined).locale('id').format('MMMM YYYY')}
+                                    </p>
+                                </div>
+                                <div className="text-right leading-none">
+                                    <h5 className="text-[7.5px] font-black text-gray-900">PT. TIGA BERLIAN (T-Be)</h5>
+                                    <p className="text-[5.5px] text-gray-400 italic">Rahasia</p>
+                                </div>
+                            </div>
+
+                            {/* Identitas Karyawan Mini */}
+                            <div className="grid grid-cols-2 gap-x-1 text-[7.5px] leading-tight mb-1">
+                                <div className="flex gap-0.5 truncate">
+                                    <span className="text-gray-500 shrink-0">Nama:</span>
+                                    <span className="font-bold text-gray-900 truncate">{karyawan.nama}</span>
+                                </div>
+                                <div className="flex gap-0.5 truncate">
+                                    <span className="text-gray-500 shrink-0">Jabt:</span>
+                                    <span className="font-bold text-gray-900 truncate">{karyawan.jabatan}</span>
+                                </div>
+                            </div>
+
+                            {/* Rincian Finansial Ultra Padat */}
+                            <div className="grid grid-cols-2 gap-x-2 text-[7px] leading-tight bg-gray-50 p-1 rounded border border-gray-100">
+                                <div>
+                                    <div className="flex justify-between font-bold text-gray-700 border-b border-gray-200 text-[6.5px] mb-0.5">
+                                        <span>PENERIMAAN</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">Gaji Pokok</span>
+                                        <span className="font-medium text-gray-900">{formatRupiah(karyawan.gaji_dasar)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">Tunj & Bon</span>
+                                        <span className="font-medium text-green-700">+{formatRupiah(karyawan.total_bonus)}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="flex justify-between font-bold text-gray-700 border-b border-gray-200 text-[6.5px] mb-0.5">
+                                        <span>POTONGAN</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">Pot/Denda</span>
+                                        <span className="font-medium text-red-700">-{formatRupiah(karyawan.total_potongan)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer Bersih & Total Gaji */}
+                            <div className="mt-0.1 pt-0.5 border-t border-gray-300 flex justify-between items-end leading-none">
+                                <div>
+                                    <span className="text-[6px] uppercase text-gray-400 font-bold block">Take Home Pay</span>
+                                    <span className="text-[9.5px] font-black text-blue-900">{formatRupiah(karyawan.gaji_bersih)}</span>
+                                </div>
+                                <div className="text-center text-[6.5px] w-14 border-b border-gray-400 text-gray-700 font-medium">
+                                    Penerima
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 }
