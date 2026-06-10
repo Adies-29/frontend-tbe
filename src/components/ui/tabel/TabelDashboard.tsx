@@ -14,6 +14,8 @@ import ButtonNuklir from "../ButtonNuklir";
 import { useMediaQuery, useTheme } from "@mui/material";
 import { getSafeErrorMessage } from "../../../utils/errorHandler";
 import { apiFetch } from "../../../utils/apiFetch";
+import { defaultDataGridSx } from "./dataGridStyles";
+import Notif from "../Notif";
 
 
 
@@ -33,6 +35,11 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     const [rows, setRows] = useState<AbsensiData[]>(initialData);
     const [rowModesModel] = useState<GridRowModesModel>({});
     const [updatingId, setUpdatingId] = useState<string | null>(null);
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
     const token = useAuthStore((state) => state.token);
     const navigate = useNavigate();
     const location = useLocation();
@@ -84,7 +91,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             }
         } catch (error: any) {
             console.error("Gagal update kerapihan:", error);
-            alert(getSafeErrorMessage());
+            setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
         } finally {
             setUpdatingId(null);
         }
@@ -181,7 +188,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
 
                 return (
 
-                    <span className={`w-36 inline-flex justify-center items-center px-6 py-1 rounded text-sm font-bold ${colorClass}`}>
+                    <span className={`min-w-[120px] px-4 py-1.5 inline-flex justify-center items-center rounded-lg text-xs md:text-sm font-bold ${colorClass}`}>
                         {statusText}
                     </span>
                 );
@@ -240,7 +247,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                 }
 
                 return (
-                    <label className="flex items-center gap-3 cursor-pointer h-full group">
+                    <label className="flex items-center gap-2 md:gap-3 cursor-pointer h-full group p-1 md:p-0">
                         <input
                             type="checkbox"
                             checked={status === true}
@@ -305,7 +312,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                     <div className="flex justify-center w-full">
                         <button
                             onClick={() => navigate(`/dashboard/lembur/tambah-lembur?pegawai_id=${params.row.id}&nama=${params.row.nama}`)}
-                            className=" w-25 flex justify-center items-center gap-1  text-purple-600 px-2 hover:text-black cursor-pointer semibold ">
+                            className=" w-25 flex justify-center items-center gap-1  text-purple-600 px-3 md:py-1 hover:text-black cursor-pointer font-semibold min-h-[40px] md:min-h-0 rounded-md active:bg-purple-50 ">
                                 
                             <PlusCircle size={14} />
                             Lembur
@@ -348,7 +355,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                     <div className="flex justify-center items-center w-full h-full">
                         <button
                             onClick={() => handleBukaPopUp(params.row.id, params.row.nama)}
-                            className="flex justify-center items-center gap-1 text-black hover:text-red-600 font-bold px-2 py-1 rounded text-xs cursor-pointer"
+                            className="flex justify-center items-center gap-1 text-black hover:text-red-600 font-bold px-3 py-2 md:py-1 rounded-md text-xs cursor-pointer min-h-[40px] md:min-h-0 active:bg-red-50"
                         >
                             <Trash2 size={18} /> Hapus
                         </button>
@@ -383,35 +390,32 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                 }}
                 disableRowSelectionOnClick
                 sx={{
-                    border: "1px solid #e5e7eb",
-                    "& .MuiDataGrid-columnHeaders": {
-                        backgroundColor: "#f3f4f6",
-                        color: "black",
-                        fontWeight: "bold",
-                        borderBottom: "1px solid #9ca3af",
-                    },
-                    width: '100%',
+                    ...defaultDataGridSx,
                     minWidth: 0,
                     '& .MuiDataGrid-virtualScroller': {
                         overflowX: 'auto',
                     },
-                    '& .MuiDataGrid-cell:focus': { outline: 'none' },
-                    '& .MuiDataGrid-columnHeader:focus': { outline: 'none' },
                     '& .bg-gray-500': {
                         backgroundColor: '#f9fafb !important',
                         '&:hover': { backgroundColor: '#f3f4f6 !important' }
                     },
                 }}
             />
-            <ButtonNuklir
+            <ButtonNuklir 
                 isOpen={isNuklirOpen}
                 onClose={() => setIsNuklirOpen(false)}
                 voidTarget={targetNuklir}
                 token={token || ""}
-                onSuccess={onRefresh} // Panggil fungsi refresh dari parent setelah sukses void
-
+                onSuccess={() => {
+                    if (onRefresh) onRefresh();
+                }}
             />
-
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+            />
         </div>
     );
 }

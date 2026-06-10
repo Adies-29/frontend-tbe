@@ -16,6 +16,7 @@ import ConfirmPopUp from '../../ConfirmPopUp';
 import Notif from '../../Notif';
 import { getSafeErrorMessage } from '../../../../utils/errorHandler';
 import { apiFetch } from "../../../../utils/apiFetch";
+import { defaultDataGridSx } from "../dataGridStyles";
 
 
 
@@ -278,15 +279,7 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
                 }}
                 pageSizeOptions={[10, 20]}
                 disableRowSelectionOnClick
-                sx={{
-                    border: "1px solid #e5e7eb",
-                    "& .MuiDataGrid-columnHeaders": {
-                        backgroundColor: "#f3f4f6",
-                        color: "black",
-                        fontWeight: "bold",
-                        borderBottom: "1px solid #9ca3af",
-                    },
-                }}
+                sx={defaultDataGridSx}
             />
             <ConfirmPopUp
                 isOpen={showPopUp}

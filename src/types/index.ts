@@ -9,6 +9,10 @@ export interface AbsensiData {
     status_lembur: string;
 }
 
+export interface LemburData{
+    
+}
+
 export interface PegawaiData {
     id: number;
     nama: string;

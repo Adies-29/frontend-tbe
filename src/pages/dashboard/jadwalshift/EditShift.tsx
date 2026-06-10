@@ -90,13 +90,13 @@ export default function EditShift() {
                         batas_akhir_scan_pulang_menit: shift.batas_akhir_scan_pulang_menit,
                     });
                 } else {
-                    alert("Gagal memuat data konfigurasi shift.");
-                    navigate(-1);
+                    setNotif({ show: true, message: "Gagal memuat data konfigurasi shift.", type: "error" });
+                    setTimeout(() => navigate(-1), 1500);
                 }
 
             } catch (error) {
                 console.error("Error fetching shift details:", error);
-                alert("Terjadi kesalahan koneksi saat mengambil data server.");
+                setNotif({ show: true, message: "Terjadi kesalahan koneksi saat mengambil data server.", type: "error" });
             } finally {
                 setIsFetchingData(false)
             }
@@ -175,7 +175,7 @@ export default function EditShift() {
                             register={register}
                             error={errors.kode_shift?.message}
                         />
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input
                                 label="Jam Masuk"
                                 nama="jam_masuk"
@@ -215,7 +215,7 @@ export default function EditShift() {
                             register={register}
                             error={errors.batas_maksimal_lembur_menit?.message}
                         />
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input
                                 label="Batas Scan Masuk (Menit)"
                                 nama="batas_akhir_scan_masuk_menit"

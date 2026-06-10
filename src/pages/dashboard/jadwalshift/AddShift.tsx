@@ -127,7 +127,7 @@ export default function AddShift() {
                             register={register}
                             error={errors.kode_shift?.message}
                         />
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input
                                 label="Jam Masuk"
                                 nama="jam_masuk"
@@ -166,7 +166,7 @@ export default function AddShift() {
                             register={register}
                             error={errors.batas_maksimal_lembur_menit?.message}
                         />
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input
                                 label="Batas Scan Masuk (Menit)"
                                 nama="batas_akhir_scan_masuk_menit"

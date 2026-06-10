@@ -1,5 +1,6 @@
 
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import { defaultDataGridSx } from "../dataGridStyles";
 
 // Mendefinisikan bentuk data yang akan diterima dari luar (props)
 interface TabelDetailDepartemenProps {
@@ -24,15 +25,7 @@ export default function TabelDetailDepartemen({ data }: TabelDetailDepartemenPro
             }}
             pageSizeOptions={[5, 10]}
             disableRowSelectionOnClick
-            sx={{
-                border: '1px solid #e5e7eb',
-                '& .MuiDataGrid-columnHeaders': {
-                    backgroundColor: '#f9fafb',
-                    color: 'black',
-                    fontWeight: 'bold',
-                    borderBottom: '1px solid #9ca3af',
-                },
-            }}
+            sx={defaultDataGridSx}
         />
     );
 }

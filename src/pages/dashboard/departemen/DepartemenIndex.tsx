@@ -6,6 +6,8 @@ import { Loader2 } from "lucide-react";
 import type { DepartemenData } from "../../../types";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { apiFetch } from "../../../utils/apiFetch";
+import Notif from "../../../components/ui/Notif";
+
 
 
 export default function DepartemenIndex() {
@@ -15,6 +17,11 @@ export default function DepartemenIndex() {
     // 2. State untuk menyimpan data dari Database & status Loading
     const [dataDepartemen, setDataDepartemen] = useState<DepartemenData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
 
     const fetchDepartemen = async () => {
         setIsLoading(true);
@@ -44,7 +51,7 @@ export default function DepartemenIndex() {
             }
         } catch (error) {
             console.error("Error fetching data departemen & jabatan:", error);
-            alert("Gagal memuat data Departemen. Pastikan backend berjalan.");
+            setNotif({ show: true, message: "Gagal memuat data Departemen. Pastikan backend berjalan.", type: "error" });
         } finally {
             setIsLoading(false);
         }
@@ -99,6 +106,12 @@ export default function DepartemenIndex() {
                 )}
 
             </section>
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+            />
         </div>
     );
 }

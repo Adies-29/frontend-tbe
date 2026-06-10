@@ -13,6 +13,7 @@ import { TabelRekapGaji, type RekapGajiData } from '../../../components/ui/tabel
 import { useAuthStore } from '../../../store/useAuthStore';
 import { getSafeErrorMessage } from '../../../utils/errorHandler';
 import { apiFetch } from "../../../utils/apiFetch";
+import Notif from '../../../components/ui/Notif';
 
 const formatRupiah = (angka: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
@@ -43,13 +44,19 @@ export default function GajiTunjanganIndex() {
         totalBonus: 0,
         totalPotongan: 0
     });
+    
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" | "info" | "warning" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
 
     // ========================================================
     // FUNGSI GENERATE GAJI (Diarahkan ke Generate Massal)
     // ========================================================
     const handleGenerateGaji = async () => {
         if (!filterValue) {
-            alert("Harap pilih bulan dan tahun di kalender terlebih dahulu sebelum men-generate gaji.");
+            setNotif({ show: true, message: "Harap pilih bulan dan tahun di kalender terlebih dahulu sebelum men-generate gaji.", type: "warning" });
             return;
         }
 
@@ -80,15 +87,15 @@ export default function GajiTunjanganIndex() {
             const result = await response.json();
     
             if (response.ok && result.success) {
-                alert(`Sukses! ${result.message}`);
+                setNotif({ show: true, message: `Sukses! ${result.message}`, type: "success" });
                 // Refresh data tabel agar hasil generate langsung muncul
                 fetchRekapGaji(); 
             } else {
-                alert(getSafeErrorMessage(response.status));
+                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
             }
         } catch (error) {
             console.error("Error generate gaji:", error);
-            alert("Terjadi kesalahan koneksi saat menghitung gaji.");
+            setNotif({ show: true, message: "Terjadi kesalahan koneksi saat menghitung gaji.", type: "error" });
         } finally {
             setIsGenerating(false);
         }
@@ -229,7 +236,7 @@ export default function GajiTunjanganIndex() {
     // Handle aksi Filter
     const handleFilter = () => {
         if (!filterValue && periode !== "minggu") {
-            alert("Harap pilih tanggal/waktu terlebih dahulu!");
+            setNotif({ show: true, message: "Harap pilih tanggal/waktu terlebih dahulu!", type: "warning" });
             return;
         }
         fetchRekapGaji(); 
@@ -370,6 +377,12 @@ export default function GajiTunjanganIndex() {
                     </div>
                 </div>
             )}
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type as any}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+            />
         </div>
     );
 }

@@ -94,7 +94,7 @@ export default function Header() {
                     </h1>
                 </div>
 
-               <div className="md:hidden bg-[#C90000] rounded-full flex items-center gap-2 pr-4 pl-1 py-1 my-2 shadow-md ">
+               <div className="md:hidden bg-[#C90000] rounded-full flex items-center gap-2 px-3 py-1.5 my-2 shadow-md">
                     <div className="bg-[#FFB800] w-8 h-8 rounded-full border-2 border-white/20"></div>
                     
                     <span className="text-white font-medium text-base md:text-xs tracking-wide text-center">

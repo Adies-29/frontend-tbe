@@ -104,12 +104,12 @@ export default function AturGajiJabatan() {
                         bonus_lembur_tahunan: gaji.bonus_lembur_tahunan || 0,
                     });
                 } else {
-                    alert("Gagal memuat data konfigurasi Gaji Jabatan.");
-                    navigate(-1);
+                    setNotif({ show: true, message: "Gagal memuat data konfigurasi Gaji Jabatan.", type: "error" });
+                    setTimeout(() => navigate(-1), 1500);
                 }
             } catch (error) {
                 console.error("Error fetching Gaji Jabatan details:", error);
-                alert("Terjadi kesalahan koneksi saat mengambil data server.");
+                setNotif({ show: true, message: "Terjadi kesalahan koneksi saat mengambil data server.", type: "error" });
             } finally {
                 setIsFetchingData(false);
             }

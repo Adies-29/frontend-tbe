@@ -9,6 +9,7 @@ import { InputPassword } from "../components/ui/InputPassword";
 import { useState } from "react";
 import { getSafeErrorMessage } from "../utils/errorHandler";
 import { apiFetch } from "../utils/apiFetch";
+import Notif from "../components/ui/Notif";
 
 
 // 1. Ubah email menjadi username agar sesuai dengan backend
@@ -27,6 +28,12 @@ export default function Login() {
     const navigate = useNavigate();
     const login = useAuthStore((state) => state.login);
     const [isLoading, setIsLoading] = useState(false); // State untuk loading button
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
+
     const {
         register,
         handleSubmit,
@@ -59,15 +66,17 @@ export default function Login() {
                 // Simpan token JWT ke Zustand (dan LocalStorage)
                 login(data.username, result.token);
 
-                alert("Login berhasil!");
-                navigate("/dashboard");
+                setNotif({ show: true, message: "Login berhasil", type: "success" });
+                setTimeout(() => {
+                    navigate("/dashboard");
+                }, 2000);
             } else {
                 // Tampilkan pesan error dari backend (misal: "Username salah")
-                alert(getSafeErrorMessage(response.status));
+                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
             }
 
         } catch (error) {
-            alert("Terjadi kesalahan saat login. Silakan coba lagi.");
+            setNotif({ show: true, message: "Terjadi kesalahan saat login. Silakan coba lagi.", type: "error" });
         } finally {
             setIsLoading(false);
         }
@@ -108,6 +117,12 @@ export default function Login() {
                 </form>
 
             </div>
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+            />
 
         </div>
     );

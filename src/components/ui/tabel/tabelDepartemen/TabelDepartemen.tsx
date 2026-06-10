@@ -15,6 +15,7 @@ import ConfirmPopUp from '../../ConfirmPopUp';
 import Notif from '../../Notif';
 import { getSafeErrorMessage } from '../../../../utils/errorHandler';
 import { apiFetch } from "../../../../utils/apiFetch";
+import { defaultDataGridSx } from "../dataGridStyles";
 
 // --- INTERFACES ---
 interface DepartemenTableProps {
@@ -223,15 +224,7 @@ export default function DepartemenTable({ data: initialData = [], onRefresh }: D
                 }}
                 pageSizeOptions={[10, 20]}
                 disableRowSelectionOnClick
-                sx={{
-                    border: '1px solid #e5e7eb',
-                    '& .MuiDataGrid-columnHeaders': {
-                        backgroundColor: '#f3f4f6',
-                        color: 'black',
-                        fontWeight: 'bold',
-                        borderBottom: '1px solid #9ca3af',
-                    },
-                }}
+                sx={defaultDataGridSx}
             />
             <ConfirmPopUp
                 isOpen={showPopUp}
@@ -240,8 +233,8 @@ export default function DepartemenTable({ data: initialData = [], onRefresh }: D
                     setHapusId(null);
                 }}
                 onConfirm={hapus}
-                title="Hapus Data Pegawai?"
-                message="Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus data pegawai ini dari sistem?"
+                title="Hapus Data Departemen?"
+                message="Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus data departemen ini dari sistem?"
                 confirmText="Ya, Hapus"
                 variant="danger"
             />

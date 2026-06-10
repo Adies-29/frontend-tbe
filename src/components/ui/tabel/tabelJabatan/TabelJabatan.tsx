@@ -15,6 +15,7 @@ import ConfirmPopUp from '../../ConfirmPopUp';
 import Notif from '../../Notif';
 import { getSafeErrorMessage } from '../../../../utils/errorHandler';
 import { apiFetch } from "../../../../utils/apiFetch";
+import { defaultDataGridSx } from "../dataGridStyles";
 
 interface TabelJabatanProps {
     data: JabatanData[];
@@ -293,6 +294,7 @@ export default function TabelJabatan({ data: initialData, onRefresh }: TabelJaba
                 pageSizeOptions={[10, 20]}
                 disableRowSelectionOnClick
                 sx={{
+                    ...defaultDataGridSx,
                     border: 'none',
                     '& .MuiDataGrid-columnHeaders': {
                         backgroundColor: '#f9fafb',
@@ -312,8 +314,8 @@ export default function TabelJabatan({ data: initialData, onRefresh }: TabelJaba
                     setHapusId(null);
                 }}
                 onConfirm={hapus}
-                title="Hapus Data Pegawai?"
-                message="Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus data pegawai ini dari sistem?"
+                title="Hapus Data Jabatan?"
+                message="Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus data jabatan ini dari sistem?"
                 confirmText="Ya, Hapus"
                 variant="danger"
             />

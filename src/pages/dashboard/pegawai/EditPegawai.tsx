@@ -156,7 +156,7 @@ export default function EditPegawai(){
                 
             } catch (error) {
                 console.error("Gagal memuat data:", error);
-                alert("Terjadi kesalahan saat memuat data dari server.");
+                setNotif({ show: true, message: "Terjadi kesalahan saat memuat data dari server.", type: "error" });
             } finally{
                 setIsFetchingData(false);
             }
