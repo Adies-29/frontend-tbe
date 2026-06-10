@@ -75,6 +75,7 @@ export default function Login() {
                 setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
             }
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             setNotif({ show: true, message: "Terjadi kesalahan saat login. Silakan coba lagi.", type: "error" });
         } finally {
