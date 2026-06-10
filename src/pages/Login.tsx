@@ -66,6 +66,7 @@ export default function Login() {
                 alert(getSafeErrorMessage(response.status));
             }
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             alert("Terjadi kesalahan saat login. Silakan coba lagi.");
         } finally {
