@@ -114,7 +114,7 @@ export default function TabelJabatan({ data: initialData, onRefresh }: TabelJaba
 
             if (response.ok && result.success) {
                 setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(hapusId)));
-                setNotif({ show: true, message: "Data berhasil dihapus!", type: "success" });
+                setNotif({ show: true, message: "Data jabatan berhasil dihapus", type: "success" });
                 setTimeout(() => {
                     onRefresh();
                 }, 2000);
@@ -189,7 +189,7 @@ export default function TabelJabatan({ data: initialData, onRefresh }: TabelJaba
             minWidth: 180,
             editable: true,
             renderCell: (params) => (
-                <span className="font-medium text-gray-800">{params.value}</span>
+                <span className="text-gray-800 font-bold">{params.value}</span>
             )
         },
         {

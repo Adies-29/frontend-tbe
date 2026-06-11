@@ -168,7 +168,25 @@ export default function AddPegawai() {
                     navigate("/dashboard/data-pegawai");
                 }, 2000);
             }else{
-                setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });
+                // Ambil pesan error spesifik dari respons backend
+                let errorMsg = "Gagal menyimpan ke database. Coba lagi.";
+                
+                if (result.message) {
+                    errorMsg = result.message;
+                } else if (result.error) {
+                    errorMsg = typeof result.error === 'string' ? result.error : JSON.stringify(result.error);
+                } else if (result.errors) {
+                    // Jika error berupa array/object (misal hasil validasi form dari backend)
+                    errorMsg = Object.values(result.errors).flat().join(", ");
+                }
+
+                // Cek apakah pesan error terindikasi masalah data duplikat
+                const lowerError = errorMsg.toLowerCase();
+                if (lowerError.includes("duplicate") || lowerError.includes("sudah terdaftar") || lowerError.includes("already exists") || lowerError.includes("unique")) {
+                    errorMsg = `Data sudah digunakan! Pastikan NIK, No BPJS, No HP, Email, atau PIN Mesin tidak sama dengan pegawai lain. (Server: ${errorMsg})`;
+                }
+
+                setNotif({ show: true, message: errorMsg, type: "error" });
             }
 
         } catch (error) {

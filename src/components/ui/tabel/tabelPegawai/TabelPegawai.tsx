@@ -75,8 +75,7 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
             if (response.ok && result.success) {
                 // Hapus data dari tabel secara realtime
                 setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(hapusId)));
-                setNotif({ show: true, message: "Data berhasil dihapus!", type: "success" });
-
+                setNotif({ show: true, message: "Data pegawai berhasil dihapus", type: "success" });
                 setTimeout(() => {
                     onRefresh();
                 }, 2000);
@@ -152,7 +151,7 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
         { field: 'nik', headerName: 'NIK', width: 160 },
         {
             field: 'nama',
-            headerName: 'Nama',
+            headerName: 'Nama Pegawai',
             flex: 1,
             minWidth: 150,
             renderCell: (params) => {
