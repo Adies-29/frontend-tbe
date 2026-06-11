@@ -74,13 +74,14 @@ export default function JadwalShiftIndex() {
                     <p className="text-sm text-gray-500 mt-1">Kelola kalender kerja karyawan dan master aturan shift.</p>
                 </div>
                 {/* Tombol aksi dinamis berdasarkan Tab yang aktif */}
-                <Button  
-                    label={activeTab === 'jadwal' ? "Tukar Shift / Override" : "Tambah Master Shift"} 
-                    onClick={() => {
-                        if (activeTab === 'jadwal') navigate('/dashboard/jadwal-shift/tukar');
-                        else navigate('/dashboard/jadwal-shift/tambah');
+                {activeTab === 'shift' &&(
+                    <Button  
+                    label="Tambah Master Shift" 
+                    onClick={() => { navigate('/dashboard/jadwal-shift/tambah');
+                        
                     }} 
-                />
+                />)}
+                
             </div>
 
             {/* INFO BANNER */}
