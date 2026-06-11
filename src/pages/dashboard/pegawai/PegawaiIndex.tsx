@@ -42,7 +42,7 @@ export default function PegawaiIndex() {
             }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error) {
             console.error("Error fetching pegawai:", error);
             setErrorMsg(getSafeErrorMessage());
         }finally{

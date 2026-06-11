@@ -51,6 +51,7 @@ export default function AturGajiJabatan() {
         watch, // Tarik fungsi watch untuk memantau perubahan input secara realtime
         formState: { errors }
     } = useForm<FormData>({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         resolver: zodResolver(schema) as any,
         defaultValues: {
             tipe_penggajian: "Bulanan", // Default value
@@ -104,12 +105,12 @@ export default function AturGajiJabatan() {
                         bonus_lembur_tahunan: gaji.bonus_lembur_tahunan || 0,
                     });
                 } else {
-                    alert("Gagal memuat data konfigurasi Gaji Jabatan.");
-                    navigate(-1);
+                    setNotif({ show: true, message: "Gagal memuat data konfigurasi Gaji Jabatan.", type: "error" });
+                    setTimeout(() => navigate(-1), 1500);
                 }
             } catch (error) {
                 console.error("Error fetching Gaji Jabatan details:", error);
-                alert("Terjadi kesalahan koneksi saat mengambil data server.");
+                setNotif({ show: true, message: "Terjadi kesalahan koneksi saat mengambil data server.", type: "error" });
             } finally {
                 setIsFetchingData(false);
             }

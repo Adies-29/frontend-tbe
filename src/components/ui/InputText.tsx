@@ -1,16 +1,17 @@
-import type React from "react";
 
-interface InputTextProps{
+import type { UseFormRegister, FieldValues, Path } from 'react-hook-form';
+
+interface InputTextProps<T extends FieldValues>{
     label:string;
-    nama:string;
+    nama:Path<T>;
     type?:string;
     error?:string;
-    register:any;
+    register:UseFormRegister<T>;
     disabled?: boolean;
     placeholder?: string;
 }
 
-export const Input: React.FC <InputTextProps> = ({
+export const Input = <T extends FieldValues> ({
     label,
     nama,
     type = "text",
@@ -18,7 +19,7 @@ export const Input: React.FC <InputTextProps> = ({
     register,
     placeholder,
     disabled = false
-}) => {
+}: InputTextProps<T>) => {
     return (
         <div className="flex flex-col gap-1">
             {/* 3. Perbaikan kecil: htmlFor sebaiknya pakai 'nama', bukan 'label' karena label sering pakai spasi */}

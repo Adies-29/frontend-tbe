@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import Notif from "../../../components/ui/Notif";
 import { apiFetch } from "../../../utils/apiFetch";
+import type { DepartemenOption, JabatanOption, ShiftOption, KotaOption } from "../../../types";
 
 
 
@@ -64,14 +65,14 @@ export default function AddPegawai() {
     const navigate = useNavigate();
     const token = useAuthStore((state) => state.token);
     const [isSaving, setIsSaving] = useState(false);
-    const [departemenList, setDepartemenList] = useState<any[]>([]);
+    const [departemenList, setDepartemenList] = useState<DepartemenOption[]>([]);
    
-    const [shiftList, setShiftList] = useState<any[]>([]);
+    const [shiftList, setShiftList] = useState<ShiftOption[]>([]);
    
-    const [allJabatan, setAllJabatan] = useState<any[]>([]);
+    const [allJabatan, setAllJabatan] = useState<JabatanOption[]>([]);
     
-    const [jabatanList, setJabatanList] = useState<any[]>([]);
-    const [kotaList, _setKotaList] = useState<any[]>(MOCK_KOTA); 
+    const [jabatanList, setJabatanList] = useState<JabatanOption[]>([]);
+    const [kotaList, _setKotaList] = useState<KotaOption[]>(MOCK_KOTA); 
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
         show: false,
         message: "",

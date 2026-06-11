@@ -16,6 +16,7 @@ import ConfirmPopUp from '../../ConfirmPopUp';
 import Notif from '../../Notif';
 import { getSafeErrorMessage } from '../../../../utils/errorHandler';
 import { apiFetch } from "../../../../utils/apiFetch";
+import { defaultDataGridSx } from "../dataGridStyles";
 
 
 
@@ -103,7 +104,7 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
 
             setRows((prevRows) => prevRows.map((row) => (row.id === newRow.id ? updatedRow : row)));
             return updatedRow;
-        } catch (error : any) {
+        } catch (error : unknown) {
             console.error("Gagal update:", error);
             setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
             throw error;
@@ -129,10 +130,14 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
             field: 'jam_kerja', 
             headerName: 'Jam Kerja', 
             width: 220,
+            align:'center',
+            headerAlign:'center',
             renderCell: (params) => (
-                <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold border border-blue-100">
-                    <Clock size={14} />
-                    {params.row.jam_masuk} - {params.row.jam_pulang}
+                <div className="flex items-center justify-center w-full h-full">
+                    <div className="flex items-center justify-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold border border-blue-100">
+                        <Clock size={14} />
+                        {params.row.jam_masuk} - {params.row.jam_pulang}
+                    </div>
                 </div>
             )
         },
@@ -212,14 +217,8 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
                 pageSizeOptions={[5, 10, 20]}
                 disableRowSelectionOnClick
                 sx={{
-                    border: "1px solid #e5e7eb",
+                    ...defaultDataGridSx,
                     borderRadius: "12px",
-                    "& .MuiDataGrid-columnHeaders": {
-                        backgroundColor: "#f3f4f6",
-                        color: "black",
-                        fontWeight: "bold",
-                        borderBottom: "1px solid #9ca3af",
-                    },
                     "& .MuiDataGrid-cell": {
                         borderBottom: "1px solid #F3F4F6",
                     },
@@ -232,8 +231,8 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
                     setHapusId(null);
                 }}
                 onConfirm={hapus}
-                title="Hapus Data Pegawai?"
-                message="Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus data pegawai ini dari sistem?"
+                title="Hapus Data Shift?"
+                message="Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus data shift ini dari sistem?"
                 confirmText="Ya, Hapus"
                 variant="danger"
             />
@@ -246,5 +245,3 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
         </div>
     );
 }
-
-

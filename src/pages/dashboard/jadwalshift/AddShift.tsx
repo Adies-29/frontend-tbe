@@ -51,8 +51,7 @@ export default function AddShift() {
         watch,
         formState: { errors }
     } = useForm<FormData>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(schema) as any,
+        resolver: zodResolver(schema) as any ,
         defaultValues: {
             lintas_hari: false,
             batas_toleransi_menit: 0,
@@ -127,7 +126,7 @@ export default function AddShift() {
                             register={register}
                             error={errors.kode_shift?.message}
                         />
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input
                                 label="Jam Masuk"
                                 nama="jam_masuk"
@@ -166,7 +165,7 @@ export default function AddShift() {
                             register={register}
                             error={errors.batas_maksimal_lembur_menit?.message}
                         />
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input
                                 label="Batas Scan Masuk (Menit)"
                                 nama="batas_akhir_scan_masuk_menit"

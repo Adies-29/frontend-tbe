@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { Briefcase, Users, Loader2 } from "lucide-react"; 
 import Button from "../../../components/ui/Button";
 import TabelJabatan from "../../../components/ui/tabel/tabelJabatan/TabelJabatan";
-import type { JabatanData } from "../../../types";
+import type { JabatanData, JabatanOption, PegawaiData } from "../../../types";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { apiFetch } from "../../../utils/apiFetch";
+import Notif from "../../../components/ui/Notif";
 
 export default function JabatanIndex() {
     const navigate = useNavigate();
@@ -13,6 +14,11 @@ export default function JabatanIndex() {
     // 2. State untuk menyimpan data dari Database & status Loading
     const [dataJabatan, setDataJabatan] = useState<JabatanData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
 
     // 3. Fungsi FETCH dari Backend (READ)
     const fetchJabatan = async () => {
@@ -29,10 +35,10 @@ export default function JabatanIndex() {
 
             if (resJabatan.ok && resPegawai.ok) {
                
-                const mappedData: JabatanData[] = resultJabatan.data.map((jab: any) => {
+                const mappedData: JabatanData[] = resultJabatan.data.map((jab: JabatanOption) => {
                    
                     const jumlah = resultPegawai.data.filter(
-                        (peg: any) => peg.jabatan_id === jab.id
+                        (peg: PegawaiData) => peg.jabatan_id === jab.id
                     ).length;
 
                     return {
@@ -47,7 +53,7 @@ export default function JabatanIndex() {
             }
         } catch (error) {
             console.error("Error fetching jabatan:", error);
-            alert("Gagal memuat data jabatan. Pastikan backend berjalan.");
+            setNotif({ show: true, message: "Gagal memuat data jabatan. Pastikan backend berjalan.", type: "error" });
         } finally {
             setIsLoading(false);
         }
@@ -117,6 +123,12 @@ export default function JabatanIndex() {
                     <TabelJabatan data={dataJabatan} onRefresh={fetchJabatan} />
                 )}
             </section>
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+            />
         </div>
     );
 }

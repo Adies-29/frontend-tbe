@@ -38,6 +38,7 @@ export default function AddLembur() {
         handleSubmit,
         formState: { errors }
     } = useForm<FormData>({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         resolver: zodResolver(lemburSchema) as any,
         defaultValues: {
             pegawai_id: idPegwai,
