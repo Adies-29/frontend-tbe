@@ -129,10 +129,10 @@ export default function EditPegawai(){
                     
                     const pegawai = dataPegawai.data;
                    
-                    const currentJabatan = masterJabatan.find((j) => j.id === pegawai.jabatan_id);
+                    const currentJabatan = masterJabatan.find((j: JabatanOption) => j.id === pegawai.jabatan_id);
                     const pegawaiId = currentJabatan ? currentJabatan.departemen_id?.toString() : "";
 
-                    const pilihJabatan = masterJabatan.filter((j) => j.departemen_id?.toString() === pegawaiId );
+                    const pilihJabatan = masterJabatan.filter((j: JabatanOption) => j.departemen_id?.toString() === pegawaiId );
                     setJabatanList(pilihJabatan);
 
                     const { nik, bpjs, tanggal_bergabung, jenis_kelamin, nama, tempat_lahir, tanggal_lahir, no_hp, alamat, email, pin_mesin, jabatan_id, default_shift_id } = pegawai;
