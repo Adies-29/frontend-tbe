@@ -80,7 +80,7 @@ export default function DepartemenTable({ data: initialData = [], onRefresh }: D
 
             if (response.ok && result.success){
                 setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(hapusId)));
-                setNotif({ show: true, message: "Data berhasil dihapus!", type: "success" });
+                setNotif({ show: true, message: "Data departemen berhasil dihapus", type: "success" });
                 setTimeout(() => {
                     onRefresh();
                 }, 2000);
