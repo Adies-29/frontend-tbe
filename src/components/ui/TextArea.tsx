@@ -1,4 +1,4 @@
-import React from 'react';
+
 import type { UseFormRegister, FieldValues, Path } from 'react-hook-form';
 
 interface TextAreaProps<T extends FieldValues> {
