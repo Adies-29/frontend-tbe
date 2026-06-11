@@ -15,6 +15,7 @@ import { Input } from "../../../components/ui/InputText";
 import { InputSelect } from "../../../components/ui/InputSelect";
 import Notif from "../../../components/ui/Notif";
 import { apiFetch } from "../../../utils/apiFetch";
+import type { DepartemenOption, JabatanOption, ShiftOption, KotaOption } from "../../../types";
 
 const schema = z.object({
     nik: z.string()
@@ -67,14 +68,14 @@ export default function EditPegawai(){
 
     //master data
    
-    const [departemenList, setDepartemenList] = useState<any[]>([]);
+    const [departemenList, setDepartemenList] = useState<DepartemenOption[]>([]);
     
-    const [jabatanList, setJabatanList] = useState<any[]>([]);
+    const [jabatanList, setJabatanList] = useState<JabatanOption[]>([]);
    
-    const [shiftList, setShiftList] = useState<any[]>([]);
+    const [shiftList, setShiftList] = useState<ShiftOption[]>([]);
    
-    const [allJabatan, setAllJabatan] = useState<any[]>([])
-    const [kotaList, _setKotaList] = useState<any[]>(MOCK_KOTA); 
+    const [allJabatan, setAllJabatan] = useState<JabatanOption[]>([]);
+    const [kotaList, _setKotaList] = useState<KotaOption[]>(MOCK_KOTA); 
 
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
         show: false,
@@ -128,10 +129,10 @@ export default function EditPegawai(){
                     
                     const pegawai = dataPegawai.data;
                    
-                    const currentJabatan = masterJabatan.find((j: any) => j.id === pegawai.jabatan_id);
+                    const currentJabatan = masterJabatan.find((j) => j.id === pegawai.jabatan_id);
                     const pegawaiId = currentJabatan ? currentJabatan.departemen_id?.toString() : "";
 
-                    const pilihJabatan = masterJabatan.filter((j: any) => j.departemen_id?.toString() === pegawaiId );
+                    const pilihJabatan = masterJabatan.filter((j) => j.departemen_id?.toString() === pegawaiId );
                     setJabatanList(pilihJabatan);
 
                     const { nik, bpjs, tanggal_bergabung, jenis_kelamin, nama, tempat_lahir, tanggal_lahir, no_hp, alamat, email, pin_mesin, jabatan_id, default_shift_id } = pegawai;

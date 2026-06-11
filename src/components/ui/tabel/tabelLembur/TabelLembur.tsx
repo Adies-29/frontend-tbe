@@ -2,9 +2,10 @@ import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { Loader2 } from "lucide-react";
 import dayjs from "dayjs";
 import { defaultDataGridSx } from "../dataGridStyles";
+import type { LemburData } from "../../../../types";
 
 interface TabelLemburProps {
-    data: any[];
+    data: LemburData[];
     isLoading: boolean;
 }
 

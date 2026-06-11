@@ -10,7 +10,14 @@ export interface AbsensiData {
 }
 
 export interface LemburData{
-    
+    id: number;
+    pegawai_id: number;
+    tanggal: string;
+    menit_lembur_diizinkan: number;
+    alasan_lembur: string;
+    disetujui_oleh: string;
+    nama?: string;
+    pegawai?: { nama: string };
 }
 
 export interface PegawaiData {
@@ -92,4 +99,43 @@ export interface JadwalShiftData {
     denda_pulang_awal_per_menit?: number;
     
     created_at?: string;
+}
+
+export interface DepartemenOption {
+    id: number;
+    nama_departemen: string;
+}
+export interface JabatanOption {
+    id: number;
+    nama_jabatan: string;
+    departemen_id?: number;
+    departemen?: { nama_departemen: string }; 
+}
+export interface ShiftOption {
+    id: number;
+    kode_shift: string;
+    nama_shift?: string;
+}
+export interface DetailDepartemenRow {
+    id: number | string;
+    jabatan: string;
+    jumlah_karyawan: number;
+}
+
+export interface KotaOption {
+    id: number;
+    nama_kota: string;
+}
+
+export interface DashboardKaryawanResponse {
+    id?: number | string;
+    id_pegawai?: number | string;
+    nama?: string;
+    jabatan?: string;
+    waktu_masuk?: string;
+    waktu_pulang?: string;
+    status?: string;
+    status_masuk?: string;
+    status_lembur?: string;
+    is_kerapian?: boolean;
 }

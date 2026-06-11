@@ -55,7 +55,7 @@ export default function DetailPegawai() {
                 } else {
                     throw new Error("Data pegawai tidak ditemukan");
                 }
-            } catch (error: any) {
+            } catch (error) {
                 console.error(error);
                 setErrorMsg(getSafeErrorMessage());
             } finally {

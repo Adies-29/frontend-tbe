@@ -51,6 +51,7 @@ export default function AturGajiJabatan() {
         watch, // Tarik fungsi watch untuk memantau perubahan input secara realtime
         formState: { errors }
     } = useForm<FormData>({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         resolver: zodResolver(schema) as any,
         defaultValues: {
             tipe_penggajian: "Bulanan", // Default value

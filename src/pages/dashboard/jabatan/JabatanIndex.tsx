@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Briefcase, Users, Loader2 } from "lucide-react"; 
 import Button from "../../../components/ui/Button";
 import TabelJabatan from "../../../components/ui/tabel/tabelJabatan/TabelJabatan";
-import type { JabatanData } from "../../../types";
+import type { JabatanData, JabatanOption, PegawaiData } from "../../../types";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { apiFetch } from "../../../utils/apiFetch";
 import Notif from "../../../components/ui/Notif";
@@ -35,10 +35,10 @@ export default function JabatanIndex() {
 
             if (resJabatan.ok && resPegawai.ok) {
                
-                const mappedData: JabatanData[] = resultJabatan.data.map((jab: any) => {
+                const mappedData: JabatanData[] = resultJabatan.data.map((jab: JabatanOption) => {
                    
                     const jumlah = resultPegawai.data.filter(
-                        (peg: any) => peg.jabatan_id === jab.id
+                        (peg: PegawaiData) => peg.jabatan_id === jab.id
                     ).length;
 
                     return {

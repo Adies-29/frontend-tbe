@@ -34,7 +34,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     // State untuk menyimpan data baris dan mode edit dari MUI DataGrid
     const [rows, setRows] = useState<AbsensiData[]>(initialData);
     const [rowModesModel] = useState<GridRowModesModel>({});
-    const [updatingId, setUpdatingId] = useState<string | null>(null);
+    const [updatingId, setUpdatingId] = useState<string | number | null>(null);
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
         show: false,
         message: "",
@@ -55,7 +55,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
         return () => clearTimeout(timer);
     }, [initialData]);
 
-    const cekKerapihan = async (row: any, newStatus: boolean) => {
+    const cekKerapihan = async (row: AbsensiData, newStatus: boolean) => {
         setUpdatingId(row.id);
         try {
             const hariIni = new Date().toISOString().split("T")[0];
@@ -89,7 +89,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             if (onRefresh) {
                 onRefresh();
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error("Gagal update kerapihan:", error);
             setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
         } finally {
@@ -104,7 +104,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     };
 
 
-    const formatWaktuAbsen = (time: any) => {
+    const formatWaktuAbsen = (time: string | null | undefined) => {
         if (!time || time === "-" || time === "null" || time === "00:00:00") {
             return <span className="text-gray-400 font-bold">-</span>;
         }

@@ -119,7 +119,7 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
             
             return updatedRow;
 
-        } catch (error: any) {
+        } catch (error) {
             console.error("Gagal update:", error);
             setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
             throw error; // Wajib di-throw agar MUI membatalkan ketikan di layar

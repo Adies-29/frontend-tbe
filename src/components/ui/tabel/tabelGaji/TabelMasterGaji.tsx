@@ -11,23 +11,30 @@ export interface MasterGajiData {
 
 interface TabelMasterGajiProps {
     data: MasterGajiData[];
-    onAturGaji: (id: number | string) => void; 
+    onAturGaji: (id: number | string) => void;
 }
 
 export const TabelMasterGaji = ({ data, onAturGaji }: TabelMasterGajiProps) => {
-    
     // Definisi Kolom Tabel Master Gaji
     const columns: GridColDef[] = [
-        { 
-            field: 'nama_jabatan', 
-            headerName: 'Nama Jabatan', 
-            flex: 1, 
-            renderCell: (params) => <span className="font-semibold text-gray-800">{params.value}</span> 
+        {
+            field: 'nama_jabatan',
+            headerName: 'Nama Jabatan',
+            flex: 1,
+            renderCell: (params) => <span className="font-semibold text-gray-800">{params.value}</span>
         },
-        { 
-            field: 'departemen', 
-            headerName: 'Departemen', 
-            flex: 1 
+        {
+            field: 'departemen',
+            headerName: 'Departemen',
+            flex: 1,
+            renderCell: (params) => {
+                const namaDept = params.value;
+                return (
+                    <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
+                        {namaDept && namaDept !== "-" ? namaDept : "--"}
+                    </span>
+                );
+            } 
         },
         {
             field: 'aksi',
@@ -37,8 +44,8 @@ export const TabelMasterGaji = ({ data, onAturGaji }: TabelMasterGajiProps) => {
             align: 'center',
             headerAlign: 'center',
             renderCell: (params) => (
-                <button 
-                    
+                <button
+
                     onClick={() => {
 
                         onAturGaji(params.row.id);
@@ -53,21 +60,20 @@ export const TabelMasterGaji = ({ data, onAturGaji }: TabelMasterGajiProps) => {
     ];
 
     return (
-        <Box sx={{ 
-            height: 400, 
-            width: '100%', 
-            '& .MuiDataGrid-root': { border: 'none' },
-            '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }
-        }}>
-            <DataGrid
-                showToolbar
-                autoHeight
-                rows={data}
-                columns={columns}
-                initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-                pageSizeOptions={[10, 25]}
-                disableRowSelectionOnClick
-            />
-        </Box>
+        <Box sx={{
+                width: '100%',
+                '& .MuiDataGrid-root': { border: 'none' },
+                '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }
+            }}>
+                <DataGrid
+                    showToolbar
+                    autoHeight
+                    rows={data}
+                    columns={columns}
+                    initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+                    pageSizeOptions={[10, 25]}
+                    disableRowSelectionOnClick
+                />
+            </Box>
     );
 };

@@ -91,7 +91,7 @@ export default function AddJabatan() {
             } else {
                 setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error("Error Submit:", error);
             setNotif({ show: true, message: "Terjadi kesalahan jaringan.", type: "error" });
         }finally {

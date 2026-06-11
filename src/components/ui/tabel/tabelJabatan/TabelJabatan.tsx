@@ -10,7 +10,7 @@ import {
 } from '@mui/x-data-grid';
 import { Pencil, Trash2, Save, X } from 'lucide-react';
 import { useAuthStore } from '../../../../store/useAuthStore';
-import type { JabatanData } from '../../../../types';
+import type { JabatanData, DepartemenOption } from '../../../../types';
 import ConfirmPopUp from '../../ConfirmPopUp';
 import Notif from '../../Notif';
 import { getSafeErrorMessage } from '../../../../utils/errorHandler';
@@ -54,8 +54,8 @@ export default function TabelJabatan({ data: initialData, onRefresh }: TabelJaba
                         "Authorization": `Bearer ${token}`
                     } 
                 });
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const result = await response.json();const options = result.data.map((dept: any) => ({
+                const result = await response.json();
+                const options = result.data.map((dept: DepartemenOption) => ({
                     value: dept.id,
                     label: dept.nama_departemen
                 }));
@@ -169,7 +169,7 @@ export default function TabelJabatan({ data: initialData, onRefresh }: TabelJaba
                 setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
                 return oldRow;
             }
-        } catch (error : any) {
+        } catch (error: unknown) {
             console.error("Error updating jabatan:", error);
             setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
             return oldRow;
@@ -198,7 +198,6 @@ export default function TabelJabatan({ data: initialData, onRefresh }: TabelJaba
             flex: 1,
             minWidth: 150,
             editable: true,
-            type: 'singleSelect',
             valueOptions: departemenOptions,
             renderCell: (params) => {
                 let namaDept = params.row.departemen?.nama_departemen;

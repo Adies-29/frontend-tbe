@@ -51,8 +51,7 @@ export default function AddShift() {
         watch,
         formState: { errors }
     } = useForm<FormData>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(schema) as any,
+        resolver: zodResolver(schema) as any ,
         defaultValues: {
             lintas_hari: false,
             batas_toleransi_menit: 0,

@@ -3,12 +3,13 @@ import { Clock } from "lucide-react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { apiFetch } from "../../../utils/apiFetch";
 import TabelLembur from "../../../components/ui/tabel/tabelLembur/TabelLembur";
+import type { LemburData } from "../../../types";
 
 
 export default function LemburIndex() {
     const token = useAuthStore((state) => state.token);
     
-    const [dataLembur, setDataLembur] = useState<any[]>([]);
+    const [dataLembur, setDataLembur] = useState<LemburData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchLembur = async () => {
@@ -26,7 +27,7 @@ export default function LemburIndex() {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                const formattedData = (result.data || []).map((item: any, index: number) => ({
+                const formattedData = (result.data || []).map((item: LemburData, index: number) => ({
                     ...item,
                     id: item.id || index + 1
                 }));

@@ -128,7 +128,7 @@ export default function DepartemenTable({ data: initialData = [], onRefresh }: D
                 setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
                 return oldRow;
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error("Error updating departemen:", error);
             setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
             return oldRow; 

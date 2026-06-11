@@ -1,4 +1,5 @@
-import React from 'react';
+
+import type { UseFormRegister, FieldValues, Path } from 'react-hook-form';
 
 // Mendefinisikan bentuk data untuk daftar pilihan (options)
 export interface SelectOption {
@@ -6,25 +7,25 @@ export interface SelectOption {
     label: string;
 }
 
-interface InputSelectProps {
+interface InputSelectProps<T extends FieldValues> {
     label: string;
-    nama: string;
-    register: any; // Menggunakan any agar fleksibel menerima register dari react-hook-form
+    nama: Path<T>;
+    register: UseFormRegister<T>; // Menggunakan any agar fleksibel menerima register dari react-hook-form
     error?: string;
     disabled?: boolean;
     options: SelectOption[];
     className?: string;
 }
 
-export const InputSelect: React.FC<InputSelectProps> = ({
+export const InputSelect = <T extends FieldValues> ({
     label,
     nama,
     register,
     error,
-    disabled,
+    disabled = false,
     options,
     className = ""
-}) => {
+}: InputSelectProps<T>) => {
     return (
         <div className={`flex flex-col gap-1.5 ${className}`}>
             <label className="text-sm font-semibold text-gray-700">

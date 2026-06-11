@@ -3,7 +3,7 @@ import Button from "../../../components/ui/Button";
 import TabelDepartemen from "../../../components/ui/tabel/tabelDepartemen/TabelDepartemen";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import type { DepartemenData } from "../../../types";
+import type { DepartemenData, DepartemenOption, JabatanOption } from "../../../types";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { apiFetch } from "../../../utils/apiFetch";
 import Notif from "../../../components/ui/Notif";
@@ -37,8 +37,8 @@ export default function DepartemenIndex() {
 
             if (resDept.ok && resJabatan.ok) {
 
-                const mappedData: DepartemenData[] = resultDept.data.map((dept: any) => {
-                    const jumlah = resultJabatan.data.filter((jab: any) => {
+                const mappedData: DepartemenData[] = resultDept.data.map((dept: DepartemenOption) => {
+                    const jumlah = resultJabatan.data.filter((jab: JabatanOption) => {
                         return String(jab.departemen_id) === String(dept.id);
                     }).length
                     return {
