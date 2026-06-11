@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import z from "zod"
 import { useAuthStore } from "../../../store/useAuthStore";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 import { useForm, Controller } from 'react-hook-form'; 
 import Autocomplete from '@mui/material/Autocomplete'; 
@@ -153,6 +153,9 @@ export default function EditPegawai(){
                         jabatan_id: jabatan_id?.toString() || "",
                         default_shift_id: default_shift_id?.toString() || "",
                     });
+
+                    // Tandai departemen awal agar watcher tidak mereset jabatan saat loading pertama
+                    prevDeptRef.current = pegawaiId;
                 };
                 
             } catch (error) {
@@ -167,19 +170,28 @@ export default function EditPegawai(){
 
    
     const selectedDept = watch("departemen");
-   useEffect(() => {
-       
-        
+    const prevDeptRef = useRef<string | undefined>(undefined);
+
+    useEffect(() => {
         if (!isFetchingData && selectedDept && allJabatan.length > 0) {
             
-            // 1. Filter daftar jabatan sesuai departemen yang baru dipilih
-            const filteredJabatan = allJabatan.filter((j) => j.departemen_id?.toString() === selectedDept.toString());
-            
-            // 2. Perbarui pilihan di dalam dropdown Jabatan
-            setJabatanList(filteredJabatan);
-            
-            // 3. Kosongkan kotak jabatan yang lama agar HRD wajib memilih yang baru
-            setValue("jabatan_id", ""); 
+            // Cek apakah nilai departemen benar-benar berubah (bukan dari proses loading awal)
+            if (prevDeptRef.current !== selectedDept) {
+                // 1. Filter daftar jabatan sesuai departemen yang baru dipilih
+                const filteredJabatan = allJabatan.filter((j) => j.departemen_id?.toString() === selectedDept.toString());
+                
+                // 2. Perbarui pilihan di dalam dropdown Jabatan
+                setJabatanList(filteredJabatan);
+                
+                // 3. Kosongkan kotak jabatan HANYA JIKA ini bukan saat loading awal
+                // (Jika prevDeptRef.current !== undefined, berarti user yang ganti manual)
+                if (prevDeptRef.current !== undefined) {
+                    setValue("jabatan_id", ""); 
+                }
+
+                // Catat departemen saat ini
+                prevDeptRef.current = selectedDept;
+            }
         }
     }, [selectedDept, allJabatan, isFetchingData, setValue]);
 
