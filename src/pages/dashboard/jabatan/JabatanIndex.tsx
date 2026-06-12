@@ -30,6 +30,7 @@ export default function JabatanIndex() {
                 apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
             ]);
 
+            // ✅ Baca stream SATU KALI saja
             const resultJabatan = await resJabatan.json();
             const resultPegawai = await resPegawai.json();
 
@@ -49,7 +50,12 @@ export default function JabatanIndex() {
                         jumlah_pegawai: jumlah 
                     };
                 });
+                
+                // Simpan ke state
                 setDataJabatan(mappedData);
+            } else {
+                // Opsional: Handle jika response dari backend tidak 'ok' (misal 401 atau 500)
+                console.error("Gagal mengambil data:", resultJabatan, resultPegawai);
             }
         } catch (error) {
             console.error("Error fetching jabatan:", error);

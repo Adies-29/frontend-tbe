@@ -197,9 +197,9 @@ export default function GajiTunjanganIndex() {
                     "Authorization": `Bearer ${token}`
                 }
             });
-
+    
             const result = await response.json();
-
+    
             if (response.ok && result.success) {
                 const data = result.data || [];
 
@@ -248,6 +248,7 @@ export default function GajiTunjanganIndex() {
         }
     };
 
+    // Efek untuk memuat data berdasarkan Tab yang aktif
     useEffect(() => {
         if (activeTab === 'master') {
             if (masterJabatanData.length === 0) {
