@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, matchPath } from "react-router-dom"; 
 import DateTime from "./ui/DateTime";
 import { useAuthStore } from "../store/useAuthStore";
+import { apiFetch } from "../utils/apiFetch";
 
 export default function Header() {
     // --- LOGIKA SHIFT ---
@@ -14,7 +15,7 @@ export default function Header() {
         const fetchShiftData = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetch("https://ppm-sooty.vercel.app/api/v1/shifts", {
+                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, {
                     method: "GET",
                     headers: {
                         "Authorization": `Bearer ${token}`, 
@@ -44,26 +45,31 @@ export default function Header() {
         "/": { title: "Monitoring Absensi", showDate: true },
         "/dashboard": { title: "Monitoring Absensi", showDate: true },
 
-        "/dashboard/data-karyawan": { title: "Data Karyawan", showDate: false },
-        "/dashboard/data-karyawan/tambah-karyawan": { title: "Tambah Karyawan", showDate: false },
-        "/dashboard/data-karyawan/:id": { title: "Detail Karyawan", showDate: false },
+        "/dashboard/data-pegawai": { title: "Data Pegawai", showDate: false },
+        "/dashboard/data-pegawai/tambah-pegawai": { title: "Tambah Pegawai", showDate: false },
+        "/dashboard/data-pegawai/:id": { title: "Detail Pegawai", showDate: false },
 
         "/dashboard/departemen": { title: "Departemen", showDate: false },
-        "/dashboard/departemen/tambah-departemen": { title: "Tambah Departemen", showDate: false },
-        "/dashboard/departemen/:id": { title: "Detail Departemen", showDate: false },
+        "/dashboard/departemen/tambah-departemen": { title: "Departemen", showDate: false },
+        "/dashboard/departemen/:id": { title: "Departemen", showDate: false },
 
 
         "/dashboard/jabatan": { title: "Jabatan", showDate: false },
-
-
-        "/dashboard/rekap-data": { title: "Rekap Data", showDate: false },
+        "/dashboard/jabatan/tambah-jabatan": { title: "Jabatan", showDate: false },
 
 
         "/dashboard/jadwal-shift": { title: "Jadwal & Shift", showDate: false },
+        "/dashboard/jadwal-shift/tambah": { title: "Jadwal & Shift", showDate: false },
+        "/dashboard/jadwal-shift/edit/:id": { title: "Jadwal & Shift", showDate: false },
         
 
 
         "/dashboard/gaji-tunjangan":{ title: "Gaji & Tunjangan", showDate: false },
+        "/dashboard/gaji-tunjangan/master-gaji/:id":{ title: "Gaji & Tunjangan", showDate: false },
+
+
+        "/dashboard/lembur":{ title: "Lembur", showDate: false },
+        "/dashboard/lembur/tambah-lembur":{ title: "Lembur", showDate: false },
     };
 
     // 3. DIUBAH: Cari pengaturan berdasarkan URL menggunakan matchPath
@@ -88,7 +94,7 @@ export default function Header() {
                     </h1>
                 </div>
 
-               <div className="md:hidden bg-[#C90000] rounded-full flex items-center gap-2 pr-4 pl-1 py-1 my-2 shadow-md ">
+               <div className="md:hidden bg-[#C90000] rounded-full flex items-center gap-2 px-3 py-1.5 my-2 shadow-md">
                     <div className="bg-[#FFB800] w-8 h-8 rounded-full border-2 border-white/20"></div>
                     
                     <span className="text-white font-medium text-base md:text-xs tracking-wide text-center">

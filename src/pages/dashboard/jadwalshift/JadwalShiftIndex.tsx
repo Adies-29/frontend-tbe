@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { Loader2, CalendarDays, Clock } from "lucide-react"; // Tambahan icon
 import TabelMatrixJadwal from "../../../components/ui/tabel/tabelJadwalShif/TabelMatrixJadwal";
+import { apiFetch } from "../../../utils/apiFetch";
 
 export default function JadwalShiftIndex() {
     const navigate = useNavigate();
@@ -24,7 +25,7 @@ export default function JadwalShiftIndex() {
 
         try {
             const token = useAuthStore.getState().token;
-            const response = await fetch ("https://ppm-sooty.vercel.app/api/v1/shifts", {
+                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`,  {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",

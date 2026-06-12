@@ -1,20 +1,21 @@
-import type React from "react";
+
 import { useState } from "react";
+import type { UseFormRegister, FieldValues, Path } from 'react-hook-form';
 
 
-interface InputPasswordProps{
+interface InputPasswordProps<T extends FieldValues> {
     label:string;
-    nama:string;
+    nama:Path<T>;
     error?:string;
-    register:any;
+    register:UseFormRegister<T>;
 }
 
-export const InputPassword: React.FC <InputPasswordProps> = ({
+export const InputPassword = <T extends FieldValues>  ({
     label,
     nama,
     error,
     register,
-}) => {
+}: InputPasswordProps<T>) => {
 
     const [show, setShow] = useState<boolean>(false);
 

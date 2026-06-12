@@ -12,6 +12,12 @@ import {
 import { Pencil, Trash2 } from "lucide-react";
 import { useAuthStore } from '../../../../store/useAuthStore';
 import type { PegawaiData } from '../../../../types';
+import ConfirmPopUp from '../../ConfirmPopUp';
+import Notif from '../../Notif';
+import { getSafeErrorMessage } from '../../../../utils/errorHandler';
+import { apiFetch } from "../../../../utils/apiFetch";
+import { defaultDataGridSx } from "../dataGridStyles";
+
 
 
 interface TabelPegawaiProps {
@@ -30,6 +36,14 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
     const token = useAuthStore((state) => state.token);
     const navigate = useNavigate();
 
+    const [showPopUp, setShowPopUp] = useState(false);
+    const [hapusId, setHapusId] = useState<GridRowId | null>(null);
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
+
     useEffect(() => {
         const timer = setTimeout(() => {
             setRows(initialData);
@@ -40,12 +54,16 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
     // --- FUNGSI-FUNGSI AKSI ---
 
     // 4. Hapus Data (Ikon Tempat Sampah)
-    const handleDeleteClick = (id: GridRowId) => async () => {
-        const isConfirm = window.confirm("Apakah Anda yakin ingin menghapus data pegawai ini?");
-        if (!isConfirm) return;
+    const handleDeleteClick = (id: GridRowId) => () => {
+        setHapusId(id);
+        setShowPopUp(true);
+    };
+
+    const hapus = async () => {
+        if (!hapusId) return;
 
         try {
-            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/pegawai/${id}`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${hapusId}`, {
                 method: 'DELETE',
                 headers: {
                     "Content-Type": "application/json",
@@ -55,15 +73,23 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
             const result = await response.json();
 
             if (response.ok && result.success) {
-                alert("Pegawai berhasil dihapus!");
-                setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(id)))
-                onRefresh();
+                // Hapus data dari tabel secara realtime
+                setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(hapusId)));
+                setNotif({ show: true, message: "Data pegawai berhasil dihapus", type: "success" });
+                setTimeout(() => {
+                    onRefresh();
+                }, 2000);
+
             } else {
-                alert(`Gagal hapus: ${result.message}`);
+                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
             }
         } catch (error) {
-            alert("Gagal menghapus data.");
             console.error("Terjadi kesalahan server:", error);
+            setNotif({ show: true, message: "Gagal menghapus data. Periksa koneksi.", type: "error" });
+        } finally {
+            // Tutup popup dan bersihkan ID setelah selesai diproses
+            setShowPopUp(false);
+            setHapusId(null);
         }
     };
 
@@ -74,7 +100,7 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
         const { no_hp, email, masakerja } = updatedRow;
 
         try {
-            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/pegawai/${newRow.id}`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${newRow.id}`, {
                 method:"PUT",
                 headers:{
                     "Content-Type" : "application/json",
@@ -83,16 +109,18 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
                 body: JSON.stringify({ no_hp, email, masakerja }), 
             });
             const result = await response.json()
-            if(!response.ok && !result.success){
+            if(!response.ok || !result.success){
                 throw new Error(result.message || "Server Menolak")
             }
             setRows((prevRows) => prevRows.map((row) => (row.id === newRow.id ? updatedRow : row)));
+
+            setNotif({ show: true, message: "Perubahan data berhasil disimpan!", type: "success" });
+            
             return updatedRow;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error) {
             console.error("Gagal update:", error);
-            alert(`Gagal menyimpan perubahan: ${error.message}`);
+            setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
             throw error; // Wajib di-throw agar MUI membatalkan ketikan di layar
         }
     };
@@ -123,7 +151,7 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
         { field: 'nik', headerName: 'NIK', width: 160 },
         {
             field: 'nama',
-            headerName: 'Nama',
+            headerName: 'Nama Pegawai',
             flex: 1,
             minWidth: 150,
             renderCell: (params) => {
@@ -250,15 +278,25 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
                 }}
                 pageSizeOptions={[10, 20]}
                 disableRowSelectionOnClick
-                sx={{
-                    border: "1px solid #e5e7eb",
-                    "& .MuiDataGrid-columnHeaders": {
-                        backgroundColor: "#f3f4f6",
-                        color: "black",
-                        fontWeight: "bold",
-                        borderBottom: "1px solid #9ca3af",
-                    },
+                sx={defaultDataGridSx}
+            />
+            <ConfirmPopUp
+                isOpen={showPopUp}
+                onClose={() => {
+                    setShowPopUp(false);
+                    setHapusId(null);
                 }}
+                onConfirm={hapus}
+                title="Hapus Data Pegawai?"
+                message="Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus data pegawai ini dari sistem?"
+                confirmText="Ya, Hapus"
+                variant="danger"
+            />
+            <Notif 
+                show={notif.show} 
+                message={notif.message} 
+                type={notif.type} 
+                onClose={() => setNotif({ show: false, message: "", type: "success" })} 
             />
         </div>
     );

@@ -14,6 +14,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuthStore } from "../../../store/useAuthStore";
 import type { PegawaiData } from "../../../types";
 import Button from "../../../components/ui/Button";
+import { getSafeErrorMessage } from "../../../utils/errorHandler";
+import { apiFetch } from "../../../utils/apiFetch";
 
 
 export default function DetailPegawai() {
@@ -32,8 +34,8 @@ export default function DetailPegawai() {
             try {
                 setIsLoading(true);
 
-                const response = await fetch(
-                    `https://ppm-sooty.vercel.app/api/v1/pegawai/${id}`,
+                const response = await apiFetch(
+                    `${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${id}`,
                     {
                         method: "GET",
                         headers: {
@@ -48,17 +50,14 @@ export default function DetailPegawai() {
                 }
 
                 const result = await response.json();
-
-                console.log("DETAIL PEGAWAI:", result);
-
                 if (result.success) {
                     setPegawai(result.data);
                 } else {
                     throw new Error("Data pegawai tidak ditemukan");
                 }
-            } catch (error: any) {
+            } catch (error) {
                 console.error(error);
-                setErrorMsg(error.message);
+                setErrorMsg(getSafeErrorMessage());
             } finally {
                 setIsLoading(false);
             }

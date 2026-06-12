@@ -25,7 +25,7 @@ interface TabelRekapGajiProps {
 export const TabelRekapGaji = ({ data }: TabelRekapGajiProps) => {
     // Definisi Kolom Tabel Rekap Gaji
     const columns: GridColDef[] = [
-        { field: 'nama', headerName: 'Nama Karyawan', flex: 1, renderCell: (params) => <span className="font-semibold text-gray-800">{params.value}</span> },
+        { field: 'nama', headerName: 'Nama Pegawai', flex: 1, renderCell: (params) => <span className="font-semibold text-gray-800">{params.value}</span> },
         { field: 'jabatan', headerName: 'Jabatan', flex: 1 },
         { field: 'gaji_dasar', headerName: 'Gaji Dasar', width: 130, renderCell: (params) => formatRupiah(params.value) },
         { field: 'total_bonus', headerName: 'Bonus & Tunjangan', width: 150, renderCell: (params) => <span className="text-green-600">+{formatRupiah(params.value)}</span> },

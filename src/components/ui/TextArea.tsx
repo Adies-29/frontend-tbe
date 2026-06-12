@@ -1,22 +1,23 @@
-import React from 'react';
 
-interface TextAreaProps {
+import type { UseFormRegister, FieldValues, Path } from 'react-hook-form';
+
+interface TextAreaProps<T extends FieldValues> {
     label: string;
-    nama: string;
-    register: any;
+    nama: Path<T>;
+    register: UseFormRegister<T>;
     error?: string;
     placeholder?: string;
     className?: string; // 1. Tambahkan ini agar bisa menerima class col-span-2 dari luar
 }
 
-export const TextArea: React.FC<TextAreaProps> = ({
+export const TextArea = <T extends FieldValues> ({
     label,
     nama,
     register,
     error,
     placeholder,
     className = "" // Default kosong jika tidak diisi
-}) => {
+}: TextAreaProps<T>) => {
     return (
         // 2. Terapkan className dari luar ke div pembungkus ini
         <div className={`flex flex-col gap-1 ${className}`}>

@@ -7,6 +7,10 @@ import { useAuthStore } from "../store/useAuthStore";
 import { Input } from "../components/ui/InputText";
 import { InputPassword } from "../components/ui/InputPassword";
 import { useState } from "react";
+import { getSafeErrorMessage } from "../utils/errorHandler";
+import { apiFetch } from "../utils/apiFetch";
+import Notif from "../components/ui/Notif";
+
 
 // 1. Ubah email menjadi username agar sesuai dengan backend
 type FormData = {
@@ -20,25 +24,31 @@ const schema = z.object({
     password: z.string().min(6, "Password minimal 6 karakter"),
 })
 
-export default function Login(){
+export default function Login() {
     const navigate = useNavigate();
     const login = useAuthStore((state) => state.login);
     const [isLoading, setIsLoading] = useState(false); // State untuk loading button
-    const { 
-        register, 
-        handleSubmit, 
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
+
+    const {
+        register,
+        handleSubmit,
         formState: { errors }
-     } = useForm<FormData>({
+    } = useForm<FormData>({
         resolver: zodResolver(schema)
-     });
- 
-    
+    });
+
+
     // 3. Fungsi Submit ke Backend Vercel
     const onSubmit = async (data: FormData) => {
         setIsLoading(true);
         try {
             // Tembak API Login yang ada di backend
-            const response = await fetch("https://ppm-sooty.vercel.app/api/login", {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -55,50 +65,66 @@ export default function Login(){
             if (response.ok && result.success) {
                 // Simpan token JWT ke Zustand (dan LocalStorage)
                 login(data.username, result.token);
-                
-                alert("Login berhasil!");
-                navigate("/dashboard");
+
+                setNotif({ show: true, message: "Login berhasil", type: "success" });
+                setTimeout(() => {
+                    navigate("/dashboard");
+                }, 2000);
             } else {
                 // Tampilkan pesan error dari backend (misal: "Username salah")
-                alert(result.message || "Login gagal, periksa kembali data Anda.");
+                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
             }
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
-            console.error("Error saat login:", error);
-            alert("Terjadi kesalahan saat login. Silakan coba lagi.");
+            setNotif({ show: true, message: "Terjadi kesalahan saat login. Silakan coba lagi.", type: "error" });
         } finally {
             setIsLoading(false);
         }
     };
-        
+
 
     return (
-        <div>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                {/* 4. Ubah input UI menjadi username */}
-                <Input
-                    label="Username"
-                    nama="username"
-                    register={register}
-                    error={errors.username?.message}
-                />
-
-                <InputPassword
-                    label="Password"
-                    nama="password"
-                    register={register}
-                    error={errors.password?.message} 
-                />
-
-                <div>
-                    {/* Tampilkan status loading di tombol */}
-                    <Button 
-                        type="submit" 
-                        label={isLoading ? "Memproses..." : "Login"} 
-                        disabled={isLoading} 
-                    />
+        <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6 md:p-8">
+                <div className="mb-6 text-center">
+                    <p className="text-sm text-gray-500 mt-1">Silakan login ke akun Anda</p>
                 </div>
-            </form>
+
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                    {/* 4. Ubah input UI menjadi username */}
+                    <Input
+                        label="Username"
+                        nama="username"
+                        register={register}
+                        error={errors.username?.message}
+                    />
+
+                    <InputPassword
+                        label="Password"
+                        nama="password"
+                        register={register}
+                        error={errors.password?.message}
+                    />
+
+                    <div className="pt-2">
+                        <Button
+                            type="submit"
+                            label={isLoading ? "Memproses..." : "Login"}
+                            disabled={isLoading}
+                            className="w-full py-3 text-lg"
+                        />
+                    </div>
+                </form>
+
+            </div>
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+            />
+
         </div>
     );
 };

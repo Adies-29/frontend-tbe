@@ -14,6 +14,9 @@ import InputSelect from "../../../components/ui/InputSelect";
 import { Input } from "../../../components/ui/InputText";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../../../store/useAuthStore";
+import Notif from "../../../components/ui/Notif";
+import { apiFetch } from "../../../utils/apiFetch";
+import type { DepartemenOption, JabatanOption, ShiftOption, KotaOption } from "../../../types";
 
 
 
@@ -62,14 +65,19 @@ export default function AddPegawai() {
     const navigate = useNavigate();
     const token = useAuthStore((state) => state.token);
     const [isSaving, setIsSaving] = useState(false);
-    const [departemenList, setDepartemenList] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [shiftList, setShiftList] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [allJabatan, setAllJabatan] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [jabatanList, setJabatanList] = useState<any[]>([]);
-    const [kotaList, _setKotaList] = useState<any[]>(MOCK_KOTA); 
+    const [departemenList, setDepartemenList] = useState<DepartemenOption[]>([]);
+   
+    const [shiftList, setShiftList] = useState<ShiftOption[]>([]);
+   
+    const [allJabatan, setAllJabatan] = useState<JabatanOption[]>([]);
+    
+    const [jabatanList, setJabatanList] = useState<JabatanOption[]>([]);
+    const [kotaList, _setKotaList] = useState<KotaOption[]>(MOCK_KOTA); 
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
     
     // Tambahkan watch dan setValue di sini
     const {
@@ -87,10 +95,11 @@ export default function AddPegawai() {
     useEffect(() =>{
         const fetctPegawai = async () => {
             try {
-               const [resDept, resJabatan, resShift] = await Promise.all([
-                    fetch("https://ppm-sooty.vercel.app/api/v1/departemen", { headers: { "Authorization": `Bearer ${token}` } }),
-                    fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Authorization": `Bearer ${token}` } }),
-                    fetch("https://ppm-sooty.vercel.app/api/v1/shifts", { headers: { "Authorization": `Bearer ${token}` } })
+               const [resDept, resJabatan, resShift, ] = await Promise.all([
+                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, { headers: { "Authorization": `Bearer ${token}` } }),
+                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Authorization": `Bearer ${token}` } }),
+                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, { headers: { "Authorization": `Bearer ${token}` } }),
+                    // apiFetch(`${import.meta.env.VITE_API_BASE_URL}api/v1/kota`,{ headers: { "Authorization": `Bearer ${token}` } })
                 ]);
                 const dataDept = await resDept.json();
                 const dataJabatan = await resJabatan.json();
@@ -111,13 +120,10 @@ export default function AddPegawai() {
 
     useEffect(() => {
         if(selectedDept) {
-            console.log("--- PROSES FILTER DIJALANKAN ---");
-            console.log("ID Dept Yang Dipilih HRD:", selectedDept);
-            console.log("Data Semua Jabatan Yang Tersedia:", allJabatan);
 
             const pilih = allJabatan.filter((j) => {
                
-                console.log("Membandingkan ID Dept di Jabatan:", j.departemen_id, "dengan", selectedDept);
+
                 return j.departemen_id?.toString() === selectedDept.toString()      
             });
 
@@ -131,7 +137,7 @@ export default function AddPegawai() {
     const onSubmit = async (data: FormData) => {
         setIsSaving(true)
         try {
-            const response = await fetch ("https://ppm-sooty.vercel.app/api/v1/pegawai", {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -157,15 +163,35 @@ export default function AddPegawai() {
             const result = await response.json();
 
             if(response.ok && result.success){
-                alert(`Sukses! Pegawai baru telah disimpan dengan ID: ${result.data.id}`);
-                navigate("/dashboard/data-pegawai");
+                setNotif({ show: true, message: `Sukses! Pegawai baru telah disimpan dengan ID: ${result.data.id}`, type: "success" });
+                setTimeout(() => {
+                    navigate("/dashboard/data-pegawai");
+                }, 2000);
             }else{
-                alert(result.message || "Gagal menambahkan pegawai.");
+                // Ambil pesan error spesifik dari respons backend
+                let errorMsg = "Gagal menyimpan ke database. Coba lagi.";
+                
+                if (result.message) {
+                    errorMsg = result.message;
+                } else if (result.error) {
+                    errorMsg = typeof result.error === 'string' ? result.error : JSON.stringify(result.error);
+                } else if (result.errors) {
+                    // Jika error berupa array/object (misal hasil validasi form dari backend)
+                    errorMsg = Object.values(result.errors).flat().join(", ");
+                }
+
+                // Cek apakah pesan error terindikasi masalah data duplikat
+                const lowerError = errorMsg.toLowerCase();
+                if (lowerError.includes("duplicate") || lowerError.includes("sudah terdaftar") || lowerError.includes("already exists") || lowerError.includes("unique")) {
+                    errorMsg = `Data sudah digunakan! Pastikan NIK, No BPJS, No HP, Email, atau PIN Mesin tidak sama dengan pegawai lain. (Server: ${errorMsg})`;
+                }
+
+                setNotif({ show: true, message: errorMsg, type: "error" });
             }
 
         } catch (error) {
-            console.error("Error:", error);
-            alert("Terjadi kesalahan saat menghubungi server.");
+            console.error("Error Submit:", error);
+            setNotif({ show: true, message: "Terjadi kesalahan jaringan.", type: "error" });
         }finally{
             setIsSaving(false);
         }
@@ -192,7 +218,7 @@ export default function AddPegawai() {
                     />
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit, (err) => console.log("ZOD ERROR:", err))} className="space-y-8">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                     
                     {/* --- SEKSI 1: INFORMASI PRIBADI --- */}
                     <div>
@@ -277,7 +303,6 @@ export default function AddPegawai() {
                     </div>
 
                     {/* --- TOMBOL SUBMIT --- */}
-                    {/* Trik Khusus Mobile: flex-col-reverse membuat tombol numpuk atas-bawah di HP */}
                     <div className="flex justify-end gap-3 mt-8 pt-5 border-t border-gray-100">
                         <Button 
                             variant="success"
@@ -288,7 +313,7 @@ export default function AddPegawai() {
                         />
                         <Button 
                             type="button" 
-                            variant="secondary" 
+                            variant="danger" 
                             label="Batal" 
                             onClick={() => navigate(-1)} 
                             disabled={isSaving} 
@@ -298,6 +323,12 @@ export default function AddPegawai() {
 
                 </form>
             </div>
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+            />
         </div>
     )
 }
