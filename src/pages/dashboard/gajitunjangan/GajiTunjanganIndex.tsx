@@ -141,7 +141,6 @@ export default function GajiTunjanganIndex() {
             });
     
             const result = await response.json();
-    
             if (response.ok && result.success) {
                 const data = result.data || [];
                 const formattedData: MasterGajiData[] = data.map((item: { id: number | string; nama_jabatan: string; departemen?: { nama_departemen: string } | string | null }) => {
