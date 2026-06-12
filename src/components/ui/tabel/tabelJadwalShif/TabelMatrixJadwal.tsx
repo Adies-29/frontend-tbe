@@ -66,7 +66,9 @@ export default function TabelMatrixJadwal() {
     
 
     // // 1. STATE BARU: Master Pegawai
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [listPegawai, setListPegawai] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [listMasterShifts, setListMasterShifts] = useState<any[]>([]);
 
     // State Input Form Modal
@@ -190,6 +192,7 @@ export default function TabelMatrixJadwal() {
             } else {
                 throw new Error(result.message || "Gagal memuat jadwal.");
             }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             console.error(err);
             setErrorMsg(err.message || "Terjadi kesalahan koneksi jaringan.");
@@ -330,7 +333,9 @@ export default function TabelMatrixJadwal() {
     const [selectedPegawaiIds, setSelectedPegawaiIds] = useState<number[]>([]);
 
     // Helper untuk mengekstrak nama Departemen & Jabatan secara seragam
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getDeptName = (p: any) => p.departemen?.nama_departemen || p.jabatan?.departemen?.nama_departemen || 'Umum';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getJabName = (p: any) => p.jabatan?.nama_jabatan || p.jabatan || 'Tanpa Jabatan';
 
     // Kumpulkan data unik untuk Dropdown
@@ -742,6 +747,7 @@ export default function TabelMatrixJadwal() {
                                     <select 
                                         value={filterLevel1} 
                                         onChange={(e) => {
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                             setFilterLevel1(e.target.value as any);
                                             setFilterLevel2("");
                                             setFilterLevel3("");

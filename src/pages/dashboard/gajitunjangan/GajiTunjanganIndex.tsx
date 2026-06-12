@@ -42,7 +42,6 @@ export default function GajiTunjanganIndex() {
     const navigate = useNavigate();
     const location = useLocation();
     const token = useAuthStore((state) => state.token);
-
     // State Navigasi & Filter
     const [activeTab, setActiveTab] = useState<'rekap' | 'master'>(location.state?.tab || 'rekap');
     const [periode, setPeriode] = useState("bulan");
@@ -140,9 +139,8 @@ export default function GajiTunjanganIndex() {
                     "Authorization": `Bearer ${token}`
                 }
             });
-
+    
             const result = await response.json();
-
             if (response.ok && result.success) {
                 const data = result.data || [];
                 const formattedData: MasterGajiData[] = data.map((item: { id: number | string; nama_jabatan: string; departemen?: { nama_departemen: string } | string | null }) => {
@@ -372,7 +370,6 @@ export default function GajiTunjanganIndex() {
                                         />
                                     </LocalizationProvider>
                                 )}
-
                                 <Button label="Filter" onClick={handleFilter} />
 
                                 {/* TOMBOL GENERATE HANYA MUNCUL SAAT PERIODE BULANAN */}

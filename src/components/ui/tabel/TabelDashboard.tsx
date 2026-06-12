@@ -211,7 +211,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             width: 110,
             sortable: false,
             renderCell: (params) => {
-                let status = params.row.is_kerapian;
+                const status = params.row.is_kerapian;
                 const isNuklir = params.row.status_masuk === "Absensi di Batalkan";  
                 const isUpdating = updatingId === params.row.id;
 
