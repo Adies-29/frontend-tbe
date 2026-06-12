@@ -10,18 +10,32 @@ import {
 } from '@mui/x-data-grid';
 import { Pencil, Trash2, Save, X } from 'lucide-react';
 import { useAuthStore } from '../../../../store/useAuthStore';
-import type { JabatanData } from '../../../../types';
+import type { JabatanData, DepartemenOption } from '../../../../types';
+import ConfirmPopUp from '../../ConfirmPopUp';
+import Notif from '../../Notif';
+import { getSafeErrorMessage } from '../../../../utils/errorHandler';
+import { apiFetch } from "../../../../utils/apiFetch";
+import { defaultDataGridSx } from "../dataGridStyles";
 
 interface TabelJabatanProps {
     data: JabatanData[];
+    onRefresh: () => void; 
 }
 
 
-export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
+export default function TabelJabatan({ data: initialData, onRefresh }: TabelJabatanProps) {
     const [departemenOptions, setDepartemenOptions] = useState<{value: number, label: string}[]>([]);
     const [rows, setRows] = useState(initialData);
     const [rowModesModel, setRowModesModel] = useState<GridRowModel>({});
     const token = useAuthStore((state) => state.token);
+
+    const [showPopUp, setShowPopUp] = useState(false);
+    const [hapusId, setHapusId] = useState<GridRowId | null>(null);
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -33,15 +47,15 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     useEffect(() => {
         const fetchDepartemen = async () => {
             try {
-                const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/departemen/`,{
+                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen/`,{
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`
                     } 
                 });
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const result = await response.json();const options = result.data.map((dept: any) => ({
+                const result = await response.json();
+                const options = result.data.map((dept: DepartemenOption) => ({
                     value: dept.id,
                     label: dept.nama_departemen
                 }));
@@ -81,27 +95,41 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
 
     //tombol Delete 
     const handleDeleteClick = (id: GridRowId) => async () => {
-        const isConfirm = window.confirm("Apakah Anda yakin ingin menghapus jabatan ini?");
-        if (!isConfirm) return;
+        setHapusId(id);
+        setShowPopUp(true);
+    };
+
+    const hapus = async () =>{
+        if (!hapusId) return;
 
         try {
-            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/jabatan/${id}`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${hapusId}`, {
                 method: 'DELETE',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                } 
             });
             const result = await response.json();
 
             if (response.ok && result.success) {
-                alert("Jabatan berhasil dihapus!");
-                setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(id)))
+                setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(hapusId)));
+                setNotif({ show: true, message: "Data jabatan berhasil dihapus", type: "success" });
+                setTimeout(() => {
+                    onRefresh();
+                }, 2000);
             } else {
-                alert(`Gagal hapus: ${result.message}`);
+                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
             }
         } catch (error) {
-            console.error("Gagal menghapus jabatan:", error);
-            alert("Gagal menghapus data.");
-            alert("Terjadi kesalahan server.");
+            console.error("Error delete :", error);
+            setNotif({ show: true, message: "Gagal menghapus data. Periksa koneksi.", type: "error" });
+        } finally{
+            setShowPopUp(false);
+            setHapusId(null);
         }
-    };
+
+    }
 
     // Fungsi penting yang dijalankan MUI setelah data selesai diedit di tabel
     const processRowUpdate = async (newRow: GridRowModel, oldRow: GridRowModel) => {
@@ -111,7 +139,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
         }
 
         try {
-            const response = await fetch (`https://ppm-sooty.vercel.app/api/v1/jabatan/${newRow.id}`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${newRow.id}`, {
                 method: "PUT",
                 headers: { 
                     "Content-Type": "application/json",
@@ -125,7 +153,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
             
             const result = await response.json();
 
-            if (response.ok){
+            if (response.ok && result.success){
                 // Update UI Lokal
                 const selectedDeptName = departemenOptions.find(opt => opt.value === Number(newRow.departemen_id))?.label;
                 if (selectedDeptName) {
@@ -138,12 +166,12 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
                 );
                 return updatedRow; 
             } else {
-                alert(`Jabatan gagal diperbarui: ${result.message}`);
+                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
                 return oldRow;
             }
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Error updating jabatan:", error);
-            alert("Terjadi kesalahan saat menghubungi server.");
+            setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
             return oldRow;
         } 
     };
@@ -161,7 +189,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
             minWidth: 180,
             editable: true,
             renderCell: (params) => (
-                <span className="font-medium text-gray-800">{params.value}</span>
+                <span className="text-gray-800 font-bold">{params.value}</span>
             )
         },
         {
@@ -170,7 +198,6 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
             flex: 1,
             minWidth: 150,
             editable: true,
-            type: 'singleSelect',
             valueOptions: departemenOptions,
             renderCell: (params) => {
                 let namaDept = params.row.departemen?.nama_departemen;
@@ -243,39 +270,63 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     ];
 
     return (
-        <DataGrid
-            autoHeight
-            rows={rows} 
-            columns={columns}
-            showToolbar
+        <div className='w-full bg-white relative'>
+            <DataGrid
+                autoHeight
+                rows={rows}
+                columns={columns}
+                showToolbar
 
-            // Pengaturan CRUD Inline Editing
-            editMode="row"
-            rowModesModel={rowModesModel}
-            onRowModesModelChange={(newModel) => setRowModesModel(newModel)}
-            processRowUpdate={processRowUpdate}
+                // Pengaturan CRUD Inline Editing
+                editMode="row"
+                rowModesModel={rowModesModel}
+                onRowModesModelChange={(newModel) => setRowModesModel(newModel)}
+                processRowUpdate={processRowUpdate}
 
-            onProcessRowUpdateError={(error) => {
-                console.error("Gagal saat update baris:", error);
-            }}
+                onProcessRowUpdateError={(error) => {
+                    console.error("Gagal saat update baris:", error);
+                }}
 
-            initialState={{
-                pagination: { paginationModel: { page: 0, pageSize: 10 } },
-            }}
-            pageSizeOptions={[10, 20]}   
-            disableRowSelectionOnClick
-            sx={{
-                border: 'none',
-                '& .MuiDataGrid-columnHeaders': {
-                    backgroundColor: '#f9fafb',
-                    color: 'black',
-                    fontWeight: 'bold',
-                    borderBottom: '1px solid #e5e7eb',
-                },
-                '& .MuiDataGrid-cell': {
-                    borderBottom: '1px solid #f3f4f6',
-                },
-            }}
-        />
+                initialState={{
+                    pagination: { paginationModel: { page: 0, pageSize: 10 } },
+                }}
+                pageSizeOptions={[10, 20]}
+                disableRowSelectionOnClick
+                sx={{
+                    ...defaultDataGridSx,
+                    border: 'none',
+                    '& .MuiDataGrid-columnHeaders': {
+                        backgroundColor: '#f9fafb',
+                        color: 'black',
+                        fontWeight: 'bold',
+                        borderBottom: '1px solid #e5e7eb',
+                    },
+                    '& .MuiDataGrid-cell': {
+                        borderBottom: '1px solid #f3f4f6',
+                    },
+                }}
+            />
+            <ConfirmPopUp
+                isOpen={showPopUp}
+                onClose={() => {
+                    setShowPopUp(false);
+                    setHapusId(null);
+                }}
+                onConfirm={hapus}
+                title="Hapus Data Jabatan?"
+                message="Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus data jabatan ini dari sistem?"
+                confirmText="Ya, Hapus"
+                variant="danger"
+            />
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+            />
+        </div>
+
+
+
     );
 }

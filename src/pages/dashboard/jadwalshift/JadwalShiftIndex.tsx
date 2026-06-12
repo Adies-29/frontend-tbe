@@ -4,8 +4,8 @@ import type { JadwalShiftData } from "../../../types";
 import TabelJadwalShift from "../../../components/ui/tabel/tabelJadwalShif/TabelJadwalShif";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../../../store/useAuthStore";
-import { Loader2, CalendarDays, Clock } from "lucide-react"; // Tambahan icon
-import TabelMatrixJadwal from "../../../components/ui/tabel/tabelJadwalShif/TabelMatrixJadwal";
+import { Loader2 } from "lucide-react";
+import { apiFetch } from "../../../utils/apiFetch";
 
 export default function JadwalShiftIndex() {
     const navigate = useNavigate();
@@ -17,52 +17,48 @@ export default function JadwalShiftIndex() {
     const [isLoading, setIsLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState("");
 
-    // Fungsi FETCH dari Backend (Khusus Shift)
-    const fetchJadwalShift = async () => {
-        setIsLoading(true);
-        setErrorMsg("");
-
-        try {
-            const token = useAuthStore.getState().token;
-            const response = await fetch ("https://ppm-sooty.vercel.app/api/v1/shifts", {
+   // Fungsi FETCH dari Backend ( Kunci Token)
+       const fetchJadwalShift = async () => {
+           setIsLoading(true);
+           setErrorMsg("");
+   
+           try {
+               // Ambil token dari memori browser
+               const token = useAuthStore.getState().token;
+               const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, {
                 method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-            if (!response.ok){
-                if(response.status === 401 || response.status === 403){
-                    throw new Error ("Sesi Anda telah habis. Silakan login kembali !")
-                }
-                throw new Error ("Gagal memuat data dari server")
-            }
-
-            const result = await response.json();
-            if (result.success){
-                setDataJadwalShift(result.data);
-            }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            console.error("Error fetching Jadwal & shift:", error);
-            setErrorMsg(error.message || "Gagal memuat data pegawai.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
+               });
+               if (!response.ok){
+                   if(response.status === 401 || response.status === 403){
+                       throw new Error ("Sesi Anda telah habis. Silakan login kembali !")
+                   }
+                   throw new Error ("Gagal memuat data dari server")
+               }
+   
+               const result = await response.json();
+               if (result.success){
+                   setDataJadwalShift(result.data);
+               }
+   
+           } catch (error: unknown) {
+               console.error("Error fetching Jadwal & shift:", error);
+               setErrorMsg(error instanceof Error ? error.message : "Gagal memuat data pegawai.");
+           }finally{
+               setIsLoading(false);
+           }
+       };
+   
     useEffect(() => {
         const fetchData = async () => {
-            // Nanti Anda bisa membedakan fetch berdasarkan activeTab
-            // Jika tab 'shift', panggil fetchJadwalShift()
-            // Jika tab 'jadwal', panggil fetchJadwalKaryawan()
-            if (activeTab === 'shift') {
-                await fetchJadwalShift();
-            }
+            await fetchJadwalShift();
         };
         setTimeout(fetchData, 0);
-    }, [activeTab]); // Effect dipicu ulang jika tab berubah
+    }, []);
+    
 
 
     return (

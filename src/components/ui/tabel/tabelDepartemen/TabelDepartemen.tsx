@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
     DataGrid, 
     type GridColDef, 
@@ -9,18 +8,34 @@ import {
     type GridRowId, 
     type GridRowModel 
 } from '@mui/x-data-grid';
-import { Pencil, Trash2, Save, X, Eye,} from 'lucide-react';
+import { Pencil, Trash2, Save, X} from 'lucide-react';
 import type { DepartemenData } from '../../../../types';
+import { useAuthStore } from '../../../../store/useAuthStore';
+import ConfirmPopUp from '../../ConfirmPopUp';
+import Notif from '../../Notif';
+import { getSafeErrorMessage } from '../../../../utils/errorHandler';
+import { apiFetch } from "../../../../utils/apiFetch";
+import { defaultDataGridSx } from "../dataGridStyles";
 
 // --- INTERFACES ---
 interface DepartemenTableProps {
     data?: DepartemenData[];
+    onRefresh: () => void; 
 }
 
-export default function DepartemenTable({ data: initialData = [] }: DepartemenTableProps) {
+export default function DepartemenTable({ data: initialData = [], onRefresh }: DepartemenTableProps) {
     const [rows, setRows] = useState<DepartemenData[]>(initialData);
     const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
-    const navigate = useNavigate(); // <-- Inisialisasi fungsi navigasi
+    const token = useAuthStore((state) => state.token)
+
+    const [showPopUp, setShowPopUp] = useState(false);
+    const [hapusId, setHapusId] = useState<GridRowId | null>(null);
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
+
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -47,27 +62,40 @@ export default function DepartemenTable({ data: initialData = [] }: DepartemenTa
     };
 
     const handleDeleteClick = (id: GridRowId) =>  async () => {
-       const isConfirm = window.confirm("Yakin gak??")
+        setHapusId(id);
+        setShowPopUp(true);
+    };
 
-        if (!isConfirm) return;
-
+    const hapus = async () =>{
+        if (!hapusId) return;
         try {
-            const response =await fetch(`https://ppm-sooty.vercel.app/api/v1/departemen/${id}`, {
-                method:"DELETE"
+            const response =await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen/${hapusId}`, {
+                method:"DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                } 
             });
             const result = await response.json();
 
-            if (response.ok){
-                alert("Departemen berhasil dihapus");
-                setRows(rows.filter((row) => row.id !== id));
+            if (response.ok && result.success){
+                setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(hapusId)));
+                setNotif({ show: true, message: "Data departemen berhasil dihapus", type: "success" });
+                setTimeout(() => {
+                    onRefresh();
+                }, 2000);
             }else{
-                alert(`Gagal hapus: ${result.message}`);
+                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
             }
         } catch (error) {
             console.error("Error delete :", error);
-            alert("Error server");
+            setNotif({ show: true, message: "Gagal menghapus data. Periksa koneksi.", type: "error" });
+        } finally{
+            setShowPopUp(false);
+            setHapusId(null);
         }
-    };
+
+    }
 
     // Fungsi untuk PINDAH HALAMAN lihat karyawan
 
@@ -78,10 +106,11 @@ export default function DepartemenTable({ data: initialData = [] }: DepartemenTa
         }
 
         try {
-            const response = await fetch (`https://ppm-sooty.vercel.app/api/v1/departemen/${newRow.id}`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen/${newRow.id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization" : `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     nama_departemen: newRow.nama_departemen
@@ -90,18 +119,18 @@ export default function DepartemenTable({ data: initialData = [] }: DepartemenTa
 
             const result = await response.json();
 
-            if (response.ok){
+            if (response.ok && result.success){
                 setRows(rows.map((row) =>
                 (row.id === newRow.id ? updatedRow : row)));
-                alert("Departemen berhasil diperbarui!");
+                setNotif({ show: true, message: "Perubahan data berhasil diperbarui", type: "success" });
                 return updatedRow;
             }else{
-                alert(`Departemen gagal diperbarui!: ${result.message}`);
+                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
                 return oldRow;
             }
         } catch (error) {
             console.error("Error updating departemen:", error);
-            alert("Terjadi kesalahan saat menghubungi server.");
+            setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
             return oldRow; 
         }    
     };
@@ -195,15 +224,25 @@ export default function DepartemenTable({ data: initialData = [] }: DepartemenTa
                 }}
                 pageSizeOptions={[10, 20]}
                 disableRowSelectionOnClick
-                sx={{
-                    border: '1px solid #e5e7eb',
-                    '& .MuiDataGrid-columnHeaders': {
-                        backgroundColor: '#f3f4f6',
-                        color: 'black',
-                        fontWeight: 'bold',
-                        borderBottom: '1px solid #9ca3af',
-                    },
+                sx={defaultDataGridSx}
+            />
+            <ConfirmPopUp
+                isOpen={showPopUp}
+                onClose={() => {
+                    setShowPopUp(false);
+                    setHapusId(null);
                 }}
+                onConfirm={hapus}
+                title="Hapus Data Departemen?"
+                message="Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus data departemen ini dari sistem?"
+                confirmText="Ya, Hapus"
+                variant="danger"
+            />
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
             />
             
             

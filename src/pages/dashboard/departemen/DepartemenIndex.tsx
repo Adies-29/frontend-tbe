@@ -3,8 +3,11 @@ import Button from "../../../components/ui/Button";
 import TabelDepartemen from "../../../components/ui/tabel/tabelDepartemen/TabelDepartemen";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import type { DepartemenData } from "../../../types";
+import type { DepartemenData, DepartemenOption, JabatanOption } from "../../../types";
 import { useAuthStore } from "../../../store/useAuthStore";
+import { apiFetch } from "../../../utils/apiFetch";
+import Notif from "../../../components/ui/Notif";
+
 
 
 export default function DepartemenIndex() {
@@ -14,25 +17,30 @@ export default function DepartemenIndex() {
     // 2. State untuk menyimpan data dari Database & status Loading
     const [dataDepartemen, setDataDepartemen] = useState<DepartemenData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
 
     const fetchDepartemen = async () => {
         setIsLoading(true);
         try {
             // Tembak API Backend
             const [resDept, resJabatan] = await Promise.all([
-                fetch("https://ppm-sooty.vercel.app/api/v1/departemen", { headers: { "Content-Type" : "application/json","Authorization": `Bearer ${token}` } }),
-                fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Content-Type" : "application/json","Authorization": `Bearer ${token}` } })
+                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
+                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
             ])
 
             const resultDept = await resDept.json();
             const resultJabatan = await resJabatan.json();
-            
+
             if (resDept.ok && resJabatan.ok) {
 
-                const mappedData: DepartemenData[] = resultDept.data.map((dept: any) => {
-                    const jumlah = resultJabatan.data.filter((jab: any) => {
-                    return String(jab.departemen_id) === String(dept.id);
-                }).length
+                const mappedData: DepartemenData[] = resultDept.data.map((dept: DepartemenOption) => {
+                    const jumlah = resultJabatan.data.filter((jab: JabatanOption) => {
+                        return String(jab.departemen_id) === String(dept.id);
+                    }).length
                     return {
                         id: dept.id,
                         nama_departemen: dept.nama_departemen,
@@ -42,8 +50,8 @@ export default function DepartemenIndex() {
                 setDataDepartemen(mappedData);
             }
         } catch (error) {
-           console.error("Error fetching data departemen & jabatan:", error);
-             alert("Gagal memuat data Departemen. Pastikan backend berjalan.");
+            console.error("Error fetching data departemen & jabatan:", error);
+            setNotif({ show: true, message: "Gagal memuat data Departemen. Pastikan backend berjalan.", type: "error" });
         } finally {
             setIsLoading(false);
         }
@@ -89,15 +97,21 @@ export default function DepartemenIndex() {
 
                 {/* 3. PEMANGGILAN KOMPONEN TABEL */}
                 {isLoading ? (
-    <div className="flex flex-col items-center justify-center h-64 text-gray-400">
-        <Loader2 className="animate-spin mb-4 text-red-600" size={32} />
-        <p>Memuat data dari database...</p>
-    </div>
-) : (
-    <TabelDepartemen data={dataDepartemen} />
-)}
+                    <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+                        <Loader2 className="animate-spin mb-4 text-red-600" size={32} />
+                        <p>Memuat data dari database...</p>
+                    </div>
+                ) : (
+                    <TabelDepartemen data={dataDepartemen} onRefresh={fetchDepartemen} />
+                )}
 
             </section>
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+            />
         </div>
     );
 }

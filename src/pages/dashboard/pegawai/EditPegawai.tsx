@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import z from "zod"
 import { useAuthStore } from "../../../store/useAuthStore";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 import { useForm, Controller } from 'react-hook-form'; 
 import Autocomplete from '@mui/material/Autocomplete'; 
@@ -13,6 +13,9 @@ import Button from "../../../components/ui/Button";
 import { TextArea } from "../../../components/ui/TextArea";
 import { Input } from "../../../components/ui/InputText";
 import { InputSelect } from "../../../components/ui/InputSelect";
+import Notif from "../../../components/ui/Notif";
+import { apiFetch } from "../../../utils/apiFetch";
+import type { DepartemenOption, JabatanOption, ShiftOption, KotaOption } from "../../../types";
 
 const schema = z.object({
     nik: z.string()
@@ -64,15 +67,21 @@ export default function EditPegawai(){
     const [isFetchingData, setIsFetchingData] = useState(true)
 
     //master data
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [departemenList, setDepartemenList] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [jabatanList, setJabatanList] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [shiftList, setShiftList] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [allJabatan, setAllJabatan] = useState<any[]>([])
-    const [kotaList, _setKotaList] = useState<any[]>(MOCK_KOTA); 
+   
+    const [departemenList, setDepartemenList] = useState<DepartemenOption[]>([]);
+    
+    const [jabatanList, setJabatanList] = useState<JabatanOption[]>([]);
+   
+    const [shiftList, setShiftList] = useState<ShiftOption[]>([]);
+   
+    const [allJabatan, setAllJabatan] = useState<JabatanOption[]>([]);
+    const [kotaList, _setKotaList] = useState<KotaOption[]>(MOCK_KOTA); 
+
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
 
     const {
         register,
@@ -92,9 +101,9 @@ export default function EditPegawai(){
                 setIsFetchingData(true);
 
                 const[resDept, resJabatan, resShift] = await Promise.all([
-                    fetch("https://ppm-sooty.vercel.app/api/v1/departemen", { headers: { "Authorization": `Bearer ${token}` } }),
-                    fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", { headers: { "Authorization": `Bearer ${token}` } }),
-                    fetch("https://ppm-sooty.vercel.app/api/v1/shifts", { headers: { "Authorization": `Bearer ${token}` } })
+                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
+                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
+                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
                 ]);
                 const dataDept = await resDept.json();
                 const dataJabatan = await resJabatan.json();
@@ -110,21 +119,20 @@ export default function EditPegawai(){
                 if(resShift.ok && dataShift.success) setShiftList(dataShift.data)
                     
 
-                const resPegawai = await fetch(`https://ppm-sooty.vercel.app/api/v1/pegawai/${id}`, {
+                const resPegawai = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${id}`, {
                     headers: { "Authorization" : `Bearer ${token}` }
                 });
                 const dataPegawai = await resPegawai.json();
-                console.log("CEK DATA PEGAWAI DARI BACKEND:", dataPegawai.data);
+                
                 
                 if(resPegawai.ok && dataPegawai.success){
                     
                     const pegawai = dataPegawai.data;
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const currentJabatan = masterJabatan.find((j: any) => j.id === pegawai.jabatan_id);
+                   
+                    const currentJabatan = masterJabatan.find((j: JabatanOption) => j.id === pegawai.jabatan_id);
                     const pegawaiId = currentJabatan ? currentJabatan.departemen_id?.toString() : "";
 
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const pilihJabatan = masterJabatan.filter((j: any) => j.departemen_id?.toString() === pegawaiId );
+                    const pilihJabatan = masterJabatan.filter((j: JabatanOption) => j.departemen_id?.toString() === pegawaiId );
                     setJabatanList(pilihJabatan);
 
                     const { nik, bpjs, tanggal_bergabung, jenis_kelamin, nama, tempat_lahir, tanggal_lahir, no_hp, alamat, email, pin_mesin, jabatan_id, default_shift_id } = pegawai;
@@ -145,11 +153,14 @@ export default function EditPegawai(){
                         jabatan_id: jabatan_id?.toString() || "",
                         default_shift_id: default_shift_id?.toString() || "",
                     });
+
+                    // Tandai departemen awal agar watcher tidak mereset jabatan saat loading pertama
+                    prevDeptRef.current = pegawaiId;
                 };
                 
             } catch (error) {
                 console.error("Gagal memuat data:", error);
-                alert("Terjadi kesalahan saat memuat data dari server.");
+                setNotif({ show: true, message: "Terjadi kesalahan saat memuat data dari server.", type: "error" });
             } finally{
                 setIsFetchingData(false);
             }
@@ -157,21 +168,30 @@ export default function EditPegawai(){
         if (id) loadInitialData();
     }, [id, token, reset]);
 
-    //  DROPDOWN Pilih Dept -> Filter Jabatan
+   
     const selectedDept = watch("departemen");
-   useEffect(() => {
-        // Syarat !isFetchingData ini SUPER PENTING!
-        // Artinya: "Jalankan reset jabatan HANYA JIKA proses loading data awal sudah selesai."
+    const prevDeptRef = useRef<string | undefined>(undefined);
+
+    useEffect(() => {
         if (!isFetchingData && selectedDept && allJabatan.length > 0) {
             
-            // 1. Filter daftar jabatan sesuai departemen yang baru dipilih
-            const filteredJabatan = allJabatan.filter((j) => j.departemen_id?.toString() === selectedDept.toString());
-            
-            // 2. Perbarui pilihan di dalam dropdown Jabatan
-            setJabatanList(filteredJabatan);
-            
-            // 3. Kosongkan kotak jabatan yang lama agar HRD wajib memilih yang baru
-            setValue("jabatan_id", ""); 
+            // Cek apakah nilai departemen benar-benar berubah (bukan dari proses loading awal)
+            if (prevDeptRef.current !== selectedDept) {
+                // 1. Filter daftar jabatan sesuai departemen yang baru dipilih
+                const filteredJabatan = allJabatan.filter((j) => j.departemen_id?.toString() === selectedDept.toString());
+                
+                // 2. Perbarui pilihan di dalam dropdown Jabatan
+                setJabatanList(filteredJabatan);
+                
+                // 3. Kosongkan kotak jabatan HANYA JIKA ini bukan saat loading awal
+                // (Jika prevDeptRef.current !== undefined, berarti user yang ganti manual)
+                if (prevDeptRef.current !== undefined) {
+                    setValue("jabatan_id", ""); 
+                }
+
+                // Catat departemen saat ini
+                prevDeptRef.current = selectedDept;
+            }
         }
     }, [selectedDept, allJabatan, isFetchingData, setValue]);
 
@@ -179,7 +199,7 @@ export default function EditPegawai(){
     const onSubmit = async (data: FormData) => {
         setIsSaving(true);
         try {
-            const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/pegawai/${id}`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type" : "application/json",
@@ -206,14 +226,16 @@ export default function EditPegawai(){
 
             
             if(response.ok && result.success){
-                alert("Data karyawan berhasil diperbarui!");
-                navigate("/dashboard/data-pegawai");
+                setNotif({ show: true, message: "Data Pegawai berhasil diperbarui!", type: "success" });
+                setTimeout(() => {
+                    navigate("/dashboard/data-pegawai");
+                }, 2000);
             }else{
-                alert(result.message || "Gagal memperbarui data karyawan.");
+                 setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });
             }
         } catch (error) {
-            console.error("Error:", error);
-            alert("Terjadi kesalahan saat menghubungi server.");
+            console.error("Error Submit:", error);
+            setNotif({ show: true, message: "Terjadi kesalahan jaringan.", type: "error" });
         }finally{
             setIsSaving(false);
         }
@@ -243,7 +265,7 @@ export default function EditPegawai(){
                     />
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit, (err) => console.log("ZOD ERROR:", err))} className="space-y-8">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                     
                     {/* --- SEKSI 1: INFORMASI PRIBADI --- */}
                     <div>
@@ -338,7 +360,7 @@ export default function EditPegawai(){
                         />
                         <Button 
                             type="button" 
-                            variant="secondary" 
+                            variant="danger" 
                             label="Batal" 
                             onClick={() => navigate(-1)} 
                         />
@@ -347,6 +369,12 @@ export default function EditPegawai(){
 
                 </form>
             </div>
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+            />
         </div>
     )
 }

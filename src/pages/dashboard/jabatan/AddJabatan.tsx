@@ -6,6 +6,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '../../../components/ui/InputText'; 
 import { useEffect, useState } from 'react';
+import { useAuthStore } from '../../../store/useAuthStore';
+import Notif from '../../../components/ui/Notif';
+import { apiFetch } from "../../../utils/apiFetch";
 
 
 const schema = z.object({
@@ -23,6 +26,13 @@ export default function AddJabatan() {
     const navigate = useNavigate();
     const [isSaving, setIsSaving] = useState(false);
     const [departemenList, setDepartemenList] =  useState<DepartemenItem[]>([]);
+    const token = useAuthStore((state) => state.token)
+
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
 
     const {
         register,
@@ -36,7 +46,13 @@ export default function AddJabatan() {
     useEffect(() => {
         const fetchDepartemen = async () =>{
             try {
-                const response = await fetch(`https://ppm-sooty.vercel.app/api/v1/departemen`);
+                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                });
+                
                 const result = await response.json();
 
                 if (response.ok){
@@ -54,10 +70,11 @@ export default function AddJabatan() {
    const onSubmit = async (data: FormData) => {
         setIsSaving(true)
         try {
-            const response = await fetch("https://ppm-sooty.vercel.app/api/v1/jabatan", {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     nama_jabatan: data.nama_jabatan,
@@ -66,17 +83,17 @@ export default function AddJabatan() {
             });
             const result = await response.json();
 
-           if (response.ok) {
-                alert("Berhasil! Jabatan baru telah ditambahkan.");
-                navigate("/dashboard/jabatan"); 
+           if (response.ok && result.success) {
+                setNotif({ show: true, message: "Jabatan berhasil disimpan!", type: "success" });
+                setTimeout(() => {
+                    navigate("/dashboard/jabatan"); 
+                }, 2000)
             } else {
-                alert(`Gagal: ${result.message}`);
+                setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });
             }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            console.error("CREATE JABATAN ERROR!:", error);
-            alert(error.message || "Gagal terhubung ke server.");
+        } catch (error) {
+            console.error("Error Submit:", error);
+            setNotif({ show: true, message: "Terjadi kesalahan jaringan.", type: "error" });
         }finally {
             setIsSaving(false);
         }
@@ -143,7 +160,7 @@ export default function AddJabatan() {
                             />
                             <Button
                                 type="button"
-                                variant="back"
+                                variant="danger"
                                 label="Batal"
                                 onClick={() => navigate(-1)}
                             />
@@ -153,6 +170,12 @@ export default function AddJabatan() {
                     </div>
                 </form>
             </div>
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+            />
         </div>
     );
 }
