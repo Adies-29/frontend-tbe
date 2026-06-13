@@ -16,7 +16,7 @@ export default function LemburIndex() {
         setIsLoading(true);
         try {
           
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/lembur/spl`, {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/all`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
