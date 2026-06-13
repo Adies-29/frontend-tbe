@@ -16,20 +16,35 @@ export default function LemburIndex() {
         setIsLoading(true);
         try {
           
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/all`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                }
-            });
+            const [responseLembur, responsePegawai] = await Promise.all([
+                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
+                }),
+                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
+                })
+            ]);
 
-            const result = await response.json();
+            const resultLembur = await responseLembur.json();
+            const resultPegawai = responsePegawai.ok ? await responsePegawai.json() : { data: [] };
 
-            if (response.ok && result.success) {
-                const formattedData = (result.data || []).map((item: LemburData, index: number) => ({
+            if (responseLembur.ok && resultLembur.success) {
+                // Buat lookup dictionary untuk nama pegawai
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const pegawaiMap = new Map((resultPegawai.data || []).map((p: any) => [String(p.id), p.nama]));
+
+                const formattedData = (resultLembur.data || []).map((item: LemburData, index: number) => ({
                     ...item,
-                    id: item.id || index + 1
+                    id: item.id || index + 1,
+                    nama: item.nama || item.pegawai?.nama || pegawaiMap.get(String(item.pegawai_id)) || ""
                 }));
                 setDataLembur(formattedData);
             }
@@ -53,7 +68,7 @@ export default function LemburIndex() {
                     </h2>
                 </div>
 
-                <TabelLembur data={dataLembur} isLoading={isLoading} />
+                <TabelLembur data={dataLembur} onRefresh={fetchLembur} isLoading={isLoading} />
             </section>
         </div>
     );

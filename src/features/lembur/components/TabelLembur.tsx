@@ -1,16 +1,78 @@
-import { DataGrid, type GridColDef } from "@mui/x-data-grid";
-import { Loader2 } from "lucide-react";
+import { DataGrid, GridActionsCellItem, type GridColDef, type GridRowId } from "@mui/x-data-grid";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import dayjs from "dayjs";
 
 import type { LemburData } from "../../../types";
 import { defaultDataGridSx } from "../../../components/common/dataGridStyles";
+import { useState } from "react";
+import { useAuthStore } from "../../../store/useAuthStore";
+import { apiFetch } from "../../../utils/apiFetch";
+import { getSafeErrorMessage } from "../../../utils/errorHandler";
+import { useNavigate } from "react-router-dom";
+import ConfirmPopUp from "../../../components/common/ConfirmPopUp";
+import Notif from "../../../components/common/Notif";
+import { useEffect } from "react";
 
 interface TabelLemburProps {
     data: LemburData[];
     isLoading: boolean;
+    onRefresh: () => void;
 }
 
-export default function TabelLembur({ data, isLoading }: TabelLemburProps) {
+export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburProps) {
+    const [rows, setRows] = useState<LemburData[]>(data);
+
+    useEffect(() => {
+        setRows(data);
+    }, [data]);
+
+    const token = useAuthStore((state) => state.token);
+    const navigate = useNavigate();
+    const [hapusId, setHapusId] = useState<GridRowId | null>(null);
+    const [showPopUp, setShowPopUp] = useState(false);
+    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+        show: false,
+        message: "",
+        type: "success"
+    });
+
+    const handleDeleteClick = (id: GridRowId) => () => {
+        setHapusId(id);
+        setShowPopUp(true);
+    };
+    const hapus = async () => {
+        if (!hapusId) return;
+
+        try {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/${hapusId}`, {
+                method: 'DELETE',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                // Hapus data dari tabel secara realtime
+                setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(hapusId)));
+                setNotif({ show: true, message: "Data lembur berhasil dihapus", type: "success" });
+                setTimeout(() => {
+                    onRefresh();
+                }, 2000);
+
+            } else {
+                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
+            }
+        } catch (error) {
+            console.error("Terjadi kesalahan server:", error);
+            setNotif({ show: true, message: "Gagal menghapus data. Periksa koneksi.", type: "error" });
+        } finally {
+            // Tutup popup dan bersihkan ID setelah selesai diproses
+            setShowPopUp(false);
+            setHapusId(null);
+        }
+    };
     const columns: GridColDef[] = [
         {
             field: "pegawai_id",
@@ -83,7 +145,32 @@ export default function TabelLembur({ data, isLoading }: TabelLemburProps) {
                     {params.value || "-"}
                 </span>
             )
-        }
+        },
+        {
+            field: 'actions',
+            type: 'actions', 
+            headerName: 'Aksi',
+            width: 100,
+            cellClassName: 'actions',
+            getActions: ({ id, row }) => {
+
+                return [
+                    <GridActionsCellItem
+                        icon={<Pencil size={18} className="text-gray-600 hover:text-black" />}
+                        label="Edit"
+                        className="textPrimary"
+                        onClick={() => navigate(`edit/${id}?pegawai_id=${row.pegawai_id}&tanggal=${row.tanggal}&nama=${encodeURIComponent(row.nama || "")}`)}
+                        color="inherit"
+                    />,
+                    <GridActionsCellItem
+                        icon={<Trash2 size={18} className="text-gray-600 hover:text-red-600" />}
+                        label="Delete"
+                        onClick={handleDeleteClick(id)}
+                        color="inherit"
+                    />,
+                ];
+            },
+        },
     ];
 
     if (isLoading) {
@@ -96,9 +183,10 @@ export default function TabelLembur({ data, isLoading }: TabelLemburProps) {
     }
 
     return (
-        <div className="w-full bg-white" style={{ width: "100%", minHeight: "400px" }}>
+        <div className="w-full bg-white relative" style={{ width: "100%", minHeight: "400px" }}>
             <DataGrid
-                rows={data}
+                showToolbar
+                rows={rows}
                 columns={columns}
                 autoHeight
                 disableRowSelectionOnClick
@@ -109,6 +197,24 @@ export default function TabelLembur({ data, isLoading }: TabelLemburProps) {
                 }}
                 pageSizeOptions={[10, 20]}
                 sx={defaultDataGridSx}
+            />
+            <ConfirmPopUp
+                isOpen={showPopUp}
+                onClose={() => {
+                    setShowPopUp(false);
+                    setHapusId(null);
+                }}
+                onConfirm={hapus}
+                title="Hapus Data Lembur?"
+                message="Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus data ini?"
+                confirmText="Ya, Hapus"
+                variant="danger"
+            />
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
             />
         </div>
     );

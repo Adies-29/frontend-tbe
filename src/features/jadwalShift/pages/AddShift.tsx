@@ -10,6 +10,7 @@ import { useAuthStore } from '../../../store/useAuthStore';
 import { useState } from 'react';
 import Notif from '../../../components/common/Notif';
 import { apiFetch } from "../../../utils/apiFetch";
+import { formatMinutesToText } from "../../../utils/formatMinutes";
 
 // 1. SCHEMA ZOD - Disesuaikan dengan penamaan presisi dari Database
 const schema = z.object({
@@ -164,6 +165,9 @@ export default function AddShift() {
                             placeholder="0"
                             register={register}
                             error={errors.batas_maksimal_lembur_menit?.message}
+                            helperText={watch("batas_maksimal_lembur_menit") > 0 ? (
+                                <span className="text-xs text-blue-600 font-medium italic">💡 {formatMinutesToText(watch("batas_maksimal_lembur_menit"))}</span>
+                            ) : null}
                         />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input
@@ -171,13 +175,21 @@ export default function AddShift() {
                                 nama="batas_akhir_scan_masuk_menit"
                                 type="number"
                                 placeholder="120"
-                                register={register} />
+                                register={register}
+                                helperText={watch("batas_akhir_scan_masuk_menit") > 0 ? (
+                                    <span className="text-xs text-blue-600 font-medium italic">💡 {formatMinutesToText(watch("batas_akhir_scan_masuk_menit"))}</span>
+                                ) : null}
+                            />
                             <Input
                                 label="Batas Scan Pulang (Menit)"
                                 nama="batas_akhir_scan_pulang_menit"
                                 type="number"
                                 placeholder="120"
-                                register={register} />
+                                register={register}
+                                helperText={watch("batas_akhir_scan_pulang_menit") > 0 ? (
+                                    <span className="text-xs text-blue-600 font-medium italic">💡 {formatMinutesToText(watch("batas_akhir_scan_pulang_menit"))}</span>
+                                ) : null}
+                            />
                         </div>
                     </section>
 
@@ -205,6 +217,9 @@ export default function AddShift() {
                                 placeholder="0"
                                 register={register}
                                 error={errors.batas_toleransi_menit?.message}
+                                helperText={watch("batas_toleransi_menit") > 0 ? (
+                                    <span className="text-xs text-blue-600 font-medium italic">💡 {formatMinutesToText(watch("batas_toleransi_menit"))}</span>
+                                ) : null}
                             />
 
                             <Input
@@ -245,7 +260,9 @@ export default function AddShift() {
                                 placeholder="0"
                                 register={register}
                                 error={errors.toleransi_pulang_awal_menit?.message}
-
+                                helperText={watch("toleransi_pulang_awal_menit") > 0 ? (
+                                    <span className="text-xs text-blue-600 font-medium italic">💡 {formatMinutesToText(watch("toleransi_pulang_awal_menit"))}</span>
+                                ) : null}
                             />
                             <Input
                                 label="Denda Per Menit (Rp)"

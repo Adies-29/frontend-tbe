@@ -27,6 +27,7 @@ const AddLembur = lazy(() => import('./features/lembur/pages/AddLembur'))
 
 const EditPegawai = lazy(() => import('./features/pegawai/pages/EditPegawai'))
 const EditShift = lazy(() => import('./features/jadwalShift/pages/EditShift'))
+const EditLembur = lazy(() => import('./features/lembur/pages/EditLembur'))
 const AturGajiJabatan = lazy(() => import('./features/gajiTunjangan/pages/AturGajiJabatan'))
 
 const DetailPegawai = lazy(() => import('./features/pegawai/pages/DetailPegawai'))
@@ -87,6 +88,7 @@ function App() {
 
               <Route path="/dashboard/lembur" element={<LemburIndex />} />
               <Route path="/dashboard/lembur/tambah-lembur" element={<AddLembur />} />
+              <Route path="/dashboard/lembur/edit/:id" element={<EditLembur />} />
 
             </Route>
           </Route>

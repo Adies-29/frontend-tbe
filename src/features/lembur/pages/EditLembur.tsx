@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Clock } from "lucide-react";
 import { useAuthStore } from "../../../store/useAuthStore";
@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiFetch } from "../../../utils/apiFetch";
 import { formatMinutesToText } from "../../../utils/formatMinutes";
+import { Input } from "../../../components/common/InputText";
 
 const lemburSchema = z.object({
     pegawai_id: z.string().min(1, "ID Pegawai wajib diisi")
@@ -23,7 +24,7 @@ const lemburSchema = z.object({
 
 type FormData = z.infer<typeof lemburSchema>;
 
-export default function AddLembur() {
+export default function EditLembur() {
     const navigate = useNavigate();
 
     const [searchParams] = useSearchParams();
@@ -37,6 +38,7 @@ export default function AddLembur() {
     const {
         register,
         handleSubmit,
+        reset,
         watch,
         formState: { errors }
     } = useForm<FormData>({
@@ -44,7 +46,7 @@ export default function AddLembur() {
         resolver: zodResolver(lemburSchema) as any,
         defaultValues: {
             pegawai_id: idPegwai,
-            tanggal: "",
+            tanggal: searchParams.get("tanggal") || "",
             alasan_lembur: ""
         }
     });
@@ -56,6 +58,38 @@ export default function AddLembur() {
         message: "",
         type: "success"
     });
+
+    useEffect(() => {
+        const fetchLemburData = async () => {
+            const tgl = searchParams.get("tanggal");
+            if (idPegwai && tgl) {
+                try {
+                    const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/?pegawai_id=${idPegwai}&tanggal=${tgl}`, {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
+                        }
+                    });
+                    const result = await response.json();
+                    if (response.ok && result.success && result.data && result.data.length > 0) {
+                        const lembur = result.data[0];
+                        // reset form with fetched data
+                        reset({
+                            pegawai_id: String(lembur.pegawai_id),
+                            tanggal: lembur.tanggal,
+                            menit_lembur_diizinkan: lembur.menit_lembur_diizinkan,
+                            alasan_lembur: lembur.alasan_lembur || ""
+                        });
+                    }
+                } catch (error) {
+                    console.error("Gagal memuat data lembur:", error);
+                }
+            }
+        };
+
+        fetchLemburData();
+    }, [idPegwai, searchParams, token, reset]);
 
     const onSubmit = async (data: FormData) => {
         setIsLoading(true);
@@ -78,7 +112,7 @@ export default function AddLembur() {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                setNotif({ show: true, message: `Sukses! Pegawai baru telah disimpan dengan ID: ${result.data.id}`, type: "success" });
+                setNotif({ show: true, message: `Sukses! Data lembur berhasil diperbarui.`, type: "success" });
                 setTimeout(() => {
                     navigate("/dashboard");
                 }, 2000);
@@ -94,59 +128,57 @@ export default function AddLembur() {
     };
     return (
         <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
-            <button onClick={() => navigate(-1)} className="mb-6 flex items-center gap-2 text-gray-600 hover:text-red-600 font-medium">
-                <ArrowLeft size={18} /> Kembali
-            </button>
 
-            <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                <Clock className="text-red-600" /> Buat Perintah Lembur Baru
-            </h1>
+            <div className="flex justify-between items-center mt-4" >
+                <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    <Clock className="text-red-600" /> Edit Perintah Lembur
+                </h1>
+
+                <Button variant="back" icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)} label="Kembali" />
+
+            </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
 
-                <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">ID Pegawai <span className="text-red-500">*</span></label>
-                    <input
-                        {...register("pegawai_id")}
-                        className={`w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:outline-none ${idPegwai ? "bg-gray-100 text-gray-600" : ""}`}
-                        readOnly={!!idPegwai}
-                    />
-                    {errors.pegawai_id && <p className="text-xs text-red-500 mt-1">{errors.pegawai_id.message}</p>}
-                    {namaPegawai && (
-                        <p className="text-xs text-green-600 mt-1.5 font-medium flex items-center gap-1">
-                            Membuat SPL untuk: <strong>{namaPegawai}</strong>
-                        </p>
-                    )}
-                </div>
+                <Input
+                    label="ID Pegawai *"
+                    nama="pegawai_id"
+                    register={register}
+                    readOnly={true}
+                    error={errors.pegawai_id?.message}
+                    helperText={
+                        namaPegawai && (
+                            <p className="text-xs text-green-600 font-medium flex items-center gap-1">
+                                Mengedit SPL untuk: <strong>{namaPegawai}</strong>
+                            </p>
+                        )
+                    }
+                />
 
+                <Input
+                    label="Tanggal Lembur *"
+                    nama="tanggal"
+                    type="date"
+                    register={register}
+                    readOnly={true}
+                    error={errors.tanggal?.message}
+                />
 
-                <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Tanggal Lembur <span className="text-red-500">*</span></label>
-                    <input
-                        type="date"
-                        {...register("tanggal")}
-                        className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:outline-none"
-                    />
-                    {errors.tanggal && <p className="text-xs text-red-500 mt-1">{errors.tanggal.message}</p>}
-                </div>
-
-
-                <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Lama Lembur (Menit) <span className="text-red-500">*</span></label>
-                    <input
-                        type="number"
-                        min="1"
-                        {...register("menit_lembur_diizinkan")}
-                        className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:outline-none"
-                        placeholder="Contoh: 120"
-                    />
-                    {valMenit > 0 && !errors.menit_lembur_diizinkan && (
-                        <p className="text-xs text-blue-600 mt-1 font-medium italic">
-                            💡 {formatMinutesToText(valMenit)}
-                        </p>
-                    )}
-                    {errors.menit_lembur_diizinkan && <p className="text-xs text-red-500 mt-1">{errors.menit_lembur_diizinkan.message}</p>}
-                </div>
+                <Input
+                    label="Lama Lembur (Menit) *"
+                    nama="menit_lembur_diizinkan"
+                    type="number"
+                    register={register}
+                    placeholder="Contoh: 120"
+                    error={errors.menit_lembur_diizinkan?.message}
+                    helperText={
+                        valMenit > 0 && !errors.menit_lembur_diizinkan && (
+                            <p className="text-xs text-blue-600 font-medium italic">
+                                💡 {formatMinutesToText(valMenit)}
+                            </p>
+                        )
+                    }
+                />
 
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Alasan Lembur <span className="text-gray-400 font-normal text-xs">(Opsional)</span></label>

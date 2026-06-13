@@ -296,9 +296,20 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                 }
                 // Jika SEDANG lembur atau sudah ada statusnya, tampilkan teks/badge biasa
                 if (!tidakAdaLembur) {
+                    let displayText = params.value;
+                    
+                    // Coba parsing jika nilainya berupa angka menit (misal: "120" atau "120 Menit")
+                    const match = String(params.value).match(/^(\d+)(?:\s*menit)?$/i);
+                    if (match) {
+                        const menitAngka = Number(match[1]);
+                        const jam = Math.floor(menitAngka / 60);
+                        const sisaMenit = menitAngka % 60;
+                        displayText = jam > 0 ? `${jam} Jam ${sisaMenit > 0 ? `${sisaMenit} Mnt` : ""}` : `${sisaMenit} Mnt`;
+                    }
+
                     return (
-                        <span className="bg-purple-600 text-white font-bold px-2 py-1 rounded text-xs">
-                            {params.value}
+                        <span className="bg-purple-100 text-purple-700 font-bold px-2 py-1 rounded text-xs border border-purple-200">
+                            {displayText}
                         </span>
                     );
                 }
