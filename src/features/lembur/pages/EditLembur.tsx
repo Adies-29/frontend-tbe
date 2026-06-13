@@ -174,7 +174,7 @@ export default function EditLembur() {
                     helperText={
                         valMenit > 0 && !errors.menit_lembur_diizinkan && (
                             <p className="text-xs text-blue-600 font-medium italic">
-                                💡 {formatMinutesToText(valMenit)}
+                                {formatMinutesToText(valMenit)}
                             </p>
                         )
                     }
