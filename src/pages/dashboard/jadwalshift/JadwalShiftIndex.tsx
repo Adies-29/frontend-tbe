@@ -44,7 +44,6 @@ export default function JadwalShiftIndex() {
                 setDataJadwalShift(result.data);
             }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: unknown) {
             console.error("Error fetching Jadwal & shift:", error);
             setErrorMsg(error instanceof Error ? error.message : "Terjadi kesalahan tidak terduga");
