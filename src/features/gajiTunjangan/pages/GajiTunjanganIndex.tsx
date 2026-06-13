@@ -48,7 +48,7 @@ export default function GajiTunjanganIndex() {
             </div>
 
             {/* RENDER KONTEN BERDASARKAN TAB AKTIF */}
-            <div className="min-h-[400px]">
+            <div className="min-h-100">
                 {activeTab === 'rekap' ? <TabRekapGaji /> : <TabMasterGaji />}
             </div>
 

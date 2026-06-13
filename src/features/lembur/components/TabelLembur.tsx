@@ -1,28 +1,28 @@
 import { DataGrid, GridActionsCellItem, type GridColDef, type GridRowId } from "@mui/x-data-grid";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import dayjs from "dayjs";
-
-import type { LemburData } from "../../../types";
 import { defaultDataGridSx } from "../../../components/common/dataGridStyles";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { apiFetch } from "../../../utils/apiFetch";
 import { getSafeErrorMessage } from "../../../utils/errorHandler";
 import { useNavigate } from "react-router-dom";
 import ConfirmPopUp from "../../../components/common/ConfirmPopUp";
 import Notif from "../../../components/common/Notif";
-import { useEffect } from "react";
 
 interface TabelLemburProps {
-    data: LemburData[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: any[]; 
     isLoading: boolean;
     onRefresh: () => void;
 }
 
 export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburProps) {
-    const [rows, setRows] = useState<LemburData[]>(data);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [rows, setRows] = useState<any[]>([]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setRows(data);
     }, [data]);
 
@@ -40,6 +40,7 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
         setHapusId(id);
         setShowPopUp(true);
     };
+
     const hapus = async () => {
         if (!hapusId) return;
 
@@ -54,7 +55,6 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
             const result = await response.json();
 
             if (response.ok && result.success) {
-                // Hapus data dari tabel secara realtime
                 setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(hapusId)));
                 setNotif({ show: true, message: "Data lembur berhasil dihapus", type: "success" });
                 setTimeout(() => {
@@ -68,25 +68,36 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
             console.error("Terjadi kesalahan server:", error);
             setNotif({ show: true, message: "Gagal menghapus data. Periksa koneksi.", type: "error" });
         } finally {
-            // Tutup popup dan bersihkan ID setelah selesai diproses
             setShowPopUp(false);
             setHapusId(null);
         }
     };
+
     const columns: GridColDef[] = [
         {
-            field: "pegawai_id",
+            field: "nama_pegawai", // <-- Berubah sesuai response API di console
             headerName: "Nama Pegawai",
             flex: 1,
             minWidth: 150,
             renderCell: (params) => {
-                const nama = params.row.nama || params.row.pegawai?.nama || `Pegawai ID: ${params.row.pegawai_id}`;
+                const nama = params.row.nama_pegawai || `Pegawai ID: ${params.row.pegawai_id}`;
                 return (
                     <span className="text-sm font-semibold text-gray-800">
                         {nama}
                     </span>
                 );
             }
+        },
+        {
+            field: "jabatan", // <-- Berubah sesuai response API di console
+            headerName: "Jabatan",
+            flex: 1,
+            minWidth: 150,
+            renderCell: (params) => (
+                <span className="text-sm font-medium text-gray-600">
+                    {params.value || "-"}
+                </span>
+            )
         },
         {
             field: "tanggal",
@@ -153,13 +164,13 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
             width: 100,
             cellClassName: 'actions',
             getActions: ({ id, row }) => {
-
+                // Menyesuaikan encodeURIComponent dari nama_pegawai
                 return [
                     <GridActionsCellItem
                         icon={<Pencil size={18} className="text-gray-600 hover:text-black" />}
                         label="Edit"
                         className="textPrimary"
-                        onClick={() => navigate(`edit/${id}?pegawai_id=${row.pegawai_id}&tanggal=${row.tanggal}&nama=${encodeURIComponent(row.nama || "")}`)}
+                        onClick={() => navigate(`edit/${id}?pegawai_id=${row.pegawai_id}&tanggal=${row.tanggal}&nama=${encodeURIComponent(row.nama_pegawai || "")}`)}
                         color="inherit"
                     />,
                     <GridActionsCellItem
