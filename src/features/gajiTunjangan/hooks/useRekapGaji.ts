@@ -119,7 +119,16 @@ export function useRekapGaji() {
         }
 
         const [tahun, bulan] = filterValue.split('-');
-        const confirmGenerate = window.confirm(`Apakah Anda yakin ingin menghitung dan menerbitkan gaji untuk periode Bulan ${bulan} Tahun ${tahun}?`);
+        
+        // =========================================================================
+        // TAMBAHAN: Kalkulasi Rentang Tanggal Otomatis (Awal s/d Akhir Bulan)
+        // =========================================================================
+        const tanggalMulai = `${tahun}-${bulan}-01`;
+        const totalHari = new Date(tahun, bulan, 0).getDate(); // Mendapatkan tanggal terakhir di bulan tsb
+        const tanggalSelesai = `${tahun}-${bulan}-${String(totalHari).padStart(2, '0')}`;
+
+        // Konfirmasi diperjelas agar HRD tahu rentang pastinya
+        const confirmGenerate = window.confirm(`Apakah Anda yakin ingin menghitung dan menerbitkan gaji untuk periode absensi dari ${tanggalMulai} sampai ${tanggalSelesai}?`);
         if (!confirmGenerate) return;
 
         setIsGenerating(true);
@@ -132,7 +141,10 @@ export function useRekapGaji() {
                 },
                 body: JSON.stringify({
                     periode_bulan: parseInt(bulan),
-                    periode_tahun: parseInt(tahun)
+                    periode_tahun: parseInt(tahun),
+                    // Suntikkan dua parameter baru ini untuk Backend!
+                    tanggal_mulai: tanggalMulai, 
+                    tanggal_selesai: tanggalSelesai 
                 })
             });
 
@@ -141,7 +153,8 @@ export function useRekapGaji() {
                 setNotif({ show: true, message: `Sukses! ${result.message}`, type: "success" });
                 fetchRekapGaji();
             } else {
-                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
+                // Tampilkan pesan error spesifik dari backend jika ada (misal: "Sudah pernah diterbitkan")
+                setNotif({ show: true, message: result.message || getSafeErrorMessage(response.status), type: "error" });
             }
         } catch (error) {
             console.error("Error generate gaji:", error);
