@@ -142,7 +142,7 @@ export default function AddLembur() {
                     />
                     {valMenit > 0 && !errors.menit_lembur_diizinkan && (
                         <p className="text-xs text-blue-600 mt-1 font-medium italic">
-                            💡 {formatMinutesToText(valMenit)}
+                            {formatMinutesToText(valMenit)}
                         </p>
                     )}
                     {errors.menit_lembur_diizinkan && <p className="text-xs text-red-500 mt-1">{errors.menit_lembur_diizinkan.message}</p>}
