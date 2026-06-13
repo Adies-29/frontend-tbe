@@ -3,32 +3,33 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import './App.css'
 
 import ProtectedRoute from './routes/ProtectedRoute';
-import DashboardLayout from './layouts/DashboardLayout';
-import AuthLayout from './layouts/AuthLayout';
+import DashboardLayout from './components/layout/DashboardLayout';
+import AuthLayout from './components/layout/AuthLayout';
+
 
 
 const Home = lazy(() => import('./pages/Home'))
-const Login = lazy(() => import('./pages/Login'))
-const DashboardIndex = lazy(() => import('./pages/dashboard/DashboardIndex'))
+const Login = lazy(() => import('./features/auth/pages/Login'))
+const DashboardIndex = lazy(() => import('./features/dashboard/pages/DashboardIndex'))
 
-const DepartemenIndex = lazy(() => import('./pages/dashboard/departemen/DepartemenIndex'))
-const JabatanIndex = lazy(() => import('./pages/dashboard/jabatan/JabatanIndex'))
-const GajiTunjanganIndex = lazy(() => import('./pages/dashboard/gajitunjangan/GajiTunjanganIndex'))
-const PegawaiIndex = lazy(() => import('./pages/dashboard/pegawai/PegawaiIndex'))
-const LemburIndex = lazy(() => import('./pages/dashboard/lembur/LemburIndex'))
-const JadwalShiftIndex = lazy(() => import('./pages/dashboard/jadwalshift/JadwalShiftIndex'))
+const DepartemenIndex = lazy(() => import('./features/departemen/pages/DepartemenIndex'))
+const JabatanIndex = lazy(() => import('./features/jabatan/pages/JabatanIndex'))
+const GajiTunjanganIndex = lazy(() => import('./features/gajiTunjangan/pages/GajiTunjanganIndex'))
+const PegawaiIndex = lazy(() => import('./features/pegawai/pages/PegawaiIndex'))
+const LemburIndex = lazy(() => import('./features/lembur/pages/LemburIndex'))
+const JadwalShiftIndex = lazy(() => import('./features/jadwalShift/pages/JadwalShiftIndex'))
 
-const AddDepartemen = lazy(() => import('./pages/dashboard/departemen/AddDepartemen'))
-const AddPegawai = lazy(() => import('./pages/dashboard/pegawai/AddPegawai'))
-const AddJabatan = lazy(() => import('./pages/dashboard/jabatan/AddJabatan'))
-const AddShift = lazy(() => import('./pages/dashboard/jadwalshift/AddShift'))
-const AddLembur = lazy(() => import('./pages/dashboard/lembur/AddLembur'))
+const AddDepartemen = lazy(() => import('./features/departemen/pages/AddDepartemen'))
+const AddPegawai = lazy(() => import('./features/pegawai/pages/AddPegawai'))
+const AddJabatan = lazy(() => import('./features/jabatan/pages/AddJabatan'))
+const AddShift = lazy(() => import('./features/jadwalShift/pages/AddShift'))
+const AddLembur = lazy(() => import('./features/lembur/pages/AddLembur'))
 
-const EditPegawai = lazy(() => import('./pages/dashboard/pegawai/EditPegawai'))
-const EditShift = lazy(() => import('./pages/dashboard/jadwalshift/EditShift'))
-const AturGajiJabatan = lazy(() => import('./pages/dashboard/gajitunjangan/AturGajiJabatan'))
+const EditPegawai = lazy(() => import('./features/pegawai/pages/EditPegawai'))
+const EditShift = lazy(() => import('./features/jadwalShift/pages/EditShift'))
+const AturGajiJabatan = lazy(() => import('./features/gajiTunjangan/pages/AturGajiJabatan'))
 
-const DetailPegawai = lazy(() => import('./pages/dashboard/pegawai/DetailPegawai'))
+const DetailPegawai = lazy(() => import('./features/pegawai/pages/DetailPegawai'))
 
 function PageLoader() {
   return (
