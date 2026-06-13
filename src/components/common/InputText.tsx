@@ -8,7 +8,9 @@ interface InputTextProps<T extends FieldValues>{
     error?:string;
     register:UseFormRegister<T>;
     disabled?: boolean;
+    readOnly?: boolean;
     placeholder?: string;
+    helperText?: React.ReactNode;
 }
 
 export const Input = <T extends FieldValues> ({
@@ -18,7 +20,9 @@ export const Input = <T extends FieldValues> ({
     error,
     register,
     placeholder,
-    disabled = false
+    disabled = false,
+    readOnly = false,
+    helperText
 }: InputTextProps<T>) => {
     return (
         <div className="flex flex-col gap-1">
@@ -31,10 +35,13 @@ export const Input = <T extends FieldValues> ({
                 placeholder={placeholder} // 3. TAMBAHKAN INI DI TAG INPUT
                 {...register(nama)}
                 disabled={disabled}
+                readOnly={readOnly}
                 className={`w-full border border-gray-300 rounded-lg px-3 py-2 outline-none transition-all 
                 ${error ? 'border-red-500 focus:ring-1 focus:ring-red-500' : 'focus:border-blue-500'}
-                ${disabled ? 'bg-gray-100 cursor-not-allowed text-gray-500' : 'bg-white'}`}
+                ${disabled || readOnly ? 'bg-gray-100 text-gray-600' : 'bg-white'}
+                ${disabled ? 'cursor-not-allowed text-gray-500' : ''}`}
             />
+            {helperText && !error && <div className="mt-1">{helperText}</div>}
             {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
         </div>
     );
