@@ -24,13 +24,17 @@ const schema = z.object({
     // Logika Terlambat & Scan Masuk
     is_potong_gaji_terlambat: z.boolean().default(false),
     denda_terlambat_per_menit: z.coerce.number().min(0).default(0),
-    batas_akhir_scan_masuk_menit: z.coerce.number().min(0).default(0), // Ditambahkan _menit
+    is_batas_scan: z.boolean().default(false),
+    batas_akhir_scan_masuk_menit: z.coerce.number().min(0).default(0),
 
     // Logika Pulang Awal & Scan Pulang
     is_potong_gaji_pulang_awal: z.boolean().default(false),
-    toleransi_pulang_awal_menit: z.coerce.number().min(0).default(0), // Ditambahkan _menit
+    toleransi_pulang_awal_menit: z.coerce.number().min(0).default(0),
     denda_pulang_awal_per_menit: z.coerce.number().min(0).default(0),
-    batas_akhir_scan_pulang_menit: z.coerce.number().min(0).default(0), // Ditambahkan _menit
+    batas_akhir_scan_pulang_menit: z.coerce.number().min(0).default(0),
+
+    // FITUR BARU: Tipe Denda Global
+    tipe_denda: z.enum(["per_menit", "tetap"]).default("tetap"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -80,16 +84,18 @@ export default function EditShift() {
                         kode_shift: shift.kode_shift,
                         jam_masuk: shift.jam_masuk,
                         jam_pulang: shift.jam_pulang,
+                        lintas_hari: shift.lintas_hari,
                         batas_toleransi_menit: shift.batas_toleransi_menit,
                         batas_maksimal_lembur_menit: shift.batas_maksimal_lembur_menit,
-                        lintas_hari: shift.lintas_hari,
+                        is_batas_scan: shift.batas_akhir_scan_masuk_menit > 0 || shift.batas_akhir_scan_pulang_menit > 0,
+                        batas_akhir_scan_masuk_menit: shift.batas_akhir_scan_masuk_menit,
                         is_potong_gaji_terlambat: shift.is_potong_gaji_terlambat,
                         denda_terlambat_per_menit: shift.denda_terlambat_per_menit,
-                        batas_akhir_scan_masuk_menit: shift.batas_akhir_scan_masuk_menit,
                         is_potong_gaji_pulang_awal: shift.is_potong_gaji_pulang_awal,
                         toleransi_pulang_awal_menit: shift.toleransi_pulang_awal_menit,
                         denda_pulang_awal_per_menit: shift.denda_pulang_awal_per_menit,
                         batas_akhir_scan_pulang_menit: shift.batas_akhir_scan_pulang_menit,
+                        tipe_denda: shift.istetap !== undefined ? (shift.istetap ? "tetap" : "per_menit") : "tetap",
                     });
                 } else {
                     setNotif({ show: true, message: "Gagal memuat data konfigurasi shift.", type: "error" });
@@ -110,13 +116,29 @@ export default function EditShift() {
     const onSubmit = async (data: FormData) => {
         setIsSaving(true)
         try {
+            const { tipe_denda, ...restData } = data;
+            
+            // Buat object payload baru yang Type-Safe untuk Backend
+            const finalPayload = {
+                ...restData,
+                // SESUAIKAN DENGAN BACKEND (Ubah string tipe_denda menjadi boolean istetap)
+                istetap: tipe_denda === "tetap",
+                // Reset nilai batas jika checkbox dimatikan
+                batas_akhir_scan_masuk_menit: restData.is_batas_scan ? restData.batas_akhir_scan_masuk_menit : 0,
+                batas_akhir_scan_pulang_menit: restData.is_batas_scan ? restData.batas_akhir_scan_pulang_menit : 0,
+            };
+
+            console.log("==== DATA PAYLOAD SHIFT ====");
+            console.log("Data yang dikirim:", JSON.stringify(finalPayload, null, 2));
+            console.log("Batas Scan Pulang (Menit):", finalPayload.batas_akhir_scan_pulang_menit);
+            console.log("============================");
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(finalPayload)
             });
 
             const result = await response.json();
@@ -157,13 +179,13 @@ export default function EditShift() {
                 {/* HEADER */}
                 <div className="flex justify-between items-center bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
                     <div>
-                        <h1 className="text-xl font-bold text-gray-800">Tambah Konfigurasi Shift</h1>
+                        <h1 className="text-xl font-bold text-gray-800">Edit Konfigurasi Shift</h1>
                         <p className="text-sm text-gray-500">Atur jadwal, toleransi, dan denda keterlambatan.</p>
                     </div>
                     <Button variant="back" disabled={isSaving} icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)} label="Kembali" />
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form onSubmit={handleSubmit(onSubmit, (err) => console.log("==== VALIDATION ERROR ====", err))} className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     {/* GRUP 1: WAKTU UTAMA */}
                     <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-5">
@@ -220,6 +242,16 @@ export default function EditShift() {
                                 <span className="text-xs text-blue-600 font-medium italic"> {formatMinutesToText(watch("batas_maksimal_lembur_menit"))}</span>
                             ) : null}
                         />
+                        <div className="flex items-center gap-3 mb-2 p-3 rounded-xl hover:bg-orange-50 transition-colors border border-gray-100">
+                            <input
+                                type="checkbox"
+                                id="is_batas_scan"
+                                {...register("is_batas_scan")}
+                                className="w-5 h-5 cursor-pointer accent-orange-600" />
+                            <label htmlFor="is_batas_scan" className="text-sm font-medium text-gray-700 cursor-pointer">
+                                Batasi Waktu Scan Masuk & Pulang
+                            </label>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input
                                 label="Batas Scan Masuk (Menit)"
@@ -227,9 +259,10 @@ export default function EditShift() {
                                 type="number"
                                 placeholder="120"
                                 register={register}
-                                helperText={watch("batas_akhir_scan_masuk_menit") > 0 ? (
+                                disabled={!watch("is_batas_scan")}
+                                helperText={watch("is_batas_scan") && watch("batas_akhir_scan_masuk_menit") > 0 ? (
                                     <span className="text-xs text-blue-600 font-medium italic"> {formatMinutesToText(watch("batas_akhir_scan_masuk_menit"))}</span>
-                                ) : null}
+                                ) : (!watch("is_batas_scan") ? <span className="text-xs text-gray-500 italic">Unlimited / Tidak dibatasi</span> : null)}
                             />
                             <Input
                                 label="Batas Scan Pulang (Menit)"
@@ -237,10 +270,43 @@ export default function EditShift() {
                                 type="number"
                                 placeholder="120"
                                 register={register}
-                                helperText={watch("batas_akhir_scan_pulang_menit") > 0 ? (
+                                disabled={!watch("is_batas_scan")}
+                                helperText={watch("is_batas_scan") && watch("batas_akhir_scan_pulang_menit") > 0 ? (
                                     <span className="text-xs text-blue-600 font-medium italic"> {formatMinutesToText(watch("batas_akhir_scan_pulang_menit"))}</span>
-                                ) : null}
+                                ) : (!watch("is_batas_scan") ? <span className="text-xs text-gray-500 italic">Unlimited / Tidak dibatasi</span> : null)}
                             />
+                        </div>
+                    </section>
+
+                    {/* GRUP 2.5: PENGATURAN TIPE DENDA (GLOBAL) */}
+                    <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-5 md:col-span-2">
+                        <div className="flex items-center gap-3 text-emerald-600 font-bold border-b border-gray-100 pb-3">
+                            <Banknote size={20} /> <h2>Sistem Perhitungan Denda (Global)</h2>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-6">
+                            <label className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-emerald-50 transition-colors flex-1">
+                                <input
+                                    type="radio"
+                                    value="per_menit"
+                                    {...register("tipe_denda")}
+                                    className="w-5 h-5 cursor-pointer accent-emerald-600" />
+                                <div className="flex flex-col">
+                                    <span className="font-semibold text-gray-800">Denda Per Menit</span>
+                                    <span className="text-xs text-gray-500">Nominal dikalikan durasi keterlambatan</span>
+                                </div>
+                            </label>
+                            
+                            <label className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-emerald-50 transition-colors flex-1">
+                                <input
+                                    type="radio"
+                                    value="tetap"
+                                    {...register("tipe_denda")}
+                                    className="w-5 h-5 cursor-pointer accent-emerald-600" />
+                                <div className="flex flex-col">
+                                    <span className="font-semibold text-gray-800">Nominal Tetap (Flat)</span>
+                                    <span className="text-xs text-gray-500">Nominal dipotong sekali per Tetap</span>
+                                </div>
+                            </label>
                         </div>
                     </section>
 
@@ -259,16 +325,6 @@ export default function EditShift() {
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Input
-                                label="Denda Terlambat (Rp/Menit)"
-                                nama="denda_terlambat_per_menit"
-                                type="number"
-                                placeholder="Masukkan nominal"
-                                register={register}
-                                error={errors.denda_terlambat_per_menit?.message}
-                                disabled={!watch("is_potong_gaji_terlambat")}
-
-                            />
-                            <Input
                                 label="Batas Toleransi (Menit)"
                                 nama="batas_toleransi_menit"
                                 type="number"
@@ -278,6 +334,16 @@ export default function EditShift() {
                                 helperText={watch("batas_toleransi_menit") > 0 ? (
                                     <span className="text-xs text-blue-600 font-medium italic"> {formatMinutesToText(watch("batas_toleransi_menit"))}</span>
                                 ) : null}
+                            />
+                            <Input
+                                label={watch("tipe_denda") === "tetap" ? "Denda Terlambat (Rp/Tetap)" : "Denda Terlambat (Rp/Menit)"}
+                                nama="denda_terlambat_per_menit"
+                                type="number"
+                                placeholder="Masukkan nominal"
+                                register={register}
+                                error={errors.denda_terlambat_per_menit?.message}
+                                disabled={!watch("is_potong_gaji_terlambat")}
+
                             />
                         </div>
 
@@ -311,7 +377,7 @@ export default function EditShift() {
                                 ) : null}
                             />
                             <Input
-                                label="Denda Per Menit (Rp)"
+                                label={watch("tipe_denda") === "tetap" ? "Denda Pulang Awal (Rp/Tetap)" : "Denda Per Menit (Rp)"}
                                 nama="denda_pulang_awal_per_menit"
                                 type="number"
                                 placeholder="Masukkan nominal"

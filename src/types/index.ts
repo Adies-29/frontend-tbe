@@ -99,6 +99,7 @@ export interface JadwalShiftData {
     toleransi_pulang_awal_menit?: number;
     denda_pulang_awal_per_menit?: number;
     
+    istetap?: boolean;
     created_at?: string;
 }
 

@@ -162,7 +162,9 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
             minWidth: 200,
             renderCell: (params) => (
                 params.row.is_potong_gaji_terlambat ? 
-                <span className="text-red-600 text-sm font-medium">Rp {params.row.denda_terlambat_per_menit} / menit</span> :
+                <span className="text-red-600 text-sm font-medium">
+                    Rp {params.row.denda_terlambat_per_menit} {params.row.istetap ? '/ Tetap' : '/ menit'}
+                </span> :
                 <span className="text-gray-400 text-sm italic">Tidak ada denda</span>
             )
         },
