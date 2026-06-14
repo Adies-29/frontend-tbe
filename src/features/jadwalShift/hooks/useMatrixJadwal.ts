@@ -100,7 +100,7 @@ export function useMatrixJadwal() {
     const [isLoading, setIsLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
-    const [filterDepartemen, setFilterDepartemen] = useState("");
+    const [filterDepartemen, setFilterDepartemen] = useState("Bag. Produksi");
     const [filterJabatan, setFilterJabatan] = useState("");
 
     // Reset filter jabatan ketika departemen berubah

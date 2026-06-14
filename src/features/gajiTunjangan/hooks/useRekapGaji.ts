@@ -23,10 +23,27 @@ interface GajiApiResponse {
     };
 }
 
+const getCurrentWeek = () => {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+};
+
+const getCurrentMonth = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
+
+const getCurrentYear = () => {
+    return new Date().getFullYear().toString();
+};
+
 export function useRekapGaji() {
     const token = useAuthStore((state) => state.token);
-    const [periode, setPeriode] = useState("bulan");
-    const [filterValue, setFilterValue] = useState("");
+    const [periode, setPeriode] = useState("minggu");
+    const [filterValue, setFilterValue] = useState(getCurrentWeek());
     const [rekapGajiData, setRekapGajiData] = useState<RekapGajiData[]>([]);
     const [isLoadingRekap, setIsLoadingRekap] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -243,8 +260,12 @@ export function useRekapGaji() {
     };
 
     const handlePeriodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setPeriode(e.target.value);
-        setFilterValue("");
+        const val = e.target.value;
+        setPeriode(val);
+        if (val === "minggu") setFilterValue(getCurrentWeek());
+        else if (val === "bulan") setFilterValue(getCurrentMonth());
+        else if (val === "tahun") setFilterValue(getCurrentYear());
+        else setFilterValue("");
     };
 
     return {
