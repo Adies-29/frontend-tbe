@@ -160,7 +160,6 @@ export default function EditLembur() {
                     nama="tanggal"
                     type="date"
                     register={register}
-                    readOnly={true}
                     error={errors.tanggal?.message}
                 />
 

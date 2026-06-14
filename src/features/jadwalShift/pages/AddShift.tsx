@@ -85,7 +85,7 @@ export default function AddShift() {
             if (response.ok && result.success) {
                 setNotif({ show: true, message: "Jadwal & Shift berhasil disimpan!", type: "success" });
                 setTimeout(() => {
-                    navigate("/dashboard/jadwal-shift");
+                    navigate("/dashboard/jadwal-shift", { state: { activeTab: 'shift' } });
                 }, 2000);
             } else {
                 setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });

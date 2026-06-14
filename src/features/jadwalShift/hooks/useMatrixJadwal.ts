@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuthStore } from '../../../store/useAuthStore';
 
 
@@ -14,12 +14,14 @@ export interface PegawaiMatrix {
     id: number;
     nama: string;
     jabatan: string;
+    departemen: string;
     jadwal: { [tanggal: string]: ShiftDetail };
 }
 
 export interface SelectedCell {
     pegawaiId: number;
     pegawaiNama: string;
+    pegawaiJabatan?: string;
     tanggal: string;
     idJadwal?: number;
     shiftId?: number;
@@ -31,7 +33,7 @@ export function useMatrixJadwal() {
     const token = useAuthStore((state) => state.token);
 
     const now = new Date();
-    
+
     const getWeekNumber = (d: Date) => {
         const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
         date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
@@ -46,7 +48,7 @@ export function useMatrixJadwal() {
     const diff = now.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
     const monday = new Date(now);
     monday.setDate(diff);
-    
+
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
 
@@ -91,18 +93,62 @@ export function useMatrixJadwal() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handlePeriodeChange = (e: any) => {
         setPeriode(e.target.value);
-        setFilterValue(""); 
+        setFilterValue("");
     };
 
     const [matrixKaryawan, setMatrixKaryawan] = useState<PegawaiMatrix[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
+    const [filterDepartemen, setFilterDepartemen] = useState("");
+    const [filterJabatan, setFilterJabatan] = useState("");
 
-    const filteredMatrixKaryawan = matrixKaryawan.filter(pegawai => 
-        pegawai.nama.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        pegawai.jabatan.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // Reset filter jabatan ketika departemen berubah
+    useEffect(() => {
+        setFilterJabatan("");
+    }, [filterDepartemen]);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [listPegawai, setListPegawai] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [listMasterShifts, setListMasterShifts] = useState<any[]>([]);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const filteredMatrixKaryawan = useMemo(() => {
+        return matrixKaryawan.filter(pegawai => {
+            const pegMatch = listPegawai.find(p => p.id === pegawai.id);
+            const actualDepartemen = pegMatch?.jabatan?.departemen?.nama_departemen || pegawai.departemen;
+
+            const matchSearch = pegawai.nama.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchDepartemen = filterDepartemen === "" || actualDepartemen === filterDepartemen;
+            const matchJabatan = filterJabatan === "" || pegawai.jabatan === filterJabatan;
+            return matchSearch && matchDepartemen && matchJabatan;
+        });
+    }, [matrixKaryawan, listPegawai, searchQuery, filterDepartemen, filterJabatan]);
+
+    const uniqueJabatanList = useMemo(() => {
+        return Array.from(new Set(
+            matrixKaryawan
+                .filter(p => {
+                    const pegMatch = listPegawai.find(listP => listP.id === p.id);
+                    const actualDepartemen = pegMatch?.jabatan?.departemen?.nama_departemen || p.departemen;
+                    return filterDepartemen === "" || actualDepartemen === filterDepartemen;
+                })
+                .map(p => p.jabatan)
+                .filter(j => j !== "-")
+        ));
+    }, [matrixKaryawan, listPegawai, filterDepartemen]);
+
+    const uniqueDepartemenList = useMemo(() => {
+        return Array.from(
+            new Set(
+                matrixKaryawan.map(p => {
+                    const pegMatch = listPegawai.find(listP => listP.id === p.id);
+                    return pegMatch?.jabatan?.departemen?.nama_departemen || p.departemen;
+                }).filter(d => d && d !== "-")
+            )
+        );
+    }, [matrixKaryawan, listPegawai]);
 
     // Modal Kelola Shift State
     const [selectedCell, setSelectedCell] = useState<SelectedCell>({ pegawaiId: 0, pegawaiNama: "", tanggal: "" });
@@ -112,14 +158,16 @@ export function useMatrixJadwal() {
     const [modeAksi, setModeAksi] = useState<'ubah' | 'tukar'>('ubah');
     const [inputShiftId, setInputShiftId] = useState("");
 
+    // (Removed useEffect to fix picker bug)
+
     // Modal Generate Massal State
     const [isModalMassalOpen, setIsModalMassalOpen] = useState(false);
     const [massalTanggalMulai, setMassalTanggalMulai] = useState("");
     const [massalTanggalSelesai, setMassalTanggalSelesai] = useState("");
     const [massalShiftId, setMassalShiftId] = useState("");
-    
+
     // Notification State
-    const [notifState, setNotifState] = useState<{show: boolean, message: string, type: 'success' | 'error'}>({
+    const [notifState, setNotifState] = useState<{ show: boolean, message: string, type: 'success' | 'error' }>({
         show: false,
         message: "",
         type: "success"
@@ -133,16 +181,12 @@ export function useMatrixJadwal() {
         setNotifState(prev => ({ ...prev, show: false }));
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [listPegawai, setListPegawai] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [listMasterShifts, setListMasterShifts] = useState<any[]>([]);
-    const [isSaving, setIsSaving] = useState(false);
+
 
     // Cascading Filter State
     const [filterLevel1, setFilterLevel1] = useState<'all_karyawan' | 'filter_departemen'>('all_karyawan');
-    const [filterLevel2, setFilterLevel2] = useState(''); 
-    const [filterLevel3, setFilterLevel3] = useState(''); 
+    const [filterLevel2, setFilterLevel2] = useState('');
+    const [filterLevel3, setFilterLevel3] = useState('');
     const [selectedPegawaiIds, setSelectedPegawaiIds] = useState<number[]>([]);
 
     const loadMasterShifts = useCallback(async () => {
@@ -182,11 +226,12 @@ export function useMatrixJadwal() {
                     id: pegId,
                     nama: item.pegawai?.nama || "Tanpa Nama",
                     jabatan: item.pegawai?.jabatan?.nama_jabatan || "-",
+                    departemen: item.pegawai?.jabatan?.departemen?.nama_departemen || "-",
                     jadwal: {}
                 };
             }
 
-            let warnaBorders = "bg-rose-100 text-rose-700 border-rose-200"; 
+            let warnaBorders = "bg-rose-100 text-rose-700 border-rose-200";
             const kode = item.shifts?.kode_shift || "OFF";
             const jamMasukStr = item.shifts?.jam_masuk;
 
@@ -220,9 +265,10 @@ export function useMatrixJadwal() {
         try {
             const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://ppm-sooty.vercel.app'}/api/v1/jadwal?start_date=${filterStartDate}&end_date=${filterEndDate}`, {
                 method: "GET",
-                headers: { 
-                    "Content-Type": "application/json", 
-                    "Authorization": `Bearer ${token}` }
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
             });
 
             const result = await response.json();
@@ -242,15 +288,15 @@ export function useMatrixJadwal() {
     useEffect(() => {
         if (token) {
             loadJadwalBulanan();
-            loadMasterShifts(); 
+            loadMasterShifts();
             loadPegawai();
         }
     }, [token, loadJadwalBulanan, loadMasterShifts, loadPegawai]);
 
-    const handleCellClick = (pegawaiId: number, pegawaiNama: string, tglFormat: string, shiftDetail?: ShiftDetail) => {
+    const handleCellClick = (pegawaiId: number, pegawaiNama: string, tglFormat: string, shiftDetail?: ShiftDetail, pegawaiJabatan?: string) => {
         if (pickerActive === 'tujuan') {
             setCellTujuan({
-                pegawaiId, pegawaiNama, tanggal: tglFormat, 
+                pegawaiId, pegawaiNama, pegawaiJabatan, tanggal: tglFormat,
                 shiftKode: shiftDetail?.kode, warna: shiftDetail?.warna
             });
             setPickerActive('none');
@@ -260,21 +306,21 @@ export function useMatrixJadwal() {
 
         if (pickerActive === 'asal') {
             setSelectedCell({
-                pegawaiId, pegawaiNama, tanggal: tglFormat, 
+                pegawaiId, pegawaiNama, pegawaiJabatan, tanggal: tglFormat,
                 idJadwal: shiftDetail?.id_jadwal, shiftId: shiftDetail?.shift_id,
                 shiftKode: shiftDetail?.kode, warna: shiftDetail?.warna
             });
-            setPickerActive('none'); 
-            setIsModalOpen(true);    
+            setPickerActive('none');
+            setIsModalOpen(true);
             return;
         }
 
         setSelectedCell({
-            pegawaiId, pegawaiNama, tanggal: tglFormat,
+            pegawaiId, pegawaiNama, pegawaiJabatan, tanggal: tglFormat,
             idJadwal: shiftDetail?.id_jadwal, shiftId: shiftDetail?.shift_id,
             shiftKode: shiftDetail?.kode, warna: shiftDetail?.warna
         });
-        
+
         setInputShiftId(shiftDetail?.shift_id ? String(shiftDetail.shift_id) : "");
         setCellTujuan(null);
         setModeAksi('ubah');
@@ -298,6 +344,8 @@ export function useMatrixJadwal() {
             if (response.ok && result.success) {
                 showNotif("Sukses memperbarui jadwal harian pegawai!", "success");
                 setIsModalOpen(false);
+                setCellTujuan(null);
+                setSelectedCell({ pegawaiId: 0, pegawaiNama: "", tanggal: "" });
                 await loadJadwalBulanan();
             } else {
                 showNotif(result.message || "Gagal memperbarui shift.", "error");
@@ -328,9 +376,10 @@ export function useMatrixJadwal() {
 
             const result = await response.json();
             if (response.ok && result.success) {
-                showNotif("🚀 Pertukaran shift lintas hari berhasil diproses!", "success");
+                showNotif("Pertukaran shift lintas hari berhasil diproses!", "success");
                 setIsModalOpen(false);
                 setCellTujuan(null);
+                setSelectedCell({ pegawaiId: 0, pegawaiNama: "", tanggal: "" });
                 await loadJadwalBulanan();
             } else {
                 showNotif(result.message || "Gagal memproses tukar shift.", "error");
@@ -356,19 +405,19 @@ export function useMatrixJadwal() {
                     list_pegawai_ids: selectedPegawaiIds,
                     tanggal_mulai: massalTanggalMulai,
                     tanggal_selesai: massalTanggalSelesai,
-                    shift_id: massalShiftId 
+                    shift_id: massalShiftId
                 })
             });
 
             const result = await response.json();
             if (response.ok && result.success) {
-                showNotif(`🚀 Sukses! ${result.message}`, "success");
-                setIsModalMassalOpen(false); 
+                showNotif(`Sukses! ${result.message}`, "success");
+                setIsModalMassalOpen(false);
                 setMassalTanggalMulai("");
                 setMassalTanggalSelesai("");
                 setMassalShiftId("");
-                setSelectedPegawaiIds([]); 
-                await loadJadwalBulanan(); 
+                setSelectedPegawaiIds([]);
+                await loadJadwalBulanan();
             } else {
                 showNotif(result.message || "Gagal melakukan generate massal.", "error");
             }
@@ -386,6 +435,7 @@ export function useMatrixJadwal() {
         periode, setPeriode, filterValue, setFilterValue, handleFilter, handlePeriodeChange,
         // State Data
         matrixKaryawan, filteredMatrixKaryawan, searchQuery, setSearchQuery, isLoading, errorMsg, listPegawai, listMasterShifts,
+        filterJabatan, setFilterJabatan, filterDepartemen, setFilterDepartemen, uniqueJabatanList, uniqueDepartemenList,
         // State Modal Kelola Shift
         selectedCell, setSelectedCell, cellTujuan, setCellTujuan,
         pickerActive, setPickerActive, isModalOpen, setIsModalOpen,

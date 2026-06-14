@@ -62,6 +62,7 @@ export default function DashboardIndex() {
                         id: karyawan.id || karyawan.id_pegawai || index + 1,
                         nama: karyawan.nama || "Tanpa Nama",
                         jabatan: karyawan.jabatan || "-",
+                        info_shift: karyawan.info_shift || "-",
                         waktu_masuk: karyawan.waktu_masuk || "-",
                         status_masuk: karyawan.status_masuk || labelStatus,
                         waktu_pulang: karyawan.waktu_pulang || "-",
