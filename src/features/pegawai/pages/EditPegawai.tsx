@@ -29,8 +29,8 @@ const schema = z.object({
     tanggal_bergabung: z.string().min(1, "Tanggal bergabung harus diisi"),
     jenis_kelamin: z.string().min(1, "Jenis Kelamin harus diisi"),
     nama: z.string().min(1, "Nama Pegawai harus diisi"),
-    tempat_lahir: z.string().min(1, "Tempat Lahir harus diisi"),
-    tanggal_lahir: z.string().min(1, "Tanggal Lahir harus diisi"),
+    tempat_lahir: z.string().optional().or(z.literal("")),
+    tanggal_lahir: z.string().optional().or(z.literal("")),
     no_hp: z.string()
         .regex(/^\d*$/, "Nomor HP hanya boleh berisi angka")
         .refine((val) => val === "" || (val.length >= 10 && val.length <= 14), "Nomor HP tidak valid (10-14 digit)")
@@ -48,10 +48,10 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 const MOCK_KOTA = [
-    { id: 1, nama_kota: "Jakarta" },
-    { id: 2, nama_kota: "Surabaya" },
+    { id: 1, nama_kota: "Tegal" },
+    { id: 2, nama_kota: "Kab.Tegal" },
     { id: 3, nama_kota: "Bandung" },
-    { id: 4, nama_kota: "Medan" },
+    { id: 4, nama_kota: "Jakarta" },
     { id: 5, nama_kota: "Semarang" },
     { id: 6, nama_kota: "Yogyakarta" },
     { id: 7, nama_kota: "Malang" },
@@ -211,8 +211,8 @@ export default function EditPegawai(){
                     tanggal_bergabung: data.tanggal_bergabung,
                     jenis_kelamin: data.jenis_kelamin,
                     nama: data.nama,
-                    tempat_lahir: data.tempat_lahir,
-                    tanggal_lahir:data.tanggal_lahir,
+                    tempat_lahir: data.tempat_lahir || null,
+                    tanggal_lahir: data.tanggal_lahir || null,
                     no_hp: data.no_hp,
                     alamat: data.alamat,
                     email: data.email || null,
