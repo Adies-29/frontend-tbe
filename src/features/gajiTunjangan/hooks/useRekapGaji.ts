@@ -95,7 +95,7 @@ export function useRekapGaji() {
 
                 // 3. MAPPING DATA (KINI SANGAT SERAGAM)
                 // Tidak perlu lagi if-else mingguan/bulanan karena database sudah di-unifikasi
-                const formattedData: RekapGajiData[] = data.map((item: any) => ({
+                const formattedData: RekapGajiData[] = data.map((item: GajiApiResponse) => ({
                     id: String(item.id),
                     nama: item.pegawai?.nama || "Tanpa Nama",
                     jabatan: item.pegawai?.jabatan?.nama_jabatan || "-",
@@ -120,6 +120,7 @@ export function useRekapGaji() {
                 });
             } else {
                 console.error("Gagal mengambil data gaji:", result.message);
+                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
                 setRekapGajiData([]); // Kosongkan tabel jika gagal
             }
         } catch (error) {
