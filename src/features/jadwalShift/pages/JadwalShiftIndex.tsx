@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { CalendarDays, Clock } from "lucide-react";
 import Button from '../../../components/common/Button';
 import TabJadwal from "./tabs/TabJadwal";
@@ -7,7 +7,10 @@ import TabShift from "./tabs/TabShift";
 
 export default function JadwalShiftIndex() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'jadwal' | 'shift'>('jadwal');
+    const location = useLocation();
+    const [activeTab, setActiveTab] = useState<'jadwal' | 'shift'>(
+        (location.state as any)?.activeTab || 'jadwal'
+    );
 
     return (
         <div className="flex flex-col gap-6 w-full p-2">

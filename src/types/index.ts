@@ -3,6 +3,7 @@ export interface AbsensiData {
     id: number | string;
     nama: string;
     jabatan: string;
+    info_shift?: string;
     waktu_masuk: string;
     status_masuk: string;
     waktu_pulang: string;
@@ -132,6 +133,7 @@ export interface DashboardKaryawanResponse {
     id_pegawai?: number | string;
     nama?: string;
     jabatan?: string;
+    info_shift?: string;
     waktu_masuk?: string;
     waktu_pulang?: string;
     status?: string;

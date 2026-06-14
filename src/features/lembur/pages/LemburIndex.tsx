@@ -17,7 +17,7 @@ export default function LemburIndex() {
         try {
           
             const [responseLembur, responsePegawai] = await Promise.all([
-                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/`, {
+                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/future`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",

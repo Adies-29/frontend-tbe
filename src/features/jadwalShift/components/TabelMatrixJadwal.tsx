@@ -30,15 +30,15 @@ export default function TabelMatrixJadwal() {
 
     return (
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col w-full overflow-hidden relative">
-            
+
             {/* TOOLBAR TIMELINE FLEKSIBEL */}
             <div className="p-4 border-b border-gray-200 flex flex-wrap items-center bg-gray-50 gap-4">
                 <div className="flex gap-2 w-full md:w-auto mr-auto">
                     <div className="relative w-full md:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                        <input 
-                            type="text" 
-                            placeholder="Cari nama Pegawai..." 
+                        <input
+                            type="text"
+                            placeholder="Cari nama Pegawai..."
                             value={hookParams.searchQuery}
                             onChange={(e) => hookParams.setSearchQuery(e.target.value)}
                             className="border border-gray-300 rounded-lg pl-9 pr-3 py-1.5 outline-none focus:border-red-500 shadow-sm text-sm w-full"
@@ -47,9 +47,9 @@ export default function TabelMatrixJadwal() {
                 </div>
 
                 <div className="flex flex-wrap gap-2 items-center w-full md:w-auto px-3">
-                    <select 
-                        value={hookParams.periode} 
-                        onChange={hookParams.handlePeriodeChange} 
+                    <select
+                        value={hookParams.periode}
+                        onChange={hookParams.handlePeriodeChange}
                         className="border border-gray-300 rounded-lg px-3 py-1.5 bg-white outline-none focus:border-red-500 shadow-sm text-sm"
                     >
                         <option value="minggu">Mingguan</option>
@@ -69,8 +69,33 @@ export default function TabelMatrixJadwal() {
                             />
                         </LocalizationProvider>
                     )}
-                    
-                    <Button label="Filter" variant='warning' onClick={hookParams.handleFilter} />
+                    <div className="hidden sm:block h-6 w-px bg-gray-300 mx-1"></div>
+
+                    <select
+                        value={hookParams.filterDepartemen}
+                        onChange={(e) => hookParams.setFilterDepartemen(e.target.value)}
+                        className="border border-gray-300 rounded-lg px-3 py-1.5 bg-white outline-none focus:border-red-500 shadow-sm text-sm max-w-[150px] truncate"
+                    >
+                        <option value="">Semua Dept</option>
+                        {hookParams.uniqueDepartemenList.map((dept: string, idx: number) => (
+                            <option key={idx} value={dept}>{dept}</option>
+                        ))}
+                    </select>
+
+                    <select
+                        value={hookParams.filterJabatan}
+                        onChange={(e) => hookParams.setFilterJabatan(e.target.value)}
+                        disabled={!hookParams.filterDepartemen}
+                        className={`border border-gray-300 rounded-lg px-3 py-1.5 outline-none focus:border-red-500 shadow-sm text-sm max-w-[150px] truncate ${!hookParams.filterDepartemen ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
+                        title={!hookParams.filterDepartemen ? "Pilih Departemen terlebih dahulu" : "Filter berdasarkan Jabatan"}
+                    >
+                        <option value="">{hookParams.filterDepartemen ? "Semua Jabatan" : "Pilih Departemen Dulu"}</option>
+                        {hookParams.uniqueJabatanList?.map((jab: string, idx: number) => (
+                            <option key={idx} value={jab}>{jab}</option>
+                        ))}
+                    </select>
+
+                    <Button label="Load Data" variant='warning' onClick={hookParams.handleFilter} />
                 </div>
 
                 <div className="flex gap-2">
@@ -97,7 +122,7 @@ export default function TabelMatrixJadwal() {
                                     Nama Pegawai
                                 </th>
                                 {daysArray.map((dateObj, idx) => {
-                                    const isWeekend = dateObj.getDay() === 0 ;
+                                    const isWeekend = dateObj.getDay() === 0;
                                     return (
                                         <th key={idx} scope="col" className={`px-2 py-3 border-r border-gray-200 text-center min-w-[60px] leading-tight ${isWeekend ? 'bg-red-50/50' : ''}`}>
                                             <div className={`text-lg ${isWeekend ? 'text-red-600 font-bold' : ''}`}>{dateObj.getDate()}</div>
@@ -120,7 +145,7 @@ export default function TabelMatrixJadwal() {
                             ) : (
                                 hookParams.filteredMatrixKaryawan.map((pegawai, index) => (
                                     <tr key={pegawai.id} className={`border-b border-gray-100 hover:bg-blue-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
-                                        
+
                                         <td className="px-4 py-3 border-r border-gray-200 sticky left-0 z-10 bg-inherit shadow-[2px_0_5px_-2px_rgba(0,0,0,0.08)]">
                                             <div className="font-bold text-gray-800">{pegawai.nama}</div>
                                             <div className="text-xs text-gray-500 font-medium">{pegawai.jabatan}</div>
@@ -131,17 +156,35 @@ export default function TabelMatrixJadwal() {
                                             const tglKey = dateObj.toLocaleDateString('en-CA');
                                             const shiftDetail = pegawai.jadwal[tglKey];
 
+                                            const isAsal = hookParams.selectedCell?.pegawaiId === pegawai.id && hookParams.selectedCell?.tanggal === tglKey;
+                                            const isTujuan = hookParams.cellTujuan?.pegawaiId === pegawai.id && hookParams.cellTujuan?.tanggal === tglKey;
+
+                                            let cellBg = isWeekend ? 'bg-red-50/10' : '';
+                                            if (isAsal) cellBg = 'bg-amber-100/70 shadow-[inset_0_0_0_2px_#f59e0b] z-10'; // Warna Oranye untuk Asal
+                                            if (isTujuan) cellBg = 'bg-blue-100/70 shadow-[inset_0_0_0_2px_#3b82f6] z-10'; // Warna Biru untuk Tujuan
+
                                             return (
-                                                <td key={idx} className={`p-1 border-r border-gray-100 relative group cursor-pointer transition-colors hover:bg-blue-100/30 ${isWeekend ? 'bg-red-50/10' : ''}`}
-                                                    onClick={() => hookParams.handleCellClick(pegawai.id, pegawai.nama, tglKey, shiftDetail)}>
-                                                    
-                                                    <div className="w-full h-full min-h-[42px] flex items-center justify-center">
+                                                <td key={idx} className={`p-1 border-r border-gray-100 relative group cursor-pointer transition-colors hover:bg-blue-100/40 ${cellBg}`}
+                                                    onClick={() => hookParams.handleCellClick(pegawai.id, pegawai.nama, tglKey, shiftDetail, pegawai.jabatan)}>
+
+                                                    <div className="w-full h-full min-h-[42px] flex flex-col items-center justify-center relative">
                                                         {shiftDetail ? (
-                                                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md tracking-wide transition-all truncate max-w-[65px] ${shiftDetail.warna} border-none shadow-none`}>
+                                                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md tracking-wide transition-all truncate max-w-[65px] ${shiftDetail.warna} border-none shadow-none mt-1`}>
                                                                 {shiftDetail.kode.replace(/^SHIFT[\s-]?/i, '')}
                                                             </span>
                                                         ) : (
                                                             <span className="text-transparent group-hover:text-blue-300 transition-colors select-none text-lg leading-none">&middot;</span>
+                                                        )}
+                                                        
+                                                        {isAsal && (
+                                                            <span className="absolute top-0 left-0 bg-amber-500 text-white text-[8px] font-bold px-1 rounded-br-md leading-tight">
+                                                                ASAL
+                                                            </span>
+                                                        )}
+                                                        {isTujuan && (
+                                                            <span className="absolute top-0 right-0 bg-blue-500 text-white text-[8px] font-bold px-1 rounded-bl-md leading-tight">
+                                                                TUJUAN
+                                                            </span>
                                                         )}
                                                     </div>
 
@@ -162,8 +205,8 @@ export default function TabelMatrixJadwal() {
                 <div className="fixed top-6 left-1/2 -translate-x-1/2 z-100 bg-blue-600 text-white px-6 py-3 rounded-full shadow-2xl font-bold flex items-center gap-3 animate-in slide-in-from-top-10">
                     <MousePointerClick size={20} className="animate-bounce" />
                     <span className="text-sm">Silakan klik kotak jadwal di tabel untuk memilih sel {hookParams.pickerActive === 'asal' ? 'ASAL' : 'TUJUAN'}...</span>
-                    <button 
-                        onClick={() => { hookParams.setPickerActive('none'); hookParams.setIsModalOpen(true); }} 
+                    <button
+                        onClick={() => { hookParams.setPickerActive('none'); hookParams.setIsModalOpen(true); }}
                         className="ml-4 bg-white/20 p-1.5 rounded-full hover:bg-white/40 transition-colors"
                         title="Batal Memilih"
                     >
@@ -173,7 +216,7 @@ export default function TabelMatrixJadwal() {
             )}
 
             {/* KOMPONEN MODAL */}
-            <ModalKelolaShift 
+            <ModalKelolaShift
                 isModalOpen={hookParams.isModalOpen}
                 setIsModalOpen={hookParams.setIsModalOpen}
                 selectedCell={hookParams.selectedCell}
@@ -189,7 +232,7 @@ export default function TabelMatrixJadwal() {
                 handleProsesTukarShift={hookParams.handleProsesTukarShift}
             />
 
-            <ModalGenerateMassal 
+            <ModalGenerateMassal
                 isModalMassalOpen={hookParams.isModalMassalOpen}
                 setIsModalMassalOpen={hookParams.setIsModalMassalOpen}
                 listPegawai={hookParams.listPegawai}
@@ -212,7 +255,7 @@ export default function TabelMatrixJadwal() {
                 handleProsesGenerateMassal={hookParams.handleProsesGenerateMassal}
             />
 
-            <Notif 
+            <Notif
                 show={hookParams.notifState.show}
                 message={hookParams.notifState.message}
                 type={hookParams.notifState.type}

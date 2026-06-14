@@ -124,7 +124,7 @@ export default function EditShift() {
             if (response.ok && result.success) {
                setNotif({ show: true, message: "Perubahan konfigurasi Jadwal & Shift berhasil diperbarui", type: "success" });
                setTimeout(() => {
-                   navigate("/dashboard/jadwal-shift");
+                   navigate("/dashboard/jadwal-shift", { state: { activeTab: 'shift' } });
                }, 2000);
             } else {
                 setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });

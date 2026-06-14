@@ -137,11 +137,19 @@ export default function ModalKelolaShift(props: ModalKelolaShiftProps) {
                                 </div>
                             </div>
 
+                            {props.selectedCell?.pegawaiJabatan && props.cellTujuan?.pegawaiJabatan && props.selectedCell.pegawaiJabatan !== props.cellTujuan.pegawaiJabatan && (
+                                <div className="bg-red-50 text-red-600 text-xs p-3 rounded border border-red-200 font-medium animate-in fade-in slide-in-from-bottom-2">
+                                    <span className="font-bold block mb-1">Peringatan: Jabatan Berbeda!</span>
+                                    Pertukaran shift hanya diizinkan untuk pegawai dengan jabatan yang sama. 
+                                    ({props.selectedCell.pegawaiJabatan} vs {props.cellTujuan.pegawaiJabatan})
+                                </div>
+                            )}
+
                             <Button 
                                 label={props.isSaving ? "Memproses Tukar..." : "Konfirmasi Pertukaran"} 
                                 className="mt-3 w-full" 
                                 variant='success'
-                                disabled={props.isSaving || !props.cellTujuan}
+                                disabled={props.isSaving || !props.cellTujuan || (props.selectedCell?.pegawaiJabatan !== props.cellTujuan?.pegawaiJabatan)}
                                 onClick={props.handleProsesTukarShift} 
                             />
                         </div>
