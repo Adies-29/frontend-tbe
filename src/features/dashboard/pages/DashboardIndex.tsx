@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, PlusCircle } from "lucide-react";
 import type { AbsensiData, DashboardKaryawanResponse } from "../../../types";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { apiFetch } from "../../../utils/apiFetch";
 import TabelDashboard from "../components/TabelDashboard";
+import ModalInputAbsensi from "../components/ModalInputAbsensi";
 
 
 export default function DashboardIndex() {
@@ -19,6 +20,7 @@ export default function DashboardIndex() {
 
     const [rows, setRows] = useState<AbsensiData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isModalAbsenOpen, setIsModalAbsenOpen] = useState(false);
     const token = useAuthStore((state) => state.token);
 
     // 2. JAM BERDETAK
@@ -151,7 +153,15 @@ export default function DashboardIndex() {
 
             <section className="bg-white border border-gray-300 rounded-2xl p-4 shadow-sm w-full min-h-100">
                 <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-4 w-full">
-                    <h2 className="text-lg font-bold text-gray-800">Aktivitas Absensi Karyawan Hari Ini</h2>
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-lg font-bold text-gray-800">Aktivitas Absensi Karyawan Hari Ini</h2>
+                        <button 
+                            onClick={() => setIsModalAbsenOpen(true)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors shadow-sm"
+                        >
+                            <PlusCircle size={18} /> Input Manual
+                        </button>
+                    </div>
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-2">
 
                         {isLoading ? (
@@ -168,8 +178,11 @@ export default function DashboardIndex() {
                 </div>
             </section>
 
-
-
+            <ModalInputAbsensi 
+                isOpen={isModalAbsenOpen} 
+                onClose={() => setIsModalAbsenOpen(false)} 
+                onSuccess={fetchLiveDashboard} 
+            />
         </div>
     );
 }
