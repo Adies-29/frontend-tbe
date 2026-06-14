@@ -104,7 +104,8 @@ export default function TabRekapGaji() {
                         )}
                         <Button label="Filter" variant='warning' onClick={handleFilter} />
 
-                        {periode === "bulan" && (
+                        {/* Tampilkan tombol Generate untuk Mingguan ATAU Bulanan */}
+                        {(periode === "bulan" || periode === "minggu") && (
                             <Button 
                                 label={isGenerating ? "Memproses..." : "Generate Gaji"} 
                                 variant="primary" 
