@@ -32,7 +32,8 @@ export default function DashboardIndex() {
     // 3. FUNGSI TARIK DATA (Dibungkus useCallback agar bisa dilempar ke Tabel)
     const fetchLiveDashboard = useCallback(async () => {
         try {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/dashboard/live`, {
+            const timestamp = new Date().getTime();
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/dashboard/live?_t=${timestamp}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",

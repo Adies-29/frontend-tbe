@@ -225,7 +225,38 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
                 return date.toLocaleDateString('id-ID');
             }
         },
-        { field: 'masakerja', headerName: 'Masa Kerja', flex: 1, minWidth: 130, align: 'center', headerAlign: 'center' },
+        { 
+            field: 'masakerja', 
+            headerName: 'Masa Kerja', 
+            flex: 1, 
+            minWidth: 130, 
+            align: 'center', 
+            headerAlign: 'center',
+            valueGetter: (_value, row) => {
+                if (!row.tanggal_bergabung) return "-";
+                const bergabung = new Date(row.tanggal_bergabung);
+                const sekarang = new Date();
+
+                let tahun = sekarang.getFullYear() - bergabung.getFullYear();
+                let bulan = sekarang.getMonth() - bergabung.getMonth();
+                let hari = sekarang.getDate() - bergabung.getDate();
+
+                if (hari < 0) {
+                    bulan--;
+                    const prevMonth = new Date(sekarang.getFullYear(), sekarang.getMonth(), 0);
+                    hari += prevMonth.getDate();
+                }
+                if (bulan < 0) {
+                    tahun--;
+                    bulan += 12;
+                }
+
+                if (tahun > 0 && bulan > 0) return `${tahun} Thn ${bulan} Bln`;
+                if (tahun > 0) return `${tahun} Tahun`;
+                if (bulan > 0) return `${bulan} Bulan`;
+                return `${hari} Hari`;
+            }
+        },
         {
             field: 'actions',
             type: 'actions', 

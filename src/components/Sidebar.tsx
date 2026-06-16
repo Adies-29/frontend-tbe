@@ -1,7 +1,7 @@
 
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
-import { CalendarDays, ChevronLeft, Coffee, DollarSign, LaptopMinimal, Layers, LogOut,  Menu,  Rows2,  Users, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, Coffee, DollarSign, LaptopMinimal, Layers, LogOut,  Menu,  Rows2,  Users, X, ListCheck } from "lucide-react";
 
 interface SidebarProps {
     isOpen: boolean;
@@ -36,6 +36,7 @@ export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: Sidebar
         { title: "Jadwal & Shift", path: "/dashboard/jadwal-shift", icon: CalendarDays },
         { title: "Gaji & Tunjangan", path: "/dashboard/gaji-tunjangan", icon: DollarSign },
         { title: "Lembur", path: "/dashboard/lembur", icon: Coffee },
+        { title: "Target", path: "/dashboard/target-packing", icon: ListCheck },
     ];
 
     return (
