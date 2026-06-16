@@ -142,3 +142,25 @@ export interface DashboardKaryawanResponse {
     status_lembur?: string;
     is_kerapian?: boolean;
 }
+
+// === TARGET PACKING ===
+
+export interface MasterTargetData {
+    id: number;
+    jabatan_id: number;
+    nama_target: string;
+    harga_satuan: number;
+    is_active: boolean;
+    jabatan?: { nama_jabatan: string };
+}
+
+export interface PencapaianTargetData {
+    id: number;
+    tanggal: string;
+    pegawai_id: number;
+    master_target_id: number;
+    jumlah_pencapaian: number;
+    nominal_total_riil: number;
+    pegawai?: { nama: string };
+    master_target?: { nama_target: string; harga_satuan: number };
+}

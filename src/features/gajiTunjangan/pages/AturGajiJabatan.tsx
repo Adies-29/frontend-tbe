@@ -351,6 +351,7 @@ export default function AturGajiJabatan() {
                     </div>
                 </form>
             </div>
+
             <ConfirmPopUp 
                 isOpen={showResetPopup}
                 onClose={() => setShowResetPopup(false)}

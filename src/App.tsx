@@ -24,6 +24,7 @@ const AddPegawai = lazy(() => import('./features/pegawai/pages/AddPegawai'))
 const AddJabatan = lazy(() => import('./features/jabatan/pages/AddJabatan'))
 const AddShift = lazy(() => import('./features/jadwalShift/pages/AddShift'))
 const AddLembur = lazy(() => import('./features/lembur/pages/AddLembur'))
+const TargetPackingIndex = lazy(() => import('./features/targetPacking/pages/TargetPackingIndex'))
 
 const EditPegawai = lazy(() => import('./features/pegawai/pages/EditPegawai'))
 const EditShift = lazy(() => import('./features/jadwalShift/pages/EditShift'))
@@ -89,6 +90,8 @@ function App() {
               <Route path="/dashboard/lembur" element={<LemburIndex />} />
               <Route path="/dashboard/lembur/tambah-lembur" element={<AddLembur />} />
               <Route path="/dashboard/lembur/edit/:id" element={<EditLembur />} />
+
+              <Route path="/dashboard/target-packing" element={<TargetPackingIndex />} />
 
             </Route>
           </Route>
