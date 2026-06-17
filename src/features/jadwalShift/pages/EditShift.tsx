@@ -182,7 +182,7 @@ export default function EditShift() {
                         <h1 className="text-xl font-bold text-gray-800">Edit Konfigurasi Shift</h1>
                         <p className="text-sm text-gray-500">Atur jadwal, toleransi, dan denda keterlambatan.</p>
                     </div>
-                    <Button variant="back" disabled={isSaving} icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)} label="Kembali" />
+                    <Button variant="back" disabled={isSaving} icon={<ArrowLeft size={18} />} onClick={() => navigate("/dashboard/jadwal-shift", { state: { activeTab: 'shift' }})} label="Kembali" />
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit, (err) => console.log("==== VALIDATION ERROR ====", err))} className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -213,16 +213,18 @@ export default function EditShift() {
                                 register={register}
                                 error={errors.jam_pulang?.message} />
                         </div>
-                        <div className="flex items-center gap-3 mb-2 p-3 rounded-xl hover:bg-red-50 transition-colors">
-                            <input
-                                type="checkbox"
-                                id="lintas_hari"
-                                {...register("lintas_hari")}
-                                className="w-5 h-5 cursor-pointer" />
-                            <label htmlFor="lintas_hari" className="text-sm font-medium text-gray-700 cursor-pointer">
-                                Aktifkan Lintas Hari (Shift Malam)
-                            </label>
-                        </div>
+                        <label htmlFor="lintas_hari" className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-red-50 transition-colors cursor-pointer select-none">
+                            <span className="text-sm font-medium text-gray-700">Aktifkan Lintas Hari (Shift Malam)</span>
+                            <div className="relative">
+                                <input
+                                    type="checkbox"
+                                    id="lintas_hari"
+                                    {...register("lintas_hari")}
+                                    className="sr-only peer" />
+                                <div className="w-10 h-[22px] bg-gray-300 rounded-full peer-checked:bg-red-500 transition-colors"></div>
+                                <div className="absolute top-[3px] left-[3px] w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-[18px] transition-transform"></div>
+                            </div>
+                        </label>
                     </section>
 
                     {/* GRUP 2: TOLERANSI & SCAN */}
@@ -242,16 +244,18 @@ export default function EditShift() {
                                 <span className="text-xs text-blue-600 font-medium italic"> {formatMinutesToText(watch("batas_maksimal_lembur_menit"))}</span>
                             ) : null}
                         />
-                        <div className="flex items-center gap-3 mb-2 p-3 rounded-xl hover:bg-orange-50 transition-colors border border-gray-100">
-                            <input
-                                type="checkbox"
-                                id="is_batas_scan"
-                                {...register("is_batas_scan")}
-                                className="w-5 h-5 cursor-pointer accent-orange-600" />
-                            <label htmlFor="is_batas_scan" className="text-sm font-medium text-gray-700 cursor-pointer">
-                                Batasi Waktu Scan Masuk & Pulang
-                            </label>
-                        </div>
+                        <label htmlFor="is_batas_scan" className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-orange-50 transition-colors border border-gray-100 cursor-pointer select-none">
+                            <span className="text-sm font-medium text-gray-700">Batasi Waktu Scan Masuk & Pulang</span>
+                            <div className="relative">
+                                <input
+                                    type="checkbox"
+                                    id="is_batas_scan"
+                                    {...register("is_batas_scan")}
+                                    className="sr-only peer" />
+                                <div className="w-10 h-[22px] bg-gray-300 rounded-full peer-checked:bg-orange-500 transition-colors"></div>
+                                <div className="absolute top-[3px] left-[3px] w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-[18px] transition-transform"></div>
+                            </div>
+                        </label>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input
                                 label="Batas Scan Masuk (Menit)"
@@ -315,14 +319,18 @@ export default function EditShift() {
                         <div className="flex items-center gap-3 text-red-600 font-bold pb-3">
                             <Banknote size={20} /> <h2>Aturan Denda Terlambat</h2>
                         </div>
-                        <div className="flex items-center gap-3 mb-2 p-3 rounded-xl hover:bg-red-50 transition-colors">
-                            <input
-                                type="checkbox"
-                                id="is_potong_gaji_terlambat"
-                                {...register("is_potong_gaji_terlambat")}
-                                className="w-5 h-5 cursor-pointer" />
-                            <label htmlFor="is_potong_gaji_terlambat" className="text-sm font-medium text-gray-700 cursor-pointer">Potong Gaji Jika Terlambat</label>
-                        </div>
+                        <label htmlFor="is_potong_gaji_terlambat" className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-red-50 transition-colors cursor-pointer select-none">
+                            <span className="text-sm font-medium text-gray-700">Potong Gaji Jika Terlambat</span>
+                            <div className="relative">
+                                <input
+                                    type="checkbox"
+                                    id="is_potong_gaji_terlambat"
+                                    {...register("is_potong_gaji_terlambat")}
+                                    className="sr-only peer" />
+                                <div className="w-10 h-[22px] bg-gray-300 rounded-full peer-checked:bg-red-500 transition-colors"></div>
+                                <div className="absolute top-[3px] left-[3px] w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-[18px] transition-transform"></div>
+                            </div>
+                        </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Input
                                 label="Batas Toleransi (Menit)"
@@ -354,16 +362,18 @@ export default function EditShift() {
                         <div className="flex items-center gap-3 text-purple-600 font-bold border-b border-gray-100 pb-3">
                             <Banknote size={20} /> <h2>Aturan Pulang Awal</h2>
                         </div>
-                        <div className="flex items-center gap-3 mb-2 p-3 rounded-xl hover:bg-red-50 transition-colors">
-                            <input
-                                type="checkbox"
-                                id="is_potong_gaji_pulang_awal"
-                                {...register("is_potong_gaji_pulang_awal")}
-                                className="w-5 h-5 cursor-pointer" />
-                            <label htmlFor="is_potong_gaji_pulang_awal" className="text-sm font-medium text-gray-700 cursor-pointer">
-                                Potong Gaji Jika Pulang Awal
-                            </label>
-                        </div>
+                        <label htmlFor="is_potong_gaji_pulang_awal" className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-red-50 transition-colors cursor-pointer select-none">
+                            <span className="text-sm font-medium text-gray-700">Potong Gaji Jika Pulang Awal</span>
+                            <div className="relative">
+                                <input
+                                    type="checkbox"
+                                    id="is_potong_gaji_pulang_awal"
+                                    {...register("is_potong_gaji_pulang_awal")}
+                                    className="sr-only peer" />
+                                <div className="w-10 h-[22px] bg-gray-300 rounded-full peer-checked:bg-purple-500 transition-colors"></div>
+                                <div className="absolute top-[3px] left-[3px] w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-[18px] transition-transform"></div>
+                            </div>
+                        </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Input
                                 label="Toleransi (Menit)"
@@ -400,7 +410,7 @@ export default function EditShift() {
                             type="button"
                             variant="danger"
                             label="Batal"
-                            onClick={() => navigate(-1)}
+                            onClick={() => navigate("/dashboard/jadwal-shift", { state: { activeTab: 'shift' }})}
                         />
                     </div>
                 </form>
