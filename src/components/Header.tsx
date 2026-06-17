@@ -71,6 +71,8 @@ export default function Header() {
 
         "/dashboard/lembur":{ title: "Lembur", showDate: false },
         "/dashboard/lembur/tambah-lembur":{ title: "Lembur", showDate: false },
+
+        "/dashboard/target-packing":{ title: "Target", showDate: false },
     };
 
     // 3. DIUBAH: Cari pengaturan berdasarkan URL menggunakan matchPath

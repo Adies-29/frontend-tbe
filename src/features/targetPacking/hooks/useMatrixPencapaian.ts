@@ -164,6 +164,7 @@ export function useMatrixPencapaian() {
     const loadPegawai = useCallback(async () => {
         try {
             const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
+                method: 'GET',
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (res.ok) {
@@ -178,6 +179,7 @@ export function useMatrixPencapaian() {
     const loadMasterTargets = useCallback(async () => {
         try {
             const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/master`, {
+                method: 'GET',
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (res.ok) {
@@ -205,9 +207,12 @@ export function useMatrixPencapaian() {
         });
 
         // Masukkan data pencapaian
-        pencapaianData.forEach(pencapaian => {
-            const pegId = pencapaian.pegawai_id;
-            if (matrixMap[pegId]) {
+        pencapaianData.forEach((pencapaian: any) => {
+            // Ambil pegawai_id: prioritas dari top-level, fallback dari nested object
+            const pegId = pencapaian.pegawai_id ?? pencapaian.pegawai?.id;
+            const masterTargetId = pencapaian.master_target_id ?? pencapaian.master_target?.id;
+
+            if (pegId && matrixMap[pegId]) {
                 if (!matrixMap[pegId].pencapaian[pencapaian.tanggal]) {
                     matrixMap[pegId].pencapaian[pencapaian.tanggal] = {
                         totalPack: 0,
@@ -221,7 +226,7 @@ export function useMatrixPencapaian() {
                 curr.totalNominal += pencapaian.nominal_total_riil;
                 
                 curr.details.push({
-                    master_target_id: pencapaian.master_target_id,
+                    master_target_id: masterTargetId,
                     nama_target: pencapaian.master_target?.nama_target || "Unknown",
                     harga_satuan: pencapaian.master_target?.harga_satuan || 0,
                     jumlah_pencapaian: pencapaian.jumlah_pencapaian,
@@ -240,6 +245,7 @@ export function useMatrixPencapaian() {
         
         try {
             const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/pencapaian?tanggal_mulai=${filterStartDate}&tanggal_selesai=${filterEndDate}`, {
+                method: 'GET',
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (res.ok) {
