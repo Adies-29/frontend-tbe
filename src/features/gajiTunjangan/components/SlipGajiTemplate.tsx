@@ -136,7 +136,7 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                             </thead>
                             <tbody>
                                 {pegawai.detail_harian && pegawai.detail_harian.length > 0 ? (
-                                    pegawai.detail_harian.map((hari, idx) => (
+                                    pegawai.detail_harian.map((hari: DetailHarian, idx: number) => (
                                         <tr key={idx} className="border-b border-black">
                                             <td className="border-r border-black py-1">{idx + 1}</td>
                                             <td className="border-r border-black py-1 text-left px-2">{hari.hari_tanggal}</td>
@@ -165,8 +165,7 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                                 ) : (
                                     // Kosong jika belum ada data harian
                                     <tr><td colSpan={isTarget ? 6 : 9} className="py-4 text-gray-500 italic">Data harian belum tersedia</td></tr>
-                                )}
-                            </tbody>
+                                )}    </tbody>
                         </table>
 
                         {/* ======================================================= */}
