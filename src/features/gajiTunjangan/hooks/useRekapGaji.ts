@@ -103,7 +103,7 @@ export function useRekapGaji() {
                     // Kalkulasi pendukung
                     const totalPotonganKasbon = item.rincian_potongan?.potongan_kasbon || 0;
                     const totalKotor = (item.gaji_dasar || 0) + (item.total_bonus || 0);
-                    
+
                     return {
                         id: String(item.id),
                         nama: item.pegawai?.nama || "Tanpa Nama",
@@ -112,20 +112,20 @@ export function useRekapGaji() {
                         departemen: "-", // Bisa diambil dari relasi jika ada
                         tipe_penggajian: item.pegawai?.jabatan?.tipe_penggajian || 'Bulanan',
                         periode_tanggal: filterValue, // Cth: "2026-W24"
-                        
+
                         detail_harian: item.detail_harian || [], // <--- Tarik array harian dari DB
-                        
+
                         gaji_dasar: item.gaji_dasar || 0,
                         total_bonus: item.total_bonus || 0,
                         total_potongan: item.total_potongan || 0,
                         gaji_bersih: item.total_gaji || 0,
                         status: item.status_pembayaran || "Pending",
-                        
+
                         // Informasi Keuangan Khusus Template Kas Muda Mudi
                         total_kotor: totalKotor,
                         potongan_bon: totalPotonganKasbon,
                         total_upah: item.total_gaji || 0,
-                        
+
                         // Informasi Hutang & Tabungan Samping Kiri (Sesuai foto)
                         hutang_awal: 0, // Bisa disesuaikan jika ingin narik saldo awal
                         sisa_hutang: 0, // Opsional jika ingin ditarik dari DB kasbon
@@ -222,7 +222,7 @@ export function useRekapGaji() {
     const handlePelunasanGaji = (id_gaji: string) => {
         const confirmLunas = window.confirm("Apakah Anda yakin ingin menandai gaji ini sebagai Lunas? (Tindakan ini akan mengunci slip gaji dan memotong saldo kasbon karyawan secara permanen jika ada).");
         if (!confirmLunas) return;
-        
+
         pelunasanGajiMutation.mutate(id_gaji);
     };
 
@@ -265,13 +265,13 @@ export function useRekapGaji() {
             const week1Start = new Date(year, 0, 4 - dayOfJan4 + 1);
 
             const startDate = new Date(week1Start.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
-            const endDate = new Date(startDate.getTime() + 6 * 24 * 60 * 60 * 1000); 
+            const endDate = new Date(startDate.getTime() + 6 * 24 * 60 * 60 * 1000);
 
             // FORMAT TANGGAL MANUAL KE YYYY-MM-DD UNTUK MENCEGAH ERROR POSTGRES
             const startYear = startDate.getFullYear();
             const startMonth = String(startDate.getMonth() + 1).padStart(2, '0');
             const startDay = String(startDate.getDate()).padStart(2, '0');
-            
+
             const endYear = endDate.getFullYear();
             const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
             const endDay = String(endDate.getDate()).padStart(2, '0');
