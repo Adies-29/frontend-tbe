@@ -26,11 +26,11 @@ export const TabelRekapGaji = ({ data }: TabelRekapGajiProps) => {
     // Definisi Kolom Tabel Rekap Gaji
     const columns: GridColDef[] = [
         { field: 'nama', headerName: 'Nama Pegawai', flex: 1, renderCell: (params) => <span className="font-semibold text-gray-800">{params.value}</span> },
-        { field: 'jabatan', headerName: 'Jabatan', flex: 1 },
-        { field: 'gaji_dasar', headerName: 'Gaji Dasar', width: 130, renderCell: (params) => formatRupiah(params.value) },
-        { field: 'total_bonus', headerName: 'Bonus & Tunjangan', width: 150, renderCell: (params) => <span className="text-green-600">+{formatRupiah(params.value)}</span> },
-        { field: 'total_potongan', headerName: 'Potongan (Denda)', width: 150, renderCell: (params) => <span className="text-red-600">-{formatRupiah(params.value)}</span> },
-        { field: 'gaji_bersih', headerName: 'Take Home Pay', width: 150, renderCell: (params) => <span className="font-bold text-blue-700">{formatRupiah(params.value)}</span> },
+        { field: 'jabatan', headerName: 'Jabatan',flex: 1, width: 100 },
+        { field: 'gaji_dasar', headerName: 'Gaji Dasar',flex: 1, width: 130, renderCell: (params) => formatRupiah(params.value) },
+        { field: 'total_bonus', headerName: 'Bonus & Tunjangan',flex: 1, width: 150, renderCell: (params) => <span className="text-green-600">+{formatRupiah(params.value)}</span> },
+        { field: 'total_potongan', headerName: 'Potongan (Denda)',flex: 1, width: 150, renderCell: (params) => <span className="text-red-600">-{formatRupiah(params.value)}</span> },
+        { field: 'gaji_bersih', headerName: 'Take Home Pay',flex: 1, width: 150, renderCell: (params) => <span className="font-bold text-blue-700">{formatRupiah(params.value)}</span> },
     ];
 
     return (
