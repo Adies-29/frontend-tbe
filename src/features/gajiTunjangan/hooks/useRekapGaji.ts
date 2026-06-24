@@ -99,16 +99,39 @@ export function useRekapGaji() {
 
             if (response.ok && result.success) {
                 const data = result.data || [];
-                const formattedData: RekapGajiData[] = data.map((item: GajiApiResponse) => ({
-                    id: String(item.id),
-                    nama: item.pegawai?.nama || "Tanpa Nama",
-                    jabatan: item.pegawai?.jabatan?.nama_jabatan || "-",
-                    gaji_dasar: item.gaji_dasar || 0,
-                    total_bonus: item.total_bonus || 0,
-                    total_potongan: item.total_potongan || 0,
-                    gaji_bersih: item.total_gaji || 0,
-                    status: item.status_pembayaran || "Pending"
-                }));
+                const formattedData = data.map((item: any) => {
+                    // Kalkulasi pendukung
+                    const totalPotonganKasbon = item.rincian_potongan?.potongan_kasbon || 0;
+                    const totalKotor = (item.gaji_dasar || 0) + (item.total_bonus || 0);
+                    
+                    return {
+                        id: String(item.id),
+                        nama: item.pegawai?.nama || "Tanpa Nama",
+                        jabatan: item.pegawai?.jabatan?.nama_jabatan || "-",
+                        shift: "-", // Bisa diambil dari relasi jika ada
+                        departemen: "-", // Bisa diambil dari relasi jika ada
+                        tipe_penggajian: item.pegawai?.jabatan?.tipe_penggajian || 'Bulanan',
+                        periode_tanggal: filterValue, // Cth: "2026-W24"
+                        
+                        detail_harian: item.detail_harian || [], // <--- Tarik array harian dari DB
+                        
+                        gaji_dasar: item.gaji_dasar || 0,
+                        total_bonus: item.total_bonus || 0,
+                        total_potongan: item.total_potongan || 0,
+                        gaji_bersih: item.total_gaji || 0,
+                        status: item.status_pembayaran || "Pending",
+                        
+                        // Informasi Keuangan Khusus Template Kas Muda Mudi
+                        total_kotor: totalKotor,
+                        potongan_bon: totalPotonganKasbon,
+                        total_upah: item.total_gaji || 0,
+                        
+                        // Informasi Hutang & Tabungan Samping Kiri (Sesuai foto)
+                        hutang_awal: 0, // Bisa disesuaikan jika ingin narik saldo awal
+                        sisa_hutang: 0, // Opsional jika ingin ditarik dari DB kasbon
+                        bon_kerupuk_info: 0,
+                    };
+                });
 
                 const totalPengeluaran = formattedData.reduce((sum, curr) => sum + (curr.gaji_bersih || 0), 0);
                 const totalBonusSemua = formattedData.reduce((sum, curr) => sum + (curr.total_bonus || 0), 0);
