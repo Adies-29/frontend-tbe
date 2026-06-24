@@ -1,4 +1,5 @@
-import { X } from 'lucide-react';
+import { useState } from 'react';
+import { X, Search } from 'lucide-react';
 import Button from '../../../components/common/Button';
 
 interface DisplayItem {
@@ -36,6 +37,8 @@ interface ModalGenerateMassalProps {
 export default function ModalGenerateMassal(props: ModalGenerateMassalProps) {
     if (!props.isModalMassalOpen) return null;
 
+    const [searchQuery, setSearchQuery] = useState("");
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getDeptName = (p: any) => p.departemen?.nama_departemen || p.jabatan?.departemen?.nama_departemen || 'Umum';
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,6 +71,15 @@ export default function ModalGenerateMassal(props: ModalGenerateMassalProps) {
                 id: p.id, label: p.nama, subLabel: p.nik || '-', pegawaiIds: [p.id]
             })));
         }
+    }
+
+    // Filter berdasarkan pencarian nama
+    if (searchQuery.trim() !== '') {
+        const query = searchQuery.toLowerCase();
+        displayList = displayList.filter(item =>
+            String(item.label).toLowerCase().includes(query) ||
+            String(item.subLabel).toLowerCase().includes(query)
+        );
     }
 
     const isItemSelected = (itemIds: number[]) => itemIds.length > 0 && itemIds.every(id => props.selectedPegawaiIds.includes(id));
@@ -105,7 +117,7 @@ export default function ModalGenerateMassal(props: ModalGenerateMassalProps) {
                     </button>
                 </div>
 
-                <div className="p-5 flex flex-col gap-4">
+                <div className="p-5 flex flex-col gap-4 max-h-[75vh] overflow-y-auto">
                     
                     <div className="flex flex-col gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
                         <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Pilih Pegawai Target</label>
@@ -148,6 +160,20 @@ export default function ModalGenerateMassal(props: ModalGenerateMassalProps) {
                                     {uniqueJabatanInDept.map(j => <option key={j as string} value={j as string}>{j as string}</option>)}
                                 </select>
                             )}
+                        </div>
+
+                        {/* SEARCH PEGAWAI */}
+                        <div className="relative mt-1">
+                            <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                                <Search size={14} className="text-gray-400" />
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Cari nama pegawai..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full border border-gray-300 rounded-lg pl-8 pr-3 py-1.5 text-xs outline-none focus:border-blue-500 shadow-sm bg-white"
+                            />
                         </div>
 
                         <div className="border border-gray-300 bg-white rounded-lg flex flex-col mt-1 shadow-sm">
