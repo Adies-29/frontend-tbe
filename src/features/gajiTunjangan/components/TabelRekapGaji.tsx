@@ -18,26 +18,22 @@ export interface RekapGajiData {
     status: string;
 }
 
-interface TabelRekapGajiProps { 
-    data: RekapGajiData[]; 
-    onPelunasan: (id: string) => void; 
+interface TabelRekapGajiProps {
+    data: RekapGajiData[];
+    onPelunasan: (id: string) => void;
 }
 
 // Ekstrak onPelunasan dari props di sini
 export const TabelRekapGaji = ({ data, onPelunasan }: TabelRekapGajiProps) => {
-    
+
     // Definisi Kolom Tabel Rekap Gaji
     const columns: GridColDef[] = [
         { field: 'nama', headerName: 'Nama Pegawai', flex: 1, renderCell: (params) => <span className="font-semibold text-gray-800">{params.value}</span> },
-        { field: 'jabatan', headerName: 'Jabatan', flex: 1 },
-        { field: 'gaji_dasar', headerName: 'Gaji Dasar', width: 130, renderCell: (params) => formatRupiah(params.value) },
-        { field: 'total_bonus', headerName: 'Bonus & Tunjangan', width: 150, renderCell: (params) => <span className="text-green-600">+{formatRupiah(params.value)}</span> },
-        { field: 'total_potongan', headerName: 'Potongan (Denda)', width: 150, renderCell: (params) => <span className="text-red-600">-{formatRupiah(params.value)}</span> },
-        { field: 'gaji_bersih', headerName: 'Take Home Pay', width: 150, renderCell: (params) => <span className="font-bold text-blue-700">{formatRupiah(params.value)}</span> },
-        
-        // ==========================================================
-        // FITUR BARU: KOLOM STATUS DAN AKSI PELUNASAN
-        // ==========================================================
+        { field: 'jabatan', headerName: 'Jabatan', flex: 1, width: 100 },
+        { field: 'gaji_dasar', headerName: 'Gaji Dasar', flex: 1, width: 130, renderCell: (params) => formatRupiah(params.value) },
+        { field: 'total_bonus', headerName: 'Bonus & Tunjangan', flex: 1, width: 150, renderCell: (params) => <span className="text-green-600">+{formatRupiah(params.value)}</span> },
+        { field: 'total_potongan', headerName: 'Potongan (Denda)', flex: 1, width: 150, renderCell: (params) => <span className="text-red-600">-{formatRupiah(params.value)}</span> },
+        { field: 'gaji_bersih', headerName: 'Take Home Pay', flex: 1, width: 150, renderCell: (params) => <span className="font-bold text-blue-700">{formatRupiah(params.value)}</span> },
         { 
             field: 'status', 
             headerName: 'Status / Aksi', 
@@ -71,9 +67,9 @@ export const TabelRekapGaji = ({ data, onPelunasan }: TabelRekapGajiProps) => {
     ];
 
     return (
-        <Box sx={{ 
-            height: 400, 
-            width: '100%', 
+        <Box sx={{
+            height: 400,
+            width: '100%',
             '& .MuiDataGrid-root': { border: 'none' },
             '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' },
             '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' } // Memastikan isi sel rata tengah vertikal
