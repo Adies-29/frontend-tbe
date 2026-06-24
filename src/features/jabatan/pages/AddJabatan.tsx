@@ -1,14 +1,15 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft} from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Button from '../../../components/common/Button';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Input } from '../../../components/common/InputText'; 
-import { useEffect, useState } from 'react';
+import { Input } from '../../../components/common/InputText';
+import { useState } from 'react';
 import { useAuthStore } from '../../../store/useAuthStore';
 import Notif from '../../../components/common/Notif';
 import { apiFetch } from "../../../utils/apiFetch";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 
 
 const schema = z.object({
@@ -24,8 +25,7 @@ interface DepartemenItem {
 
 export default function AddJabatan() {
     const navigate = useNavigate();
-    const [isSaving, setIsSaving] = useState(false);
-    const [departemenList, setDepartemenList] =  useState<DepartemenItem[]>([]);
+
     const token = useAuthStore((state) => state.token)
 
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
@@ -33,6 +33,8 @@ export default function AddJabatan() {
         message: "",
         type: "success"
     });
+    const queryClient = useQueryClient();
+
 
     const {
         register,
@@ -43,33 +45,24 @@ export default function AddJabatan() {
     });
 
     //Mengambil data departemen
-    useEffect(() => {
-        const fetchDepartemen = async () =>{
-            try {
-                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, {
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    },
-                });
-                
-                const result = await response.json();
-
-                if (response.ok){
-                    setDepartemenList(result.data)
-                }
-            } catch (error) {
-                console.error("Gagal mengambil data departemen:", error);
+    const {
+        data: departemenList = []
+    } = useQuery({
+        queryKey: ['masterDepartemen'],
+        queryFn: async () => {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error("Gagal Mengambil data Departemen")
             }
-        };
-        fetchDepartemen();
-    }, []);
+            return result.data as DepartemenItem[];
+        }
+    });
 
-
-    // tombol Simpan diklik
-   const onSubmit = async (data: FormData) => {
-        setIsSaving(true)
-        try {
+    const addJabatanMutation = useMutation({
+        mutationFn: async (data: FormData) => {
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, {
                 method: "POST",
                 headers: {
@@ -81,22 +74,31 @@ export default function AddJabatan() {
                     departemen_id: parseInt(data.departemen_id)
                 }),
             });
+
             const result = await response.json();
 
-           if (response.ok && result.success) {
-                setNotif({ show: true, message: "Jabatan berhasil disimpan!", type: "success" });
-                setTimeout(() => {
-                    navigate("/dashboard/jabatan"); 
-                }, 2000)
-            } else {
-                setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Gagal menyimpan data");
             }
-        } catch (error) {
-            console.error("Error Submit:", error);
-            setNotif({ show: true, message: "Terjadi kesalahan jaringan.", type: "error" });
-        }finally {
-            setIsSaving(false);
+            return result;
+        },
+        onSuccess: () => {
+            setNotif({ show: true, message: "Jabatan berhasil disimpan", type: "success" });
+            queryClient.invalidateQueries({ queryKey: ['jabatan_pegawai'] });
+            setTimeout(() => {
+                navigate("/dashboard/jabatan")
+            }, 2000);
+        },
+        onError: (error) => {
+            setNotif({ show: true, message: error.message || "Terjadi kesalahan koneksi", type: "error" });
+
         }
+    });
+
+
+    // tombol Simpan diklik
+    const onSubmit = async (data: FormData) => {
+        addJabatanMutation.mutate(data);
     };
 
     return (
@@ -105,7 +107,7 @@ export default function AddJabatan() {
                 {/* HEADER HALAMAN */}
                 <div className="flex grid-cols-1 md:grid-cols-2 justify-between">
 
-                    <h2  className="text-2xl font-bold text-gray-800 mb-6">Tambah Jabatan Baru</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-6">Tambah Jabatan Baru</h2>
 
                     <Button
                         variant="back"
@@ -156,7 +158,8 @@ export default function AddJabatan() {
                             <Button
                                 variant="success"
                                 type="submit"
-                                label={isSaving ? "Menyimpan..." : "SImpan"}
+                                label={addJabatanMutation.isPending ? "Menyimpan..." : "SImpan"}
+                                disabled={addJabatanMutation.isPending}
                             />
                             <Button
                                 type="button"

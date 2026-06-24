@@ -11,6 +11,8 @@ import { useAuthStore } from '../../../store/useAuthStore';
 import Notif from '../../../components/common/Notif';
 import { apiFetch } from "../../../utils/apiFetch";
 import { formatMinutesToText } from "../../../utils/formatMinutes";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 
 // 1. SCHEMA ZOD 
 const schema = z.object({
@@ -43,8 +45,7 @@ export default function EditShift() {
     const { id } = useParams();
     const navigate = useNavigate();
     const token = useAuthStore((state) => (state.token));
-    const [isSaving, setIsSaving] = useState(false);
-    const [isFetchingData, setIsFetchingData] = useState(true)
+    const queryClient = useQueryClient();
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
         show: false,
         message: "",
@@ -61,77 +62,45 @@ export default function EditShift() {
         resolver: zodResolver(schema) as any,
     });
 
-    // 2. LOGIKA LOAD DATA LAMA 
+    const shiftQuery = useQuery({
+        queryKey: ['masterShift', id],
+        queryFn: async () => {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${id}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success) throw new Error("Gagal memuat data konfigurasi shift.");
+            return result.data;
+        },
+        enabled: !!id
+    });
+
     useEffect(() => {
-        const loadShiftData = async () => {
-            try {
-                setIsFetchingData(true)
+        if (shiftQuery.data) {
+            const shift = shiftQuery.data;
+            reset({
+                kode_shift: shift.kode_shift,
+                jam_masuk: shift.jam_masuk,
+                jam_pulang: shift.jam_pulang,
+                lintas_hari: shift.lintas_hari,
+                batas_toleransi_menit: shift.batas_toleransi_menit,
+                batas_maksimal_lembur_menit: shift.batas_maksimal_lembur_menit,
+                is_batas_scan: shift.batas_akhir_scan_masuk_menit > 0 || shift.batas_akhir_scan_pulang_menit > 0,
+                batas_akhir_scan_masuk_menit: shift.batas_akhir_scan_masuk_menit,
+                is_potong_gaji_terlambat: shift.is_potong_gaji_terlambat,
+                denda_terlambat_per_menit: shift.denda_terlambat_per_menit,
+                is_potong_gaji_pulang_awal: shift.is_potong_gaji_pulang_awal,
+                toleransi_pulang_awal_menit: shift.toleransi_pulang_awal_menit,
+                denda_pulang_awal_per_menit: shift.denda_pulang_awal_per_menit,
+                batas_akhir_scan_pulang_menit: shift.batas_akhir_scan_pulang_menit,
+                tipe_denda: shift.istetap !== undefined ? (shift.istetap ? "tetap" : "per_menit") : "tetap",
+            });
+        }
+    }, [shiftQuery.data, reset]);
 
-                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${id}`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    }
-                });
-
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    const shift = result.data;
-
-                    reset({
-                        kode_shift: shift.kode_shift,
-                        jam_masuk: shift.jam_masuk,
-                        jam_pulang: shift.jam_pulang,
-                        lintas_hari: shift.lintas_hari,
-                        batas_toleransi_menit: shift.batas_toleransi_menit,
-                        batas_maksimal_lembur_menit: shift.batas_maksimal_lembur_menit,
-                        is_batas_scan: shift.batas_akhir_scan_masuk_menit > 0 || shift.batas_akhir_scan_pulang_menit > 0,
-                        batas_akhir_scan_masuk_menit: shift.batas_akhir_scan_masuk_menit,
-                        is_potong_gaji_terlambat: shift.is_potong_gaji_terlambat,
-                        denda_terlambat_per_menit: shift.denda_terlambat_per_menit,
-                        is_potong_gaji_pulang_awal: shift.is_potong_gaji_pulang_awal,
-                        toleransi_pulang_awal_menit: shift.toleransi_pulang_awal_menit,
-                        denda_pulang_awal_per_menit: shift.denda_pulang_awal_per_menit,
-                        batas_akhir_scan_pulang_menit: shift.batas_akhir_scan_pulang_menit,
-                        tipe_denda: shift.istetap !== undefined ? (shift.istetap ? "tetap" : "per_menit") : "tetap",
-                    });
-                } else {
-                    setNotif({ show: true, message: "Gagal memuat data konfigurasi shift.", type: "error" });
-                    setTimeout(() => navigate(-1), 1500);
-                }
-
-            } catch (error) {
-                console.error("Error fetching shift details:", error);
-                setNotif({ show: true, message: "Terjadi kesalahan koneksi saat mengambil data server.", type: "error" });
-            } finally {
-                setIsFetchingData(false)
-            }
-        };
-
-        if (id) loadShiftData();
-    }, [id, token, reset, navigate]);
-
-    const onSubmit = async (data: FormData) => {
-        setIsSaving(true)
-        try {
-            const { tipe_denda, ...restData } = data;
-            
-            // Buat object payload baru yang Type-Safe untuk Backend
-            const finalPayload = {
-                ...restData,
-                // SESUAIKAN DENGAN BACKEND (Ubah string tipe_denda menjadi boolean istetap)
-                istetap: tipe_denda === "tetap",
-                // Reset nilai batas jika checkbox dimatikan
-                batas_akhir_scan_masuk_menit: restData.is_batas_scan ? restData.batas_akhir_scan_masuk_menit : 0,
-                batas_akhir_scan_pulang_menit: restData.is_batas_scan ? restData.batas_akhir_scan_pulang_menit : 0,
-            };
-
-            console.log("==== DATA PAYLOAD SHIFT ====");
-            console.log("Data yang dikirim:", JSON.stringify(finalPayload, null, 2));
-            console.log("Batas Scan Pulang (Menit):", finalPayload.batas_akhir_scan_pulang_menit);
-            console.log("============================");
+    const editShiftMutation = useMutation({
+    
+        mutationFn: async (finalPayload: any) => {
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${id}`, {
                 method: "PUT",
                 headers: {
@@ -140,28 +109,37 @@ export default function EditShift() {
                 },
                 body: JSON.stringify(finalPayload)
             });
-
             const result = await response.json();
-
-            if (response.ok && result.success) {
-               setNotif({ show: true, message: "Perubahan konfigurasi Jadwal & Shift berhasil diperbarui", type: "success" });
-               setTimeout(() => {
-                   navigate("/dashboard/jadwal-shift", { state: { activeTab: 'shift' } });
-               }, 2000);
-            } else {
-                setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });
-            }
-
-        } catch (error) {
-            console.error("Error Submit:", error);
-            setNotif({ show: true, message: "Terjadi kesalahan jaringan.", type: "error" });
-        } finally {
-            setIsSaving(false);
+            if (!response.ok || !result.success) throw new Error(result.message || "Gagal menyimpan ke database. Coba lagi.");
+            return result;
+        },
+        onSuccess: () => {
+            setNotif({ show: true, message: "Perubahan konfigurasi Jadwal & Shift berhasil diperbarui", type: "success" });
+            queryClient.invalidateQueries({ queryKey: ['masterShiftList'] });
+            queryClient.invalidateQueries({ queryKey: ['masterShift', id] });
+            setTimeout(() => {
+                navigate("/dashboard/jadwal-shift", { state: { activeTab: 'shift' } });
+            }, 2000);
+        },
+       
+        onError: (error: any) => {
+            setNotif({ show: true, message: error.message || "Terjadi kesalahan jaringan.", type: "error" });
         }
+    });
+
+    const onSubmit = (data: FormData) => {
+        const { tipe_denda, ...restData } = data;
+        const finalPayload = {
+            ...restData,
+            istetap: tipe_denda === "tetap",
+            batas_akhir_scan_masuk_menit: restData.is_batas_scan ? restData.batas_akhir_scan_masuk_menit : 0,
+            batas_akhir_scan_pulang_menit: restData.is_batas_scan ? restData.batas_akhir_scan_pulang_menit : 0,
+        };
+        editShiftMutation.mutate(finalPayload);
     };
 
 
-    if (isFetchingData) {
+    if (shiftQuery.isLoading) {
         return (
             <div className="flex flex-col items-center justify-center h-96 text-gray-500 w-full">
                 <Loader2 className="animate-spin mb-4" size={40} />
@@ -182,7 +160,7 @@ export default function EditShift() {
                         <h1 className="text-xl font-bold text-gray-800">Edit Konfigurasi Shift</h1>
                         <p className="text-sm text-gray-500">Atur jadwal, toleransi, dan denda keterlambatan.</p>
                     </div>
-                    <Button variant="back" disabled={isSaving} icon={<ArrowLeft size={18} />} onClick={() => navigate("/dashboard/jadwal-shift", { state: { activeTab: 'shift' }})} label="Kembali" />
+                    <Button variant="back" disabled={editShiftMutation.isPending} icon={<ArrowLeft size={18} />} onClick={() => navigate("/dashboard/jadwal-shift", { state: { activeTab: 'shift' }})} label="Kembali" />
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit, (err) => console.log("==== VALIDATION ERROR ====", err))} className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -403,8 +381,8 @@ export default function EditShift() {
                         <Button
                             variant="success"
                             type="submit"
-                            label="Simpan Konfigurasi Shift"
-                            disabled={isSaving}
+                            label={editShiftMutation.isPending ? "Menyimpan Data..." : "Simpan Konfigurasi Shift"}
+                            disabled={editShiftMutation.isPending}
                         />
                         <Button
                             type="button"

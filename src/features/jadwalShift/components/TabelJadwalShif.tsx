@@ -18,6 +18,7 @@ import { apiFetch } from "../../../utils/apiFetch";
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import Notif from '../../../components/common/Notif';
+import { useMutation } from "@tanstack/react-query";
 
 
 
@@ -53,63 +54,80 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
         setShowPopUp(true);
     };
 
-    const hapus = async () => {
-        if (!hapusId) return;
-
-        try {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${hapusId}`, {
+        const deleteShiftMutation = useMutation({
+        mutationFn: async (idToDelete: GridRowId) => {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${idToDelete}`, {
                 method: "DELETE",
                 headers: {
-                    "Authorization" : `Bearer ${token}`,
-                    "Content-Type" : "application/json"
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
                 }
             });
-            const result = await response.json()
-
-            if(response.ok && result.success){
-                setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(hapusId)));
-                setNotif({ show: true, message: "Data jadwal shift berhasil dihapus", type: "success" });
-                setTimeout(() => {
-                    onRefresh();
-                }, 2000);
-            } else{
-                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error(getSafeErrorMessage(response.status));
             }
-        } catch (error) {
-            console.error("Error delete :", error);
-            setNotif({ show: true, message: "Gagal menghapus data. Periksa koneksi.", type: "error" });
-        } finally{
+            return result;
+        },
+        // data ini otomatis membaca id yang berhasil dihapus
+        onSuccess: ( deletedId) => {
+            setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(deletedId)));
+            setNotif({ show: true, message: "Data jadwal shift berhasil dihapus", type: "success" });
+            setTimeout(() => {
+                onRefresh(); // Pakai onRefresh bawaan komponen saja!
+            }, 2000);
+        },
+        onError: (error) => {
+            setNotif({ show: true, message: error.message || "Gagal menghapus data. Periksa koneksi.", type: "error" });
+        },
+        onSettled: () => {
             setShowPopUp(false);
             setHapusId(null);
         }
-    }
+    });
 
-    const processRowUpdate = async (newRow: GridRowModel, oldRow: GridRowModel) => {
-        const updatedRow = {...newRow} as JadwalShiftData;
-        if (JSON.stringify(newRow) === JSON.stringify(oldRow)) return oldRow;
-        const { kode_shift, jam_masuk, jam_pulang } = updatedRow;
+    const hapus = () => {
+        if (hapusId) {
+            deleteShiftMutation.mutate(hapusId);
+        }
+    };
 
-        try {
+        const editShiftMutation = useMutation({
+        mutationFn: async (newRow: GridRowModel) => {
+            const { kode_shift, jam_masuk, jam_pulang } = newRow as JadwalShiftData;
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${newRow.id}`, {
                 method: "PUT",
                 headers: {
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify({kode_shift, jam_masuk, jam_pulang}),
+                body: JSON.stringify({ kode_shift, jam_masuk, jam_pulang }),
             });
-            const result = await response.json()
+            const result = await response.json();
 
-            if(!response.ok || !result.success){
-                throw new Error(result.message || "Server Error")
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Server Error");
             }
+            return newRow as JadwalShiftData;
+        },
+        onSuccess: (updatedRow) => {
+            setRows((prevRows) => prevRows.map((row) => (row.id === updatedRow.id ? updatedRow : row)));
+            onRefresh(); 
+        },
+        onError: (error) => {
+            setNotif({ show: true, message: error.message || getSafeErrorMessage(), type: "error" });
+        }
+    });
 
-            setRows((prevRows) => prevRows.map((row) => (row.id === newRow.id ? updatedRow : row)));
+    const processRowUpdate = async (newRow: GridRowModel, oldRow: GridRowModel) => {
+        if (JSON.stringify(newRow) === JSON.stringify(oldRow)) return oldRow;
+        
+        try {
+           
+            const updatedRow = await editShiftMutation.mutateAsync(newRow);
             return updatedRow;
-        } catch (error : unknown) {
-            console.error("Gagal update:", error);
-            setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
-            throw error;
+        } catch (error) {
+            return Promise.reject(error); 
         }
     };
 
@@ -125,7 +143,6 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
             headerName: 'Kode Shift', 
             flex: 1,
             minWidth: 150,
-            editable: true,
             renderCell: (params) => <span className="font-bold text-gray-800">{params.value}</span> 
         },
         { 

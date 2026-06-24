@@ -1,7 +1,6 @@
 import { DataGrid, GridActionsCellItem, type GridColDef, type GridRowId } from "@mui/x-data-grid";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import dayjs from "dayjs";
-
 import type { LemburData } from "../../../types";
 import { defaultDataGridSx } from "../../../components/common/dataGridStyles";
 import { useState } from "react";
@@ -11,7 +10,7 @@ import { getSafeErrorMessage } from "../../../utils/errorHandler";
 import { useNavigate } from "react-router-dom";
 import ConfirmPopUp from "../../../components/common/ConfirmPopUp";
 import Notif from "../../../components/common/Notif";
-import { useEffect } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface TabelLemburProps {
     data: LemburData[];
@@ -20,14 +19,10 @@ interface TabelLemburProps {
 }
 
 export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburProps) {
-    const [rows, setRows] = useState<LemburData[]>(data);
-
-    useEffect(() => {
-        setRows(data);
-    }, [data]);
-
     const token = useAuthStore((state) => state.token);
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    
     const [hapusId, setHapusId] = useState<GridRowId | null>(null);
     const [showPopUp, setShowPopUp] = useState(false);
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
@@ -40,11 +35,10 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
         setHapusId(id);
         setShowPopUp(true);
     };
-    const hapus = async () => {
-        if (!hapusId) return;
 
-        try {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/${hapusId}`, {
+    const deleteLemburMutation = useMutation({
+        mutationFn: async (idToDelete: GridRowId) => {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/${idToDelete}`, {
                 method: 'DELETE',
                 headers: {
                     "Content-Type": "application/json",
@@ -53,26 +47,34 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
             });
             const result = await response.json();
 
-            if (response.ok && result.success) {
-                // Hapus data dari tabel secara realtime
-                setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(hapusId)));
-                setNotif({ show: true, message: "Data lembur berhasil dihapus", type: "success" });
-                setTimeout(() => {
-                    onRefresh();
-                }, 2000);
-
-            } else {
-                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
+            if (!response.ok || !result.success) {
+                throw new Error(getSafeErrorMessage(response.status));
             }
-        } catch (error) {
-            console.error("Terjadi kesalahan server:", error);
+            return result;
+        },
+        onSuccess: () => {
+            setNotif({ show: true, message: "Data lembur berhasil dihapus", type: "success" });
+            queryClient.invalidateQueries({ queryKey: ['lemburList'] });
+            // onRefresh tetap dipertahankan untuk redundansi yang aman
+            setTimeout(() => {
+                onRefresh();
+            }, 2000);
+        },
+        onError: () => {
             setNotif({ show: true, message: "Gagal menghapus data. Periksa koneksi.", type: "error" });
-        } finally {
-            // Tutup popup dan bersihkan ID setelah selesai diproses
+        },
+        onSettled: () => {
             setShowPopUp(false);
             setHapusId(null);
         }
+    });
+
+    const hapus = () => {
+        if (hapusId) {
+            deleteLemburMutation.mutate(hapusId);
+        }
     };
+
     const columns: GridColDef[] = [
         {
             field: "pegawai_id",
@@ -153,9 +155,9 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
             width: 100,
             cellClassName: 'actions',
             getActions: ({ id, row }) => {
-
                 return [
                     <GridActionsCellItem
+                        key="edit"
                         icon={<Pencil size={18} className="text-gray-600 hover:text-black" />}
                         label="Edit"
                         className="textPrimary"
@@ -163,6 +165,7 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
                         color="inherit"
                     />,
                     <GridActionsCellItem
+                        key="delete"
                         icon={<Trash2 size={18} className="text-gray-600 hover:text-red-600" />}
                         label="Delete"
                         onClick={handleDeleteClick(id)}
@@ -186,7 +189,7 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
         <div className="w-full bg-white relative" style={{ width: "100%", minHeight: "400px" }}>
             <DataGrid
                 showToolbar
-                rows={rows}
+                rows={data}
                 columns={columns}
                 autoHeight
                 disableRowSelectionOnClick

@@ -9,10 +9,52 @@ import Button from '../../../components/common/Button';
 import { useMatrixPencapaian } from '../hooks/useMatrixPencapaian';
 import Notif from '../../../components/common/Notif';
 import ModalInputPencapaian from './ModalInputPencapaian';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function TabelMatrixPencapaian() {
     const hookParams = useMatrixPencapaian();
     const token = useAuthStore(state => state.token);
+    const queryClient = useQueryClient();
+
+    const saveMutation = useMutation({
+        mutationFn: async (payload: any) => {
+            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/pencapaian`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(result.message || result.error || "Gagal menyimpan pencapaian (500)");
+            return result;
+        },
+        onSuccess: () => {
+            hookParams.showNotif("Pencapaian berhasil disimpan", "success");
+            queryClient.invalidateQueries({ queryKey: ['pencapaianList'] });
+            hookParams.setIsModalOpen(false);
+        },
+        onError: (err: any) => hookParams.showNotif(err.message, "error")
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: async (pencapaianId: number) => {
+            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/pencapaian/${pencapaianId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(result.message || result.error || "Gagal menghapus pencapaian");
+            return result;
+        },
+        onSuccess: () => {
+            hookParams.showNotif("Data pencapaian dihapus", "success");
+            queryClient.invalidateQueries({ queryKey: ['pencapaianList'] });
+            hookParams.setIsModalOpen(false);
+        },
+        onError: (err: any) => hookParams.showNotif(err.message, "error")
+    });
 
     // Helper untuk generate array Date
     const getDatesInRange = (startStr: string, endStr: string) => {
@@ -74,7 +116,10 @@ export default function TabelMatrixPencapaian() {
 
                     <select
                         value={hookParams.filterDepartemen}
-                        onChange={(e) => hookParams.setFilterDepartemen(e.target.value)}
+                        onChange={(e) => {
+                            hookParams.setFilterDepartemen(e.target.value);
+                            hookParams.setFilterJabatan("");
+                        }}
                         className="border border-gray-300 rounded-lg px-3 py-1.5 bg-white outline-none focus:border-red-500 shadow-sm text-sm max-w-[150px] truncate"
                     >
                         <option value="">Semua Dept</option>
@@ -201,59 +246,17 @@ export default function TabelMatrixPencapaian() {
                         hookParams.matrixKaryawan.find(p => p.id === hookParams.selectedCell.pegawaiId)
                             ?.pencapaian[hookParams.selectedCell.tanggal] || null
                     }
-                    isSaving={hookParams.isSaving}
+                    isSaving={saveMutation.isPending || deleteMutation.isPending}
                     onSave={async (data) => {
-                        hookParams.setIsSaving(true);
-                        try {
-                            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/pencapaian`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`
-                                },
-                                body: JSON.stringify({
-                                    pegawai_id: hookParams.selectedCell.pegawaiId,
-                                    master_target_id: data.master_target_id,
-                                    tanggal: hookParams.selectedCell.tanggal,
-                                    jumlah_pencapaian: data.jumlah
-                                })
-                            });
-                            
-                            const result = await res.json().catch(() => ({}));
-                            
-                            if (!res.ok) {
-                                throw new Error(result.message || result.error || "Gagal menyimpan pencapaian (500)");
-                            }
-                            
-                            hookParams.showNotif("Pencapaian berhasil disimpan", "success");
-                            hookParams.loadPencapaianBulanan();
-                        } catch (err: any) {
-                            hookParams.showNotif(err.message, "error");
-                        } finally {
-                            hookParams.setIsSaving(false);
-                        }
+                        await saveMutation.mutateAsync({
+                            pegawai_id: hookParams.selectedCell.pegawaiId,
+                            master_target_id: data.master_target_id,
+                            tanggal: hookParams.selectedCell.tanggal,
+                            jumlah_pencapaian: data.jumlah
+                        });
                     }}
                     onDelete={async (pencapaianId) => {
-                        hookParams.setIsSaving(true);
-                        try {
-                            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/pencapaian/${pencapaianId}`, {
-                                method: 'DELETE',
-                                headers: { 'Authorization': `Bearer ${token}` }
-                            });
-
-                            const result = await res.json().catch(() => ({}));
-
-                            if (!res.ok) {
-                                throw new Error(result.message || result.error || "Gagal menghapus pencapaian");
-                            }
-
-                            hookParams.showNotif("Data pencapaian dihapus", "success");
-                            hookParams.loadPencapaianBulanan();
-                        } catch (err: any) {
-                            hookParams.showNotif(err.message, "error");
-                        } finally {
-                            hookParams.setIsSaving(false);
-                        }
+                        await deleteMutation.mutateAsync(pencapaianId);
                     }}
                 />
             )}

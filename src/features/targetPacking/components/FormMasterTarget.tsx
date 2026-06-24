@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { PackageSearch, Pencil, Trash2, Plus, Loader2 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Button from '../../../components/common/Button';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import Notif from '../../../components/common/Notif';
@@ -13,10 +14,8 @@ interface FormMasterTargetProps {
 }
 
 export default function FormMasterTarget({ jabatanId }: FormMasterTargetProps) {
-    const [targets, setTargets] = useState<MasterTargetData[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
-    const token = useAuthStore((state) => state.token)
+    const queryClient = useQueryClient();
+    const token = useAuthStore((state) => state.token);
     
     // Inline Add state
     const [isAdding, setIsAdding] = useState(false);
@@ -43,33 +42,19 @@ export default function FormMasterTarget({ jabatanId }: FormMasterTargetProps) {
         setNotifState({ show: true, message, type });
     };
 
-    const loadTargets = async () => {
-        setIsLoading(true);
-        try {
+    const targetsQuery = useQuery({
+        queryKey: ['masterTargetList', jabatanId],
+        queryFn: async () => {
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/master?jabatan_id=${jabatanId}`, {
-                method: "GET",
-                headers:{
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                }
+                headers: { "Authorization": `Bearer ${token}` }
             });
-            
-            if (!response.ok) throw new Error("Gagal mengambil data");
-            
             const result = await response.json();
-            // Sesuaikan result.data atau result jika API tidak dibungkus 'data'
-            setTargets(result.data || result || []);
-        } catch (error: any) {
-            showNotif(error.message || "Gagal memuat target", "error");
-        } finally {
-            setIsLoading(false);
+            if (!response.ok) throw new Error("Gagal mengambil data");
+            return result.data || result || [];
         }
-    };
+    });
 
-    // INITIAL LOAD
-    useEffect(() => {
-        loadTargets();
-    }, [jabatanId]);
+    const targets: MasterTargetData[] = targetsQuery.data || [];
 
     const handleAddClick = () => {
         setIsAdding(true);
@@ -81,17 +66,11 @@ export default function FormMasterTarget({ jabatanId }: FormMasterTargetProps) {
         setIsAdding(false);
     };
 
-    const handleSaveAdd = async () => {
-        if (!newTargetName || !newTargetPrice) return;
-        setIsSaving(true);
-        
-        try {
+    const addMutation = useMutation({
+        mutationFn: async () => {
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/master`, {
                 method: "POST",
-                headers:{
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },  
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },  
                 body: JSON.stringify({
                     jabatan_id: parseInt(jabatanId),
                     nama_target: newTargetName,
@@ -99,17 +78,19 @@ export default function FormMasterTarget({ jabatanId }: FormMasterTargetProps) {
                     is_active: true
                 })
             });
-            
             if (!response.ok) throw new Error("Gagal menyimpan data");
-            
+        },
+        onSuccess: () => {
             showNotif("Target baru berhasil ditambahkan", "success");
             setIsAdding(false);
-            loadTargets();
-        } catch (error: any) {
-            showNotif(error.message || "Gagal menambah target", "error");
-        } finally {
-            setIsSaving(false);
-        }
+            queryClient.invalidateQueries({ queryKey: ['masterTargetList', jabatanId] });
+        },
+        onError: (error: any) => showNotif(error.message || "Gagal menambah target", "error")
+    });
+
+    const handleSaveAdd = () => {
+        if (!newTargetName || !newTargetPrice) return;
+        addMutation.mutate();
     };
 
     const handleEditClick = (target: MasterTargetData) => {
@@ -122,60 +103,49 @@ export default function FormMasterTarget({ jabatanId }: FormMasterTargetProps) {
         setEditingId(null);
     };
 
-    const handleSaveEdit = async () => {
-        if (!editTargetName || !editTargetPrice || !editingId) return;
-        setIsSaving(true);
-
-        try {
-            const targetToEdit = targets.find(t => t.id === editingId);
+    const editMutation = useMutation({
+        mutationFn: async (payload: any) => {
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/master`, {
                 method: "POST",
-                headers:{
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },  
-                body: JSON.stringify({
-                    id: editingId,
-                    jabatan_id: parseInt(jabatanId),
-                    nama_target: editTargetName,
-                    harga_satuan: parseInt(editTargetPrice),
-                    is_active: targetToEdit?.is_active ?? true
-                })
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },  
+                body: JSON.stringify(payload)
             });
-            
-            if (!response.ok) throw new Error("Gagal mengubah data");
-            
-            showNotif("Perubahan target berhasil disimpan", "success");
-            setEditingId(null);
-            loadTargets();
-        } catch (error: any) {
-            showNotif(error.message || "Gagal mengubah target", "error");
-        } finally {
-            setIsSaving(false);
-        }
+            if (!response.ok) throw new Error("Gagal menyimpan data");
+        },
+        onSuccess: (_, variables) => {
+            if (variables.is_active === false && Object.keys(variables).length > 2) {
+                showNotif("Target dinonaktifkan (karena belum ada fungsi delete permanen)", "success");
+                setShowDeletePopup(false);
+                setDeleteId(null);
+            } else if (Object.keys(variables).length === 3) {
+                showNotif(`Status target diubah menjadi ${variables.is_active ? 'Aktif' : 'Nonaktif'}`, "success");
+            } else {
+                showNotif("Perubahan target berhasil disimpan", "success");
+                setEditingId(null);
+            }
+            queryClient.invalidateQueries({ queryKey: ['masterTargetList', jabatanId] });
+        },
+        onError: (error: any) => showNotif(error.message || "Gagal menyimpan data", "error")
+    });
+
+    const handleSaveEdit = () => {
+        if (!editTargetName || !editTargetPrice || !editingId) return;
+        const targetToEdit = targets.find(t => t.id === editingId);
+        editMutation.mutate({
+            id: editingId,
+            jabatan_id: parseInt(jabatanId),
+            nama_target: editTargetName,
+            harga_satuan: parseInt(editTargetPrice),
+            is_active: targetToEdit?.is_active ?? true
+        });
     };
 
-    const handleToggleActive = async (target: MasterTargetData) => {
-        try {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/master`, {
-                method: "POST",
-                headers:{
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },      
-                body: JSON.stringify({
-                    ...target,
-                    is_active: !target.is_active
-                })
-            });
-            
-            if (!response.ok) throw new Error("Gagal mengubah status");
-            
-            showNotif(`Status target diubah menjadi ${!target.is_active ? 'Aktif' : 'Nonaktif'}`, "success");
-            loadTargets();
-        } catch (error: any) {
-            showNotif(error.message || "Gagal mengubah status", "error");
-        }
+    const handleToggleActive = (target: MasterTargetData) => {
+        editMutation.mutate({
+            id: target.id,
+            jabatan_id: target.jabatan_id,
+            is_active: !target.is_active
+        });
     };
 
     const handleDeleteClick = (id: number) => {
@@ -183,34 +153,14 @@ export default function FormMasterTarget({ jabatanId }: FormMasterTargetProps) {
         setShowDeletePopup(true);
     };
 
-    const confirmDelete = async () => {
+    const confirmDelete = () => {
         if (!deleteId) return;
-        
-        try {
-            const targetToDelete = targets.find(t => t.id === deleteId);
-            if (targetToDelete) {
-                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/master`, {
-                    method: "POST",
-                    headers:{
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },  
-                    body: JSON.stringify({
-                        ...targetToDelete,
-                        is_active: false
-                    })
-                });
-                
-                if (!response.ok) throw new Error("Gagal menghapus target");
-                
-                showNotif("Target dinonaktifkan (karena belum ada fungsi delete permanen)", "success");
-                loadTargets();
-            }
-        } catch (error: any) {
-            showNotif(error.message || "Gagal menghapus target", "error");
-        } finally {
-            setShowDeletePopup(false);
-            setDeleteId(null);
+        const targetToDelete = targets.find(t => t.id === deleteId);
+        if (targetToDelete) {
+            editMutation.mutate({
+                ...targetToDelete,
+                is_active: false
+            });
         }
     };
 
@@ -235,7 +185,7 @@ export default function FormMasterTarget({ jabatanId }: FormMasterTargetProps) {
                     )}
             </div>
 
-            {isLoading ? (
+            {targetsQuery.isLoading ? (
                 <div className="flex justify-center items-center h-32">
                     <Loader2 className="animate-spin text-indigo-600" size={24} />
                 </div>
@@ -289,14 +239,14 @@ export default function FormMasterTarget({ jabatanId }: FormMasterTargetProps) {
                                                                 variant="success"
                                                                 label="Simpan"
                                                                 onClick={handleSaveEdit}
-                                                                isLoading={isSaving}
+                                                                isLoading={editMutation.isPending}
                                                                 className="px-3 py-1.5 text-xs"
                                                             />
                                                             <Button 
                                                                 variant="secondary"
                                                                 label="Batal"
                                                                 onClick={handleCancelEdit}
-                                                                disabled={isSaving}
+                                                                disabled={editMutation.isPending}
                                                                 className="px-3 py-1.5 text-xs"
                                                             />
                                                         </div>
@@ -375,14 +325,14 @@ export default function FormMasterTarget({ jabatanId }: FormMasterTargetProps) {
                                                     label="Simpan"
                                                     onClick={handleSaveAdd}
                                                     disabled={!newTargetName || !newTargetPrice}
-                                                    isLoading={isSaving}
+                                                    isLoading={addMutation.isPending}
                                                     className="px-3 py-1.5 text-xs"
                                                 />
                                                 <Button 
                                                     variant="secondary"
                                                     label="Batal"
                                                     onClick={handleCancelAdd}
-                                                    disabled={isSaving}
+                                                    disabled={addMutation.isPending}
                                                     className="px-3 py-1.5 text-xs"
                                                 />
                                             </div>

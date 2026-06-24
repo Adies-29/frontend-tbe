@@ -1,42 +1,43 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from "react";
-import { 
-    DataGrid, 
-    type GridColDef, 
-    type GridRowModesModel,  
-    GridActionsCellItem, 
-    type GridRowId, 
-    type GridRowModel,
+import {
+    DataGrid,
+    type GridColDef,
+    GridActionsCellItem,
+    type GridRowId
 
 } from "@mui/x-data-grid";
 import { Pencil, Trash2 } from "lucide-react";
 import { useAuthStore } from '../../../store/useAuthStore';
 import type { PegawaiData } from '../../../types';
 
-import { getSafeErrorMessage } from '../../../utils/errorHandler';
+
 import { apiFetch } from "../../../utils/apiFetch";
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import Notif from '../../../components/common/Notif';
+import { useMediaQuery, useTheme } from '@mui/material';
 
+import { useQueryClient, useMutation } from '@tanstack/react-query';
 
 
 
 interface TabelPegawaiProps {
     data: PegawaiData[];
-    onRefresh: () => void; 
 }
 
 
 
-export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPegawaiProps) {
+export default function TabelPegawai({ data: initialData }: TabelPegawaiProps) {
 
     // State untuk menyimpan data baris dan mode edit dari MUI DataGrid
     const [rows, setRows] = useState<PegawaiData[]>(initialData);
-    const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
 
     const token = useAuthStore((state) => state.token);
     const navigate = useNavigate();
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const [showPopUp, setShowPopUp] = useState(false);
     const [hapusId, setHapusId] = useState<GridRowId | null>(null);
@@ -46,6 +47,52 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
         type: "success"
     });
 
+    const queryClient = useQueryClient();
+    const deletePegawaiMutation = useMutation({
+        mutationFn: async (idToDelete: import("@mui/x-data-grid").GridRowId) => {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${idToDelete}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Gagal Hapus data dari server");
+            }
+            return idToDelete;
+        },
+        onSuccess: (deleteId) => {
+            setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(deleteId)));
+            setNotif({ show: true, message: "Data pegawai berhasil dihapus", type: "success" });
+            queryClient.invalidateQueries({ queryKey: ['pegawai'] });
+
+        },
+        onError: (error) => {
+            console.error("Gagal menghapus :", error);
+            setNotif({ show: true, message: error.message || "terjadi kesalahan, Periksa koneksi", type: 'error' });
+        },
+        onSettled: () => {
+            setShowPopUp(false);
+            setHapusId(null);
+        }
+    })
+
+
+    // Hapus Data (Ikon Tempat Sampah)
+    const handleDeleteClick = (id: GridRowId) => () => {
+        setHapusId(id);
+        setShowPopUp(true);
+    };
+
+    const hapus = () => {
+        if (!hapusId) return;
+
+        deletePegawaiMutation.mutate(hapusId);
+    };
+
     useEffect(() => {
         const timer = setTimeout(() => {
             setRows(initialData);
@@ -53,99 +100,7 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
         return () => clearTimeout(timer);
     }, [initialData]);
 
-    // --- FUNGSI-FUNGSI AKSI ---
 
-    // 4. Hapus Data (Ikon Tempat Sampah)
-    const handleDeleteClick = (id: GridRowId) => () => {
-        setHapusId(id);
-        setShowPopUp(true);
-    };
-
-    const hapus = async () => {
-        if (!hapusId) return;
-
-        try {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${hapusId}`, {
-                method: 'DELETE',
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                } 
-            });
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                // Hapus data dari tabel secara realtime
-                setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(hapusId)));
-                setNotif({ show: true, message: "Data pegawai berhasil dihapus", type: "success" });
-                setTimeout(() => {
-                    onRefresh();
-                }, 2000);
-
-            } else {
-                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
-            }
-        } catch (error) {
-            console.error("Terjadi kesalahan server:", error);
-            setNotif({ show: true, message: "Gagal menghapus data. Periksa koneksi.", type: "error" });
-        } finally {
-            // Tutup popup dan bersihkan ID setelah selesai diproses
-            setShowPopUp(false);
-            setHapusId(null);
-        }
-    };
-
-        
-    const processRowUpdate = async (newRow: GridRowModel, oldRow: GridRowModel) => {
-        const updatedRow = { ...newRow } as PegawaiData;
-        if (JSON.stringify(newRow) === JSON.stringify(oldRow)) return oldRow;
-        const { no_hp, email, masakerja } = updatedRow;
-
-        try {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${newRow.id}`, {
-                method:"PUT",
-                headers:{
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`, 
-                },
-                body: JSON.stringify({ no_hp, email, masakerja }), 
-            });
-            const result = await response.json()
-            if(!response.ok || !result.success){
-                throw new Error(result.message || "Server Menolak")
-            }
-            setRows((prevRows) => prevRows.map((row) => (row.id === newRow.id ? updatedRow : row)));
-
-            setNotif({ show: true, message: "Perubahan data berhasil disimpan!", type: "success" });
-            
-            return updatedRow;
-
-        } catch (error) {
-            console.error("Gagal update:", error);
-            setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
-            throw error; // Wajib di-throw agar MUI membatalkan ketikan di layar
-        }
-    };
-
-    const handleRowModesModelChange = (newRowModesModel: GridRowModesModel) => {
-        setRowModesModel(newRowModesModel);
-    };
-
-    const departemenOption = Array.from(
-        new Set(
-            initialData
-                .map((item) => item.jabatan?.departemen?.nama_departemen)
-                .filter(Boolean)
-        )
-    ) as string[];
-    const jabatanOption = Array.from(
-        new Set(
-            initialData
-                .map((item) => item.jabatan?.nama_jabatan)
-                .filter(Boolean)
-        )
-    ) as string[];
-  
 
     // --- DEFINISI KOLOM ---
     const columns: GridColDef[] = [
@@ -168,29 +123,23 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
                 );
             }
         },
-        { field: 'no_hp', headerName: 'No. HP', width: 140, editable: true }, 
-        { field: 'email', headerName: 'Email', minWidth: 180, editable: true },
-        { 
-            field: 'departemen', 
-            headerName: 'Departemen', 
-            flex: 1, 
-            minWidth: 130, 
-            editable: true, 
-            valueOptions: departemenOption,
-            type: 'singleSelect',
+        { field: 'no_hp', headerName: 'No. HP', width: 140 },
+        { field: 'email', headerName: 'Email', minWidth: 180 },
+        {
+            field: 'departemen',
+            headerName: 'Departemen',
+            flex: 1,
+            minWidth: 130,
             valueGetter: (_value, row) => row?.jabatan?.departemen?.nama_departemen || "-",
             renderCell: (params) => {
                 const namaDept = params.row.jabatan?.departemen?.nama_departemen;
                 return namaDept ? <span>{namaDept}</span> : <span className="text-gray-400">-</span>;
-            } 
+            }
         },
-        { 
-            field: 'jabatan', 
-            headerName: 'Jabatan', 
-            editable: true,
-            flex: 1, 
-            type: 'singleSelect',
-            valueOptions: jabatanOption,
+        {
+            field: 'jabatan',
+            headerName: 'Jabatan',
+            flex: 1,
             minWidth: 150,
             valueGetter: (_value, row) => row.jabatan?.nama_jabatan || "-",
             renderCell: (params) => {
@@ -201,22 +150,20 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
                 );
             }
         },
-        { 
-            field: 'shift', 
-            headerName: 'Shift', 
-            width: 120, 
-            align: 'center', 
-            headerAlign: 'center', 
-            editable: true, 
-            type: 'singleSelect',
+        {
+            field: 'shift',
+            headerName: 'Shift',
+            width: 120,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => {
                 const namaShift = params.row.shifts?.kode_shift;
                 return namaShift ? <span>{namaShift}</span> : <span className="text-gray-400">-</span>;
-            } 
+            }
         },
-        { 
-            field: 'tanggal_bergabung', 
-            headerName: 'Tgl Bergabung', 
+        {
+            field: 'tanggal_bergabung',
+            headerName: 'Tgl Bergabung',
             width: 130,
             valueGetter: (_params, row) => {
                 // Pastikan mengecek nama field yang baru juga
@@ -225,12 +172,12 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
                 return date.toLocaleDateString('id-ID');
             }
         },
-        { 
-            field: 'masakerja', 
-            headerName: 'Masa Kerja', 
-            flex: 1, 
-            minWidth: 130, 
-            align: 'center', 
+        {
+            field: 'masakerja',
+            headerName: 'Masa Kerja',
+            flex: 1,
+            minWidth: 130,
+            align: 'center',
             headerAlign: 'center',
             valueGetter: (_value, row) => {
                 if (!row.tanggal_bergabung) return "-";
@@ -259,7 +206,7 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
         },
         {
             field: 'actions',
-            type: 'actions', 
+            type: 'actions',
             headerName: 'Aksi',
             width: 100,
             cellClassName: 'actions',
@@ -269,15 +216,16 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
                 // Jika mode NORMAL, tampilkan Pencil dan Trash
                 return [
                     <GridActionsCellItem
-                        icon={<Pencil size={18} className="text-gray-600 hover:text-black" />}
+                        icon={<Pencil size={20} className="text-gray-600 hover:text-black" />}
                         label="Edit"
-                        className="textPrimary"
+                        className="min-w-[44px] min-h-[44px] p-2 hover:bg-gray-100 rounded-full transition-colors"
                         onClick={() => navigate(`/dashboard/data-pegawai/edit/${id}`)}
                         color="inherit"
                     />,
                     <GridActionsCellItem
-                        icon={<Trash2 size={18} className="text-gray-600 hover:text-red-600" />}
+                        icon={<Trash2 size={20} className="text-gray-600 hover:text-red-600" />}
                         label="Delete"
+                        className="min-w-[44px] min-h-[44px] p-2 hover:bg-red-50 rounded-full transition-colors"
                         onClick={handleDeleteClick(id)}
                         color="inherit"
                     />,
@@ -293,10 +241,6 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
                 autoHeight
                 rows={rows}
                 columns={columns}
-                rowModesModel={rowModesModel}
-                onRowModesModelChange={handleRowModesModelChange}
-                processRowUpdate={processRowUpdate}
-                onProcessRowUpdateError={(error) => console.error("Gagal update baris:", error)}
                 initialState={{
                     pagination: {
                         paginationModel: { page: 0, pageSize: 10 },
@@ -306,12 +250,14 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
                             id: false,         // Sembunyikan ID
                             nik: false,        // Sembunyikan NIK (karena panjang banget)
                             pin_mesin: false,  // Sembunyikan PIN (cuma butuh pas mau sinkron mesin)
+                            email: !isMobile,     // Hilang di layar HP
+                            masakerja: !isMobile  // Hilang di layar HP 
                         },
                     },
                 }}
                 pageSizeOptions={[10, 20]}
                 disableRowSelectionOnClick
-                sx={defaultDataGridSx}
+                sx={{ ...defaultDataGridSx, width: "100%", minWidth: "700px" }}
             />
             <ConfirmPopUp
                 isOpen={showPopUp}
@@ -325,11 +271,11 @@ export default function TabelPegawai({ data: initialData, onRefresh  }: TabelPeg
                 confirmText="Ya, Hapus"
                 variant="danger"
             />
-            <Notif 
-                show={notif.show} 
-                message={notif.message} 
-                type={notif.type} 
-                onClose={() => setNotif({ show: false, message: "", type: "success" })} 
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={() => setNotif({ show: false, message: "", type: "success" })}
             />
         </div>
     );

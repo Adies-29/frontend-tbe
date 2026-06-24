@@ -6,6 +6,8 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
 import AuthLayout from './components/layout/AuthLayout';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 
 
 const Home = lazy(() => import('./pages/Home'))
@@ -25,6 +27,8 @@ const AddJabatan = lazy(() => import('./features/jabatan/pages/AddJabatan'))
 const AddShift = lazy(() => import('./features/jadwalShift/pages/AddShift'))
 const AddLembur = lazy(() => import('./features/lembur/pages/AddLembur'))
 const TargetPackingIndex = lazy(() => import('./features/targetPacking/pages/TargetPackingIndex'))
+const KasbonIndex = lazy(() => import('./features/kasbon/pages/KasbonIndex'))
+const AddKasbon = lazy(() => import('./features/kasbon/pages/AddKasbon'))
 
 const EditPegawai = lazy(() => import('./features/pegawai/pages/EditPegawai'))
 const EditShift = lazy(() => import('./features/jadwalShift/pages/EditShift'))
@@ -41,65 +45,71 @@ function PageLoader() {
   );
 }
 
+const queryClient = new QueryClient();
+
 function App() {
   return (
-    <BrowserRouter>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
 
-          <Route path="/" element={<Home />} />
+            <Route path="/" element={<Home />} />
 
-          <Route element={<AuthLayout />}>
-            <Route path="/login" element={<Login />} />
-          </Route>
-
-          {/* halaman khusus login */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/tv" element={
-              <div className="p-6 bg-gray-50 min-h-screen">
-                <DashboardIndex />
-              </div>
-            } />
-            <Route element={<DashboardLayout />}>
-
-              <Route path="/dashboard" element={<DashboardIndex />} />
-
-
-              <Route path="/dashboard/data-pegawai" element={<PegawaiIndex />} />
-              <Route path="/dashboard/data-pegawai/tambah-pegawai" element={<AddPegawai />} />
-              <Route path="/dashboard/data-pegawai/:id" element={<DetailPegawai />} />
-              <Route path="/dashboard/data-pegawai/edit/:id" element={<EditPegawai />} />
-
-
-              <Route path="/dashboard/departemen" element={<DepartemenIndex />} />
-              <Route path="/dashboard/departemen/tambah-departemen" element={<AddDepartemen />} />
-
-
-              <Route path="/dashboard/jabatan" element={<JabatanIndex />} />
-              <Route path="/dashboard/jabatan/tambah-jabatan" element={<AddJabatan />} />
-
-
-              <Route path="/dashboard/jadwal-shift" element={<JadwalShiftIndex />} />
-              <Route path="/dashboard/jadwal-shift/tambah" element={<AddShift />} />
-              <Route path="/dashboard/jadwal-shift/edit/:id" element={<EditShift />} />
-
-
-              <Route path="/dashboard/gaji-tunjangan" element={<GajiTunjanganIndex />} />
-              <Route path="/dashboard/gaji-tunjangan/master-gaji/:id" element={<AturGajiJabatan />} />
-
-              <Route path="/dashboard/lembur" element={<LemburIndex />} />
-              <Route path="/dashboard/lembur/tambah-lembur" element={<AddLembur />} />
-              <Route path="/dashboard/lembur/edit/:id" element={<EditLembur />} />
-
-              <Route path="/dashboard/target-packing" element={<TargetPackingIndex />} />
-
+            <Route element={<AuthLayout />}>
+              <Route path="/login" element={<Login />} />
             </Route>
-          </Route>
 
-        </Routes>
-      </Suspense>
-    </BrowserRouter>
+            {/* halaman khusus login */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/tv" element={
+                <div className="p-6 bg-gray-50 min-h-screen">
+                  <DashboardIndex />
+                </div>
+              } />
+              <Route element={<DashboardLayout />}>
 
+                <Route path="/dashboard" element={<DashboardIndex />} />
+
+
+                <Route path="/dashboard/data-pegawai" element={<PegawaiIndex />} />
+                <Route path="/dashboard/data-pegawai/tambah-pegawai" element={<AddPegawai />} />
+                <Route path="/dashboard/data-pegawai/:id" element={<DetailPegawai />} />
+                <Route path="/dashboard/data-pegawai/edit/:id" element={<EditPegawai />} />
+
+
+                <Route path="/dashboard/departemen" element={<DepartemenIndex />} />
+                <Route path="/dashboard/departemen/tambah-departemen" element={<AddDepartemen />} />
+
+
+                <Route path="/dashboard/jabatan" element={<JabatanIndex />} />
+                <Route path="/dashboard/jabatan/tambah-jabatan" element={<AddJabatan />} />
+
+
+                <Route path="/dashboard/jadwal-shift" element={<JadwalShiftIndex />} />
+                <Route path="/dashboard/jadwal-shift/tambah" element={<AddShift />} />
+                <Route path="/dashboard/jadwal-shift/edit/:id" element={<EditShift />} />
+
+
+                <Route path="/dashboard/gaji-tunjangan" element={<GajiTunjanganIndex />} />
+                <Route path="/dashboard/gaji-tunjangan/master-gaji/:id" element={<AturGajiJabatan />} />
+
+                <Route path="/dashboard/lembur" element={<LemburIndex />} />
+                <Route path="/dashboard/lembur/tambah-lembur" element={<AddLembur />} />
+                <Route path="/dashboard/lembur/edit/:id" element={<EditLembur />} />
+
+                <Route path="/dashboard/target-packing" element={<TargetPackingIndex />} />
+
+                <Route path="/dashboard/kasbon" element={<KasbonIndex />} />
+                <Route path="/dashboard/kasbon/tambah" element={<AddKasbon />} />
+
+              </Route>
+            </Route>
+
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 

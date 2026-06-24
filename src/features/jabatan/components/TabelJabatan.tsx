@@ -18,15 +18,15 @@ import { apiFetch } from "../../../utils/apiFetch";
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import Notif from '../../../components/common/Notif';
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+
 
 interface TabelJabatanProps {
-    data: JabatanData[];
-    onRefresh: () => void; 
+    data: JabatanData[]; 
 }
 
 
-export default function TabelJabatan({ data: initialData, onRefresh }: TabelJabatanProps) {
-    const [departemenOptions, setDepartemenOptions] = useState<{value: number, label: string}[]>([]);
+export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     const [rows, setRows] = useState(initialData);
     const [rowModesModel, setRowModesModel] = useState<GridRowModel>({});
     const token = useAuthStore((state) => state.token);
@@ -38,6 +38,9 @@ export default function TabelJabatan({ data: initialData, onRefresh }: TabelJaba
         message: "",
         type: "success"
     });
+    const queryClient = useQueryClient();
+
+    
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -46,30 +49,25 @@ export default function TabelJabatan({ data: initialData, onRefresh }: TabelJaba
         return () => clearTimeout(timer);
     }, [initialData]);
 
-    useEffect(() => {
-        const fetchDepartemen = async () => {
-            try {
-                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen/`,{
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    } 
-                });
-                const result = await response.json();
-                const options = result.data.map((dept: DepartemenOption) => ({
-                    value: dept.id,
-                    label: dept.nama_departemen
-                }));
-                setDepartemenOptions(options);
-                
-            } catch (error) {
-                console.error("Error updating jabatan:", error);
-                console.error("Gagal ambil opsi departemen:", error);
+    const { data: departemenOptions = [] } = useQuery({
+        queryKey: ['masterDepartemen'],
+        queryFn: async () => {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, {
+                headers: { "Authorization": `Bearer ${token}` } 
+            });
+            const result = await response.json();
+            
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Gagal memuat daftar departemen");
             }
-        };
-        fetchDepartemen();
-    }, []);
+            
+            // Format data langsung sesuai kebutuhan MUI DataGrid
+            return result.data.map((dept: DepartemenOption) => ({
+                value: dept.id,
+                label: dept.nama_departemen
+            }));
+        }
+    });
 
 
 
@@ -101,85 +99,100 @@ export default function TabelJabatan({ data: initialData, onRefresh }: TabelJaba
         setShowPopUp(true);
     };
 
-    const hapus = async () =>{
-        if (!hapusId) return;
-
-        try {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${hapusId}`, {
+    const deleteJabatanMutation = useMutation({
+        mutationFn: async (idToDelete: GridRowId) => {
+            const response = await apiFetch (`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${idToDelete}`, {
                 method: 'DELETE',
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                } 
+                    "Content-Type" : "application/json",
+                    "Authorization" : `Bearer ${token}`
+                },
             });
             const result = await response.json();
-
-            if (response.ok && result.success) {
-                setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(hapusId)));
-                setNotif({ show: true, message: "Data jabatan berhasil dihapus", type: "success" });
-                setTimeout(() => {
-                    onRefresh();
-                }, 2000);
-            } else {
-                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
+            
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Gagal menghapus jabatan")
             }
-        } catch (error) {
-            console.error("Error delete :", error);
-            setNotif({ show: true, message: "Gagal menghapus data. Periksa koneksi.", type: "error" });
-        } finally{
+            return idToDelete;
+        },
+        onSuccess: (deleteId) => {
+            setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(deleteId)));
+            setNotif({show: true, message: "Data jabatan berhasil dihapus", type: "success"});
+            queryClient.invalidateQueries({ queryKey: ['jabatan_pegawai']});
+        },
+        onError: (error) => {
+             setNotif({ show: true, message: error.message || "Gagal menghapus data. Periksa koneksi.", type: "error" });
+        },
+        onSettled: () => {
             setShowPopUp(false);
             setHapusId(null);
         }
+    })
 
-    }
+
+    const hapus =  () =>{
+        if (hapusId) {
+            deleteJabatanMutation.mutate(hapusId)
+        }
+    };
+
+    const editJabatanMutation = useMutation({
+        mutationFn: async (newRow: GridRowModel) =>{
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${newRow.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type" : "application/json",
+                    "Authorization" : `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    nama_jabatan: newRow.nama_jabatan,
+                    departemen_id: Number(newRow.departemen_id)
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success){
+                throw new Error(result.message || "Gagal memperbarui jabatan")
+            }
+            return newRow;
+        },
+        onSuccess: () => {
+            setNotif({ show: true, message: "Data jabatan berhasil diperbarui!", type: "success" });
+            queryClient.invalidateQueries({ queryKey: ['jabatan_pegawai'] });
+
+        },
+        onError: (error) =>{
+            setNotif({ show: true, message: error.message, type:"error"});
+        }
+    })
 
     // Fungsi penting yang dijalankan MUI setelah data selesai diedit di tabel
     const processRowUpdate = async (newRow: GridRowModel, oldRow: GridRowModel) => {
-        const updatedRow = { ...newRow } as JabatanData;
+        
         if (oldRow.nama_jabatan === newRow.nama_jabatan && oldRow.departemen_id === newRow.departemen_id){
             return oldRow; 
         }
 
         try {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${newRow.id}`, {
-                method: "PUT",
-                headers: { 
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}` 
-                },
-                body: JSON.stringify({
-                    nama_jabatan: newRow.nama_jabatan,
-                    departemen_id: Number(newRow.departemen_id) 
-                }),
-            });
-            
-            const result = await response.json();
+            await editJabatanMutation.mutateAsync(newRow);
+            const updatedRow = { ...newRow } as JabatanData;
+            const selectedDeptName = departemenOptions.find(opt => opt.value === Number(newRow.departemen_id))?.label;
 
-            if (response.ok && result.success){
-                // Update UI Lokal
-                const selectedDeptName = departemenOptions.find(opt => opt.value === Number(newRow.departemen_id))?.label;
-                if (selectedDeptName) {
-                    updatedRow.departemen = { nama_departemen: selectedDeptName };
-                }
-
-                // Perbarui state 'rows'
-                setRows((prevRows) => 
-                    prevRows.map((row) => (String(row.id) === String(newRow.id) ? updatedRow : row))
-                );
-                return updatedRow; 
-            } else {
-                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
-                return oldRow;
+            if (selectedDeptName) {
+                updatedRow.departemen = { nama_departemen: selectedDeptName};
             }
+           setRows((prevRows) => 
+                prevRows.map((row) => (String(row.id) === String(newRow.id) ? updatedRow : row))
+            );
+            return updatedRow;
+
         } catch (error: unknown) {
             console.error("Error updating jabatan:", error);
             setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
-            return oldRow;
+            return Promise.reject(error);
         } 
     };
 
 
-   
 
 
     // --- 3. DEFINISI KOLOM ---

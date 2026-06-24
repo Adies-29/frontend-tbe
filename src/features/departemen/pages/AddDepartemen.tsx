@@ -9,7 +9,7 @@ import { useState } from "react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import Notif from "../../../components/common/Notif";
 import { apiFetch } from "../../../utils/apiFetch";
-
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 
 
@@ -23,13 +23,13 @@ type FormData = z.infer<typeof schema>;
 
 export default function AddDepartemen() {
     const navigate = useNavigate();
-    const [isSaving, setIsSaving] = useState(false);
     const token = useAuthStore((state) => state.token)
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
         show: false,
         message: "",
         type: "success"
     });
+    const queryClient = useQueryClient();
 
     const {
         register,
@@ -39,39 +39,41 @@ export default function AddDepartemen() {
         resolver: zodResolver(schema)
     });
 
-    const onSubmit = async (data: FormData) => {
-        setIsSaving(true);
-
-        try {
+    const addDeptMutation = useMutation({
+        mutationFn: async(data: FormData) => {
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type" : "application/json",
+                    "Authorization" : `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     nama_departemen: data.nama
-                }),
+                })
             });
+
             const result = await response.json();
 
-            if (response.ok && result.success) {
-                setNotif({ show: true, message: "Departemen berhasil disimpan!", type: "success" });
-                setTimeout(() => {
-                    navigate("/dashboard/departemen")
-                }, 2000)
-            } else {
-                setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });
+            if(!response.ok || !result.success){
+                throw new Error(result.message || "Gagal menyimpan data");
             }
-        } catch (error) {
-            console.error("Error Submit:", error);
-            setNotif({ show: true, message: "Terjadi kesalahan jaringan.", type: "error" });
-        } finally {
-            setIsSaving(false);
+            return result;
+        },
+        onSuccess: () => {
+            setNotif({show: true, message: "Data departmen berhasil disimpan", type: "success"});
+            queryClient.invalidateQueries({ queryKey: ["departemen"] });
+            setTimeout(() => {
+                navigate("/dashboard/departemen")
+            }, 2000);
+        },
+        onError: (error) => {
+            setNotif({show: true, message: error.message || "Gagal menyimpan data", type: "error"});
         }
+    });
+
+    const onSubmit = async (data: FormData) => {
+      addDeptMutation.mutate(data);
     };
-
-
 
     return (
         <div className="p-6 max-w-2xlmx-auto w-full">
@@ -106,8 +108,8 @@ export default function AddDepartemen() {
                         <Button
                             variant="success"
                             type="submit"
-                            label={isSaving ? "Menyimpan.." : "Simpan"}
-
+                            label={addDeptMutation.isPending ? "Menyimpan.." : "Simpan"}
+                            disabled={addDeptMutation.isPending}
                         />
                         <Button
                             type="button"

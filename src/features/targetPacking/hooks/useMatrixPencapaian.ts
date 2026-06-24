@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuthStore } from '../../../store/useAuthStore';
 import type { PencapaianTargetData } from '../../../types';
 import { apiFetch } from '../../../utils/apiFetch';
+import { useQuery } from '@tanstack/react-query';
 
 
 export interface TargetDetail {
@@ -100,46 +101,13 @@ export function useMatrixPencapaian() {
         setFilterValue("");
     };
 
-    const [matrixKaryawan, setMatrixKaryawan] = useState<PegawaiMatrix[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [errorMsg, setErrorMsg] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
-    const [filterDepartemen, setFilterDepartemen] = useState("");
-    const [filterJabatan, setFilterJabatan] = useState("");
+    const [filterDepartemen, setFilterDepartemen] = useState("Bag. Produksi");
+    const [filterJabatan, setFilterJabatan] = useState("Packing");
 
-    useEffect(() => {
-        setFilterJabatan("");
-    }, [filterDepartemen]);
-
-    const [listPegawai, setListPegawai] = useState<any[]>([]);
-    const [listMasterTargets, setListMasterTargets] = useState<any[]>([]);
     const [isSaving, setIsSaving] = useState(false);
 
-    const filteredMatrixKaryawan = useMemo(() => {
-        return matrixKaryawan.filter(pegawai => {
-            const matchSearch = pegawai.nama.toLowerCase().includes(searchQuery.toLowerCase());
-            const matchDepartemen = filterDepartemen === "" || pegawai.departemen === filterDepartemen;
-            const matchJabatan = filterJabatan === "" || pegawai.jabatan === filterJabatan;
-            return matchSearch && matchDepartemen && matchJabatan;
-        });
-    }, [matrixKaryawan, searchQuery, filterDepartemen, filterJabatan]);
 
-    const uniqueJabatanList = useMemo(() => {
-        return Array.from(new Set(
-            matrixKaryawan
-                .filter(p => filterDepartemen === "" || p.departemen === filterDepartemen)
-                .map(p => p.jabatan)
-                .filter(j => j !== "-")
-        ));
-    }, [matrixKaryawan, filterDepartemen]);
-
-    const uniqueDepartemenList = useMemo(() => {
-        return Array.from(
-            new Set(
-                matrixKaryawan.map(p => p.departemen).filter(d => d && d !== "-")
-            )
-        );
-    }, [matrixKaryawan]);
 
     // Modal State
     const [selectedCell, setSelectedCell] = useState<SelectedCell>({ pegawaiId: 0, pegawaiNama: "", tanggal: "" });
@@ -160,37 +128,33 @@ export function useMatrixPencapaian() {
         setNotifState(prev => ({ ...prev, show: false }));
     };
 
-    // --- ACTUAL API FETCHES ---
-    const loadPegawai = useCallback(async () => {
-        try {
+    // --- ACTUAL API FETCHES WITH REACT QUERY ---
+    const pegawaiQuery = useQuery({
+        queryKey: ['pegawaiList'],
+        queryFn: async () => {
             const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
-                method: 'GET',
                 headers: { "Authorization": `Bearer ${token}` }
             });
-            if (res.ok) {
-                const data = await res.json();
-                setListPegawai(data.data || []);
-            }
-        } catch (err) {
-            console.error("Gagal memuat pegawai:", err);
+            const data = await res.json();
+            if (!res.ok) throw new Error("Gagal memuat pegawai");
+            return data.data || [];
         }
-    }, [token]);
+    });
 
-    const loadMasterTargets = useCallback(async () => {
-        try {
+    const masterTargetsQuery = useQuery({
+        queryKey: ['masterTargetListAll'],
+        queryFn: async () => {
             const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/master`, {
-                method: 'GET',
                 headers: { "Authorization": `Bearer ${token}` }
             });
-            if (res.ok) {
-                const data = await res.json();
-                // Hanya ambil master target yang masih aktif untuk modal input
-                setListMasterTargets((data.data || []).filter((t: any) => t.is_active));
-            }
-        } catch (err) {
-            console.error("Gagal memuat master target:", err);
+            const data = await res.json();
+            if (!res.ok) throw new Error("Gagal memuat master target");
+            return (data.data || []).filter((t: any) => t.is_active);
         }
-    }, [token]);
+    });
+
+    const listPegawai = pegawaiQuery.data || [];
+    const listMasterTargets = masterTargetsQuery.data || [];
 
     const transformToMatrix = (pegawaiData: any[], pencapaianData: PencapaianTargetData[]): PegawaiMatrix[] => {
         const matrixMap: { [key: number]: PegawaiMatrix } = {};
@@ -239,42 +203,52 @@ export function useMatrixPencapaian() {
         return Object.values(matrixMap);
     };
 
-    const loadPencapaianBulanan = useCallback(async () => {
-        setIsLoading(true);
-        setErrorMsg("");
-        
-        try {
+    const pencapaianQuery = useQuery({
+        queryKey: ['pencapaianList', filterStartDate, filterEndDate],
+        queryFn: async () => {
             const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/pencapaian?tanggal_mulai=${filterStartDate}&tanggal_selesai=${filterEndDate}`, {
-                method: 'GET',
                 headers: { "Authorization": `Bearer ${token}` }
             });
-            if (res.ok) {
-                const data = await res.json();
-                setMatrixKaryawan(transformToMatrix(listPegawai, data.data || []));
-            } else {
-                throw new Error("Gagal memuat data pencapaian");
-            }
-        } catch (error: any) {
-            setErrorMsg(error.message || "Gagal memuat matrix");
-            setMatrixKaryawan(transformToMatrix(listPegawai, []));
-        } finally {
-            setIsLoading(false);
-        }
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Gagal memuat data pencapaian");
+            return data.data || [];
+        },
+        enabled: listPegawai.length > 0
+    });
 
-    }, [filterStartDate, filterEndDate, listPegawai, token]);
+    const matrixKaryawan = useMemo(() => {
+        if (!pencapaianQuery.data || !listPegawai.length) return [];
+        return transformToMatrix(listPegawai, pencapaianQuery.data);
+    }, [pencapaianQuery.data, listPegawai]);
 
-    // Initial load
-    useEffect(() => {
-        loadPegawai();
-        loadMasterTargets();
-    }, [loadPegawai, loadMasterTargets]);
+    const filteredMatrixKaryawan = useMemo(() => {
+        return matrixKaryawan.filter(pegawai => {
+            const matchSearch = pegawai.nama.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchDepartemen = filterDepartemen === "" || pegawai.departemen === filterDepartemen;
+            const matchJabatan = filterJabatan === "" || pegawai.jabatan === filterJabatan;
+            return matchSearch && matchDepartemen && matchJabatan;
+        });
+    }, [matrixKaryawan, searchQuery, filterDepartemen, filterJabatan]);
 
-    // Load pencapaian when pegawai is ready or filter changes
-    useEffect(() => {
-        if (listPegawai.length > 0) {
-            loadPencapaianBulanan();
-        }
-    }, [listPegawai, loadPencapaianBulanan]);
+    const uniqueJabatanList = useMemo(() => {
+        return Array.from(new Set(
+            matrixKaryawan
+                .filter(p => filterDepartemen === "" || p.departemen === filterDepartemen)
+                .map(p => p.jabatan)
+                .filter(j => j !== "-")
+        ));
+    }, [matrixKaryawan, filterDepartemen]);
+
+    const uniqueDepartemenList = useMemo(() => {
+        return Array.from(
+            new Set(
+                matrixKaryawan.map(p => p.departemen).filter(d => d && d !== "-")
+            )
+        );
+    }, [matrixKaryawan]);
+
+    const isLoading = pegawaiQuery.isLoading || pencapaianQuery.isLoading;
+    const errorMsg = pencapaianQuery.error?.message || "";
 
     const handleCellClick = (pegawaiId: number, pegawaiNama: string, tglFormat: string, pegawaiJabatan?: string) => {
         setSelectedCell({
@@ -298,6 +272,6 @@ export function useMatrixPencapaian() {
         notifState, closeNotif, showNotif,
         // Handlers
         isSaving, setIsSaving,
-        handleCellClick, loadPencapaianBulanan
+        handleCellClick
     };
 }

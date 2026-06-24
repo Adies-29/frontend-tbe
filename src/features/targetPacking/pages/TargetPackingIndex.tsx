@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+
 import { useLocation, useNavigate } from "react-router-dom";
 import TabelMatrixPencapaian from "../components/TabelMatrixPencapaian";
 import MasterTargetTab from "../components/MasterTargetTab";
@@ -7,17 +7,10 @@ export default function TargetPackingIndex() {
     const location = useLocation();
     const navigate = useNavigate();
     
-    // Manage tabs: 'pencapaian' | 'master'
-    const [activeTab, setActiveTab] = useState<'pencapaian' | 'master'>('pencapaian');
-
-    useEffect(() => {
-        if (location.state?.tab) {
-            setActiveTab(location.state.tab as 'pencapaian' | 'master');
-        }
-    }, [location.state]);
+    // Derivasi tab aktif langsung dari location.state agar tidak memicu cascading render
+    const activeTab = (location.state?.tab as 'pencapaian' | 'master') || 'pencapaian';
 
     const handleTabChange = (tab: 'pencapaian' | 'master') => {
-        setActiveTab(tab);
         navigate(location.pathname, { replace: true, state: { tab } });
     };
 
