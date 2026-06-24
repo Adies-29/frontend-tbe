@@ -18,11 +18,14 @@ export interface RekapGajiData {
     status: string;
 }
 
-interface TabelRekapGajiProps {
-    data: RekapGajiData[];
+interface TabelRekapGajiProps { 
+    data: RekapGajiData[]; 
+    onPelunasan: (id: string) => void; 
 }
 
-export const TabelRekapGaji = ({ data }: TabelRekapGajiProps) => {
+// Ekstrak onPelunasan dari props di sini
+export const TabelRekapGaji = ({ data, onPelunasan }: TabelRekapGajiProps) => {
+    
     // Definisi Kolom Tabel Rekap Gaji
     const columns: GridColDef[] = [
         { field: 'nama', headerName: 'Nama Pegawai', flex: 1, renderCell: (params) => <span className="font-semibold text-gray-800">{params.value}</span> },
@@ -38,10 +41,10 @@ export const TabelRekapGaji = ({ data }: TabelRekapGajiProps) => {
             height: 400, 
             width: '100%', 
             '& .MuiDataGrid-root': { border: 'none' },
-            '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }
+            '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' },
+            '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' } // Memastikan isi sel rata tengah vertikal
         }}>
             <DataGrid
-                showToolbar
                 rows={data}
                 columns={columns}
                 initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
