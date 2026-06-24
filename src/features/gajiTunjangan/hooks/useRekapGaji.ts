@@ -1,27 +1,38 @@
 import { useState } from 'react';
 import { useAuthStore } from '../../../store/useAuthStore';
-import type { RekapGajiData } from '../components/TabelRekapGaji';
 import { apiFetch } from '../../../utils/apiFetch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+// =========================================================================
+// INTERFACE API RESPONSE DARI BACKEND
+// =========================================================================
 interface GajiApiResponse {
     id: number;
     gaji_dasar?: number;
     total_bonus?: number;
     total_potongan?: number;
     total_gaji?: number;
-    total_gaji_pokok_mingguan?: number;
-    total_bonus_kerapian_mingguan?: number;
-    total_bonus_disiplin_mingguan?: number;
-    total_denda_mingguan?: number;
-    total_pendapatan_bersih_mingguan?: number;
     status_pembayaran?: string;
+    tanggal_awal_periode?: string;
+    tanggal_akhir_periode?: string;
+    
+    detail_harian?: any[];
+    rincian_bonus?: any;
+    rincian_potongan?: any;
+    informasi_tabungan?: any;
+
     pegawai?: {
         nama: string;
-        jabatan?: { nama_jabatan: string };
+        jabatan?: { 
+            nama_jabatan: string;
+            tipe_penggajian?: 'Harian' | 'Target' | 'Bulanan';
+        };
     };
 }
 
+// =========================================================================
+// HELPER FUNCTIONS
+// =========================================================================
 const getCurrentWeek = () => {
     const d = new Date();
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
@@ -39,6 +50,20 @@ const getCurrentYear = () => {
     return new Date().getFullYear().toString();
 };
 
+// Format tanggal "YYYY-MM-DD" menjadi "05-09 Mei 2026"
+const formatPeriodeGaji = (startStr?: string, endStr?: string, fallback?: string) => {
+    if (!startStr || !endStr) return fallback || "-";
+    const startDate = new Date(startStr);
+    const endDate = new Date(endStr);
+    
+    const startDay = String(startDate.getDate()).padStart(2, '0');
+    const endDay = String(endDate.getDate()).padStart(2, '0');
+    const monthName = new Intl.DateTimeFormat('id-ID', { month: 'long' }).format(startDate);
+    const year = startDate.getFullYear();
+
+    return `${startDay}-${endDay} ${monthName} ${year}`;
+};
+
 export function useRekapGaji() {
     const token = useAuthStore((state) => state.token);
     const queryClient = useQueryClient();
@@ -51,11 +76,15 @@ export function useRekapGaji() {
         type: "success"
     });
 
+    // =========================================================================
+    // GET / FETCH DATA REKAP GAJI
+    // =========================================================================
     const fetchRekapGaji = async () => {
         try {
             let targetBulan = 0;
             let targetTahun = new Date().getFullYear();
 
+            // 1. Ekstrak nilai filter
             if (filterValue) {
                 if (periode === 'bulan') {
                     const [tahun, bulan] = filterValue.split('-');
@@ -78,6 +107,7 @@ export function useRekapGaji() {
                 }
             }
 
+            // 2. Fetch API
             let url = `${import.meta.env.VITE_API_BASE_URL}/api/v1/gaji?tahun=${targetTahun}`;
             if (targetBulan > 0) {
                 url += `&bulan=${targetBulan}`;
@@ -96,46 +126,49 @@ export function useRekapGaji() {
             if (!response.ok) {
                 throw new Error("Gagal mengambil data dari server");
             }
-
+            
             if (response.ok && result.success) {
                 const data = result.data || [];
-                const formattedData = data.map((item: any) => {
-                    // Kalkulasi pendukung
+                
+                // 3. MAPPING KE FORMAT SLIP GAJI LENGKAP & TABEL REKAP
+                const formattedData = data.map((item: GajiApiResponse) => {
                     const totalPotonganKasbon = item.rincian_potongan?.potongan_kasbon || 0;
                     const totalKotor = (item.gaji_dasar || 0) + (item.total_bonus || 0);
-                    
+
                     return {
+                        // Data Inti & Kebutuhan Tabel
                         id: String(item.id),
                         nama: item.pegawai?.nama || "Tanpa Nama",
                         jabatan: item.pegawai?.jabatan?.nama_jabatan || "-",
-                        shift: "-", // Bisa diambil dari relasi jika ada
-                        departemen: "-", // Bisa diambil dari relasi jika ada
-                        tipe_penggajian: item.pegawai?.jabatan?.tipe_penggajian || 'Bulanan',
-                        periode_tanggal: filterValue, // Cth: "2026-W24"
-                        
-                        detail_harian: item.detail_harian || [], // <--- Tarik array harian dari DB
-                        
                         gaji_dasar: item.gaji_dasar || 0,
                         total_bonus: item.total_bonus || 0,
                         total_potongan: item.total_potongan || 0,
                         gaji_bersih: item.total_gaji || 0,
                         status: item.status_pembayaran || "Pending",
+
+                        // Data Spesifik Cetak Slip Gaji Kas Muda Mudi
+                        shift: "-", // (Opsional) Jika di DB ada relasi shift, tarik dari sini
+                        tipe_penggajian: item.pegawai?.jabatan?.tipe_penggajian || 'Bulanan',
+                        periode_tanggal: formatPeriodeGaji(item.tanggal_awal_periode, item.tanggal_akhir_periode, filterValue),
                         
-                        // Informasi Keuangan Khusus Template Kas Muda Mudi
+                        detail_harian: item.detail_harian || [], // Data rincian harian dari Backend
+                        
                         total_kotor: totalKotor,
                         potongan_bon: totalPotonganKasbon,
+                        bayar_kerupuk: 0, // Placeholder tabungan (Jika ada tabungan harian)
                         total_upah: item.total_gaji || 0,
                         
-                        // Informasi Hutang & Tabungan Samping Kiri (Sesuai foto)
-                        hutang_awal: 0, // Bisa disesuaikan jika ingin narik saldo awal
-                        sisa_hutang: 0, // Opsional jika ingin ditarik dari DB kasbon
-                        bon_kerupuk_info: 0,
+                        // Sisa Hutang Kasbon (Jika ada endpoint untuk cek saldo utang)
+                        hutang_awal: 0, 
+                        sisa_hutang: 0, 
+                        bon_kerupuk_info: 0, 
                     };
                 });
 
-                const totalPengeluaran = formattedData.reduce((sum, curr) => sum + (curr.gaji_bersih || 0), 0);
-                const totalBonusSemua = formattedData.reduce((sum, curr) => sum + (curr.total_bonus || 0), 0);
-                const totalPotonganSemua = formattedData.reduce((sum, curr) => sum + (curr.total_potongan || 0), 0);
+                // Kalkulasi Summary Atas
+                const totalPengeluaran = formattedData.reduce((sum: number, curr: any) => sum + (curr.gaji_bersih || 0), 0);
+                const totalBonusSemua = formattedData.reduce((sum: number, curr: any) => sum + (curr.total_bonus || 0), 0);
+                const totalPotonganSemua = formattedData.reduce((sum: number, curr: any) => sum + (curr.total_potongan || 0), 0);
 
                 return {
                     formattedData,
@@ -171,6 +204,9 @@ export function useRekapGaji() {
         totalPotongan: 0
     };
 
+    // =========================================================================
+    // MUTASI GENERATE MASSAL
+    // =========================================================================
     const generateGajiMutation = useMutation({
         mutationFn: async (payload: any) => {
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/gaji/generate-massal`, {
@@ -195,7 +231,7 @@ export function useRekapGaji() {
     });
 
     // ==========================================================
-    // FITUR BARU: MUTASI PELUNASAN GAJI
+    // MUTASI PELUNASAN GAJI
     // ==========================================================
     const pelunasanGajiMutation = useMutation({
         mutationFn: async (id_gaji: string) => {
@@ -226,6 +262,9 @@ export function useRekapGaji() {
         pelunasanGajiMutation.mutate(id_gaji);
     };
 
+    // ==========================================================
+    // HANDLE GENERATE LOGIC
+    // ==========================================================
     const handleGenerateGaji = () => {
         if (!filterValue) {
             setNotif({ show: true, message: "Harap pilih periode di kalender terlebih dahulu sebelum men-generate gaji.", type: "error" });
@@ -330,12 +369,12 @@ export function useRekapGaji() {
         rekapGajiData,
         isLoadingRekap,
         isGenerating: generateGajiMutation.isPending,
-        isPelunasanPending: pelunasanGajiMutation.isPending, // Expose status loading pelunasan
+        isPelunasanPending: pelunasanGajiMutation.isPending,
         summaryCards,
         notif,
         isErrorRekap,
         handleGenerateGaji,
-        handlePelunasanGaji, // Expose fungsi pelunasan
+        handlePelunasanGaji, 
         handleCetakSemuaSlip,
         handleFilter,
         handlePeriodeChange,
