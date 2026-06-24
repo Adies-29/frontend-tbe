@@ -47,6 +47,7 @@ export default function DepartemenIndex() {
                 });
                 return (mappedData);
             }
+            return [];
         } catch (error) {
             console.error("Error fetching data departemen & jabatan:", error);
             setNotif({ show: true, message: "Gagal memuat data Departemen. Pastikan backend berjalan.", type: "error" });
