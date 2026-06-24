@@ -15,7 +15,7 @@ import { apiFetch } from "../../../utils/apiFetch";
 
 // 1. UPDATE SCHEMA: Tambahkan tipe_penggajian dan gaji_pokok_bulanan
 const schema = z.object({
-    tipe_penggajian: z.enum(["Harian", "Bulanan"]),
+    tipe_penggajian: z.enum(["Harian", "Bulanan", "Target"]),
     gaji_pokok_bulanan: z.coerce.number().min(0, "Tidak boleh minus"),
     upah_per_kehadiran: z.coerce.number().min(0, "Tidak boleh minus"),
     upah_lembur_per_jam: z.coerce.number().min(0, "Tidak boleh minus"),
@@ -213,6 +213,7 @@ export default function AturGajiJabatan() {
                                 >
                                     <option value="Bulanan">Gaji Bulanan</option>
                                     <option value="Harian">Gaji Harian</option>
+                                    <option value="Target">Gaji Target</option>
                                 </select>
                             </div>
 

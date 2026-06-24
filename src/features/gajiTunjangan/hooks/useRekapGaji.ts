@@ -225,11 +225,12 @@ export function useRekapGaji() {
             targetTahun = parseInt(tahun);
             targetBulan = parseInt(bulan);
 
-            tanggalMulai = `${tahun}-${bulan}-01`;
+            const bulanPad = String(targetBulan).padStart(2, '0');
+            tanggalMulai = `${tahun}-${bulanPad}-01`;
             const totalHari = new Date(targetTahun, targetBulan, 0).getDate();
-            tanggalSelesai = `${tahun}-${bulan}-${String(totalHari).padStart(2, '0')}`;
+            tanggalSelesai = `${tahun}-${bulanPad}-${String(totalHari).padStart(2, '0')}`;
 
-            labelPeriode = `Bulan ${bulan} Tahun ${tahun}`;
+            labelPeriode = `Bulan ${bulanPad} Tahun ${tahun}`;
 
         } else if (periode === 'minggu') {
             const [tahunStr, mingguStr] = filterValue.split('-W');
@@ -243,8 +244,17 @@ export function useRekapGaji() {
             const startDate = new Date(week1Start.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
             const endDate = new Date(startDate.getTime() + 6 * 24 * 60 * 60 * 1000); 
 
-            tanggalMulai = startDate.toLocaleDateString('en-CA'); 
-            tanggalSelesai = endDate.toLocaleDateString('en-CA');
+            // FORMAT TANGGAL MANUAL KE YYYY-MM-DD UNTUK MENCEGAH ERROR POSTGRES
+            const startYear = startDate.getFullYear();
+            const startMonth = String(startDate.getMonth() + 1).padStart(2, '0');
+            const startDay = String(startDate.getDate()).padStart(2, '0');
+            
+            const endYear = endDate.getFullYear();
+            const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
+            const endDay = String(endDate.getDate()).padStart(2, '0');
+
+            tanggalMulai = `${startYear}-${startMonth}-${startDay}`;
+            tanggalSelesai = `${endYear}-${endMonth}-${endDay}`;
 
             targetBulan = startDate.getMonth() + 1;
             targetTahun = startDate.getFullYear();
