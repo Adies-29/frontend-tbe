@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Award, Banknote, Loader2 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Button from '../../../components/common/Button';
 import { z } from 'zod';
 
@@ -32,9 +33,8 @@ export default function AturGajiJabatan() {
     const { id } = useParams();
     const navigate = useNavigate();
     const token = useAuthStore((state) => (state.token));
+    const queryClient = useQueryClient();
 
-    const [isSaving, setIsSaving] = useState(false);
-    const [isFetchingData, setIsFetchingData] = useState(true);
     const [jabatanInfo, setJabatanInfo] = useState({ nama_jabatan: "Memuat...", departemen: "..." });
 
     const [showResetPopup, setShowResetPopup] = useState(false);
@@ -70,95 +70,79 @@ export default function AturGajiJabatan() {
     // Pantau dropdown tipe penggajian untuk mengubah UI
     const tipePenggajianAktif = watch("tipe_penggajian");
 
+    const gajiQuery = useQuery({
+        queryKey: ['gajiJabatan', id],
+        queryFn: async () => {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${id}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success) throw new Error("Gagal memuat konfigurasi Gaji Jabatan");
+            return result.data;
+        },
+        enabled: !!id && !!token
+    });
+
     useEffect(() => {
-        const loadGajiJabatan = async () => {
-            try {
-                setIsFetchingData(true);
+        if (gajiQuery.data) {
+            const gaji = gajiQuery.data;
+            setJabatanInfo({
+                nama_jabatan: gaji.nama_jabatan || "Nama Jabatan",
+                departemen: gaji.departemen?.nama_departemen || "Umum"
+            });
 
-                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${id}`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    }
-                });
+            reset({
+                tipe_penggajian: gaji.tipe_penggajian || "Bulanan",
+                gaji_pokok_bulanan: gaji.gaji_pokok_bulanan || 0,
+                upah_per_kehadiran: gaji.upah_per_kehadiran || 0,
+                upah_lembur_per_jam: gaji.upah_lembur_per_jam || 0,
+                bonus_disiplin_harian: gaji.bonus_disiplin_harian || 0,
+                bonus_kerapian_harian: gaji.bonus_kerapian_harian || 0,
+                bonus_minggu_6_hari: gaji.bonus_minggu_6_hari || 0,
+                bonus_minggu_5_hari: gaji.bonus_minggu_5_hari || 0,
+                bonus_minggu_harian: gaji.bonus_minggu_harian || 0,
+                bonus_lembur_tahunan: gaji.bonus_lembur_tahunan || 0,
+            });
+        }
+    }, [gajiQuery.data, reset]);
 
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    const gaji = result.data;
-                    setJabatanInfo({
-                        nama_jabatan: gaji.nama_jabatan || "Nama Jabatan",
-                        departemen: gaji.departemen?.nama_departemen || "Umum"
-                    });
-
-                    reset({
-                        tipe_penggajian: gaji.tipe_penggajian || "Bulanan", // Ambil dari database
-                        gaji_pokok_bulanan: gaji.gaji_pokok_bulanan || 0,
-                        upah_per_kehadiran: gaji.upah_per_kehadiran || 0,
-                        upah_lembur_per_jam: gaji.upah_lembur_per_jam || 0,
-                        bonus_disiplin_harian: gaji.bonus_disiplin_harian || 0,
-                        bonus_kerapian_harian: gaji.bonus_kerapian_harian || 0,
-                        bonus_minggu_6_hari: gaji.bonus_minggu_6_hari || 0,
-                        bonus_minggu_5_hari: gaji.bonus_minggu_5_hari || 0,
-                        bonus_minggu_harian: gaji.bonus_minggu_harian || 0,
-                        bonus_lembur_tahunan: gaji.bonus_lembur_tahunan || 0,
-                    });
-                } else {
-                    setNotif({ show: true, message: "Gagal memuat data konfigurasi Gaji Jabatan.", type: "error" });
-                    setTimeout(() => navigate(-1), 1500);
-                }
-            } catch (error) {
-                console.error("Error fetching Gaji Jabatan details:", error);
-                setNotif({ show: true, message: "Terjadi kesalahan koneksi saat mengambil data server.", type: "error" });
-            } finally {
-                setIsFetchingData(false);
-            }
-        };
-
-        if (id) loadGajiJabatan();
-    }, [id, token, reset, navigate]);
-
-    const onSubmit = async (data: FormData) => {
-        setIsSaving(true);
-        try {
-            // 2. LOGIKA OTOMATISASI SEBELUM KIRIM KE BACKEND
-            const payloadKiriman = { ...data };
-
-            if (payloadKiriman.tipe_penggajian === "Bulanan") {
-                // Jika bulanan, otomatis hitung upah_per_kehadiran (dibagi 30)
-                // Gunakan Math.round agar angkanya bulat tidak ada koma (desimal)
-                payloadKiriman.upah_per_kehadiran = Math.round(payloadKiriman.gaji_pokok_bulanan / 30);
-            } else {
-                // Jika harian, pastikan gaji pokok bulanan di-reset ke 0 agar data tetap bersih
-                payloadKiriman.gaji_pokok_bulanan = 0;
-            }
-
+    const saveMutation = useMutation({
+        mutationFn: async (payloadKiriman: any) => {
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify(payloadKiriman) // Kirim payload yang sudah dimodifikasi
+                body: JSON.stringify(payloadKiriman)
             });
-
             const result = await response.json();
-
-            if (response.ok && result.success) {
-                setNotif({ show: true, message: "Pengaturan gaji berhasil disimpan!", type: "success" });
-                setTimeout(() => {
-                    navigate('/dashboard/gaji-tunjangan', { state: { tab: 'master' } });
-                }, 2000);
-            } else{
-                setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });
-            }
-        } catch (error) {
-           console.error("Error Submit:", error);
-            setNotif({ show: true, message: "Terjadi kesalahan jaringan.", type: "error" });
-        } finally {
-            setIsSaving(false);
+            if (!response.ok || !result.success) throw new Error("Gagal menyimpan ke database");
+            return result;
+        },
+        onSuccess: () => {
+            setNotif({ show: true, message: "Pengaturan gaji berhasil disimpan!", type: "success" });
+            queryClient.invalidateQueries({ queryKey: ['master-jabatan'] });
+            queryClient.invalidateQueries({ queryKey: ['gajiJabatan', id] });
+            setTimeout(() => {
+                navigate('/dashboard/gaji-tunjangan', { state: { tab: 'master' } });
+            }, 2000);
+        },
+        onError: () => {
+            setNotif({ show: true, message: "Terjadi kesalahan jaringan atau database.", type: "error" });
         }
+    });
+
+    const onSubmit = (data: FormData) => {
+        const payloadKiriman = { ...data };
+
+        if (payloadKiriman.tipe_penggajian === "Bulanan") {
+            payloadKiriman.upah_per_kehadiran = Math.round(payloadKiriman.gaji_pokok_bulanan / 30);
+        } else {
+            payloadKiriman.gaji_pokok_bulanan = 0;
+        }
+
+        saveMutation.mutate(payloadKiriman);
     };
 
     const handleResetGaji = () => {
@@ -180,7 +164,7 @@ export default function AturGajiJabatan() {
 
     return (
         <div className="flex flex-col gap-6 w-full relative min-h-125">
-            {isFetchingData && (
+            {gajiQuery.isLoading && (
                 <div className="absolute inset-0 z-50 bg-white/60 flex items-center justify-center rounded-xl backdrop-blur-sm">
                     <Loader2 className="animate-spin text-blue-600" size={40} />
                 </div>
@@ -338,9 +322,9 @@ export default function AturGajiJabatan() {
                             <Button
                                 variant='success'
                                 type="submit"
-                                disabled={isSaving}
-                                label={isSaving ? "Menyimpan..." : "Simpan Pengaturan"}
-                                icon={isSaving ? <Loader2 className="animate-spin" size={16} /> : undefined}
+                                disabled={saveMutation.isPending}
+                                label={saveMutation.isPending ? "Menyimpan..." : "Simpan Pengaturan"}
+                                icon={saveMutation.isPending ? <Loader2 className="animate-spin" size={16} /> : undefined}
                             />
                             <Button
                                 type="button"

@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect,  useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../store/useAuthStore';
+import { apiFetch } from '../../../utils/apiFetch';
 
 
 // Interfaces
@@ -96,12 +98,10 @@ export function useMatrixJadwal() {
         setFilterValue("");
     };
 
-    const [matrixKaryawan, setMatrixKaryawan] = useState<PegawaiMatrix[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [errorMsg, setErrorMsg] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
     const [filterDepartemen, setFilterDepartemen] = useState("Bag. Produksi");
     const [filterJabatan, setFilterJabatan] = useState("");
+
 
     // Reset filter jabatan ketika departemen berubah
     useEffect(() => {
@@ -109,10 +109,85 @@ export function useMatrixJadwal() {
     }, [filterDepartemen]);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [listPegawai, setListPegawai] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [listMasterShifts, setListMasterShifts] = useState<any[]>([]);
-    const [isSaving, setIsSaving] = useState(false);
+    const transformToMatrix = (backendData: any[]): PegawaiMatrix[] => {
+        const matrixMap: { [key: number]: PegawaiMatrix } = {};
+
+        backendData.forEach(item => {
+            const pegId = item.pegawai_id;
+            if (!matrixMap[pegId]) {
+                matrixMap[pegId] = {
+                    id: pegId,
+                    nama: item.pegawai?.nama || "Tanpa Nama",
+                    jabatan: item.pegawai?.jabatan?.nama_jabatan || "-",
+                    departemen: item.pegawai?.jabatan?.departemen?.nama_departemen || "-",
+                    jadwal: {}
+                };
+            }
+
+            let warnaBorders = "bg-rose-100 text-rose-700 border-rose-200";
+            const kode = item.shifts?.kode_shift || "OFF";
+            const jamMasukStr = item.shifts?.jam_masuk;
+
+            if (jamMasukStr) {
+                const jam = parseInt(jamMasukStr.substring(0, 2));
+                if (jam >= 5 && jam <= 10) {
+                    warnaBorders = "bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100 text-orange-800 border-orange-300";
+                } else if (jam >= 11 && jam <= 14) {
+                    warnaBorders = "bg-sky-100 text-sky-800 border-sky-300";
+                } else if (jam >= 15 && jam <= 18) {
+                    warnaBorders = "bg-emerald-100 text-emerald-800 border-emerald-300";
+                } else {
+                    warnaBorders = "bg-indigo-900 text-indigo-100 border-indigo-700 shadow-inner";
+                }
+            }
+
+            matrixMap[pegId].jadwal[item.tanggal] = {
+                id_jadwal: item.id,
+                kode: kode,
+                warna: warnaBorders,
+                shift_id: item.shift_id
+            };
+        });
+
+        return Object.values(matrixMap);
+    };
+
+    const queryClient = useQueryClient();
+
+    const { data: listMasterShifts = [] } = useQuery({
+        queryKey: ['masterShiftList'],
+        queryFn: async () => {
+            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, { headers: { "Authorization": `Bearer ${token}` } });
+            const json = await res.json();
+            return json.success ? json.data : [];
+        },
+        enabled: !!token
+    });
+
+    const { data: listPegawai = [] } = useQuery({
+        queryKey: ['masterPegawaiList'],
+        queryFn: async () => {
+            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, { headers: { "Authorization": `Bearer ${token}` } });
+            const json = await res.json();
+            return json.success ? json.data : [];
+        },
+        enabled: !!token
+    });
+
+    const { data: matrixKaryawan = [], isLoading, error: jadwalError } = useQuery({
+        queryKey: ['jadwalBulanan', filterStartDate, filterEndDate],
+        queryFn: async () => {
+            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jadwal?start_date=${filterStartDate}&end_date=${filterEndDate}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const json = await res.json();
+            if (!res.ok || !json.success) throw new Error(json.message || "Gagal memuat jadwal.");
+            return transformToMatrix(json.data);
+        },
+        enabled: !!token && !!filterStartDate && !!filterEndDate
+    });
+
+    const errorMsg = jadwalError?.message || "";
 
     const filteredMatrixKaryawan = useMemo(() => {
         return matrixKaryawan.filter(pegawai => {
@@ -189,109 +264,7 @@ export function useMatrixJadwal() {
     const [filterLevel3, setFilterLevel3] = useState('');
     const [selectedPegawaiIds, setSelectedPegawaiIds] = useState<number[]>([]);
 
-    const loadMasterShifts = useCallback(async () => {
-        try {
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://ppm-sooty.vercel.app'}/api/v1/shifts`, {
-                method: "GET",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
-            });
-            const result = await response.json();
-            if (response.ok && result.success) setListMasterShifts(result.data);
-        } catch (err) {
-            console.error("Gagal memuat master shift:", err);
-        }
-    }, [token]);
 
-    const loadPegawai = useCallback(async () => {
-        try {
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://ppm-sooty.vercel.app'}/api/v1/pegawai`, {
-                method: "GET",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
-            });
-            const result = await response.json();
-            if (response.ok && result.success) setListPegawai(result.data);
-        } catch (err) {
-            console.error("Gagal memuat master pegawai:", err);
-        }
-    }, [token]);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const transformToMatrix = (backendData: any[]): PegawaiMatrix[] => {
-        const matrixMap: { [key: number]: PegawaiMatrix } = {};
-
-        backendData.forEach(item => {
-            const pegId = item.pegawai_id;
-            if (!matrixMap[pegId]) {
-                matrixMap[pegId] = {
-                    id: pegId,
-                    nama: item.pegawai?.nama || "Tanpa Nama",
-                    jabatan: item.pegawai?.jabatan?.nama_jabatan || "-",
-                    departemen: item.pegawai?.jabatan?.departemen?.nama_departemen || "-",
-                    jadwal: {}
-                };
-            }
-
-            let warnaBorders = "bg-rose-100 text-rose-700 border-rose-200";
-            const kode = item.shifts?.kode_shift || "OFF";
-            const jamMasukStr = item.shifts?.jam_masuk;
-
-            if (jamMasukStr) {
-                const jam = parseInt(jamMasukStr.substring(0, 2));
-                if (jam >= 5 && jam <= 10) {
-                    warnaBorders = "bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100 text-orange-800 border-orange-300";
-                } else if (jam >= 11 && jam <= 14) {
-                    warnaBorders = "bg-sky-100 text-sky-800 border-sky-300";
-                } else if (jam >= 15 && jam <= 18) {
-                    warnaBorders = "bg-emerald-100 text-emerald-800 border-emerald-300";
-                } else {
-                    warnaBorders = "bg-indigo-900 text-indigo-100 border-indigo-700 shadow-inner";
-                }
-            }
-
-            matrixMap[pegId].jadwal[item.tanggal] = {
-                id_jadwal: item.id,
-                kode: kode,
-                warna: warnaBorders,
-                shift_id: item.shift_id
-            };
-        });
-
-        return Object.values(matrixMap);
-    };
-
-    const loadJadwalBulanan = useCallback(async () => {
-        setIsLoading(true);
-        setErrorMsg("");
-        try {
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://ppm-sooty.vercel.app'}/api/v1/jadwal?start_date=${filterStartDate}&end_date=${filterEndDate}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-
-            const result = await response.json();
-            if (response.ok && result.success) {
-                setMatrixKaryawan(transformToMatrix(result.data));
-            } else {
-                throw new Error(result.message || "Gagal memuat jadwal.");
-            }
-        } catch (err: any) {
-            console.error(err);
-            setErrorMsg(err.message || "Terjadi kesalahan koneksi jaringan.");
-        } finally {
-            setIsLoading(false);
-        }
-    }, [filterStartDate, filterEndDate, token]);
-
-    useEffect(() => {
-        if (token) {
-            loadJadwalBulanan();
-            loadMasterShifts();
-            loadPegawai();
-        }
-    }, [token, loadJadwalBulanan, loadMasterShifts, loadPegawai]);
 
     const handleCellClick = (pegawaiId: number, pegawaiNama: string, tglFormat: string, shiftDetail?: ShiftDetail, pegawaiJabatan?: string) => {
         if (pickerActive === 'tujuan') {
@@ -327,10 +300,9 @@ export function useMatrixJadwal() {
         setIsModalOpen(true);
     };
 
-    const handleSimpanShiftHarian = async () => {
-        setIsSaving(true);
-        try {
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://ppm-sooty.vercel.app'}/api/v1/jadwal/harian`, {
+    const simpanHarianMutation = useMutation({
+        mutationFn: async () => {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jadwal/harian`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify({
@@ -339,66 +311,60 @@ export function useMatrixJadwal() {
                     shift_id: inputShiftId === "off" || inputShiftId === "" ? null : parseInt(inputShiftId)
                 })
             });
-
             const result = await response.json();
-            if (response.ok && result.success) {
-                showNotif("Sukses memperbarui jadwal harian pegawai!", "success");
-                setIsModalOpen(false);
-                setCellTujuan(null);
-                setSelectedCell({ pegawaiId: 0, pegawaiNama: "", tanggal: "" });
-                await loadJadwalBulanan();
-            } else {
-                showNotif(result.message || "Gagal memperbarui shift.", "error");
-            }
-        } catch (err) {
-            console.error(err);
-            showNotif("Terjadi kesalahan sistem.", "error");
-        } finally {
-            setIsSaving(false);
+            if (!response.ok || !result.success) throw new Error(result.message || "Gagal memperbarui shift.");
+            return result;
+        },
+        onSuccess: () => {
+            showNotif("Sukses memperbarui jadwal harian pegawai!", "success");
+            setIsModalOpen(false);
+            setCellTujuan(null);
+            setSelectedCell({ pegawaiId: 0, pegawaiNama: "", tanggal: "" });
+            queryClient.invalidateQueries({ queryKey: ['jadwalBulanan'] });
+        },
+        onError: (err: any) => {
+            showNotif(err.message || "Terjadi kesalahan sistem.", "error");
         }
-    };
+    });
 
-    const handleProsesTukarShift = async () => {
-        if (!cellTujuan) return showNotif("Harap pilih jadwal tujuan terlebih dahulu.", "error");
+    const handleSimpanShiftHarian = () => simpanHarianMutation.mutate();
 
-        setIsSaving(true);
-        try {
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://ppm-sooty.vercel.app'}/api/v1/jadwal/tukar-shift`, {
+    const tukarShiftMutation = useMutation({
+        mutationFn: async () => {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jadwal/tukar-shift`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify({
                     pegawai_id_asal: selectedCell.pegawaiId,
                     tanggal_asal: selectedCell.tanggal,
-                    pegawai_id_tujuan: cellTujuan.pegawaiId,
-                    tanggal_tujuan: cellTujuan.tanggal
+                    pegawai_id_tujuan: cellTujuan?.pegawaiId,
+                    tanggal_tujuan: cellTujuan?.tanggal
                 })
             });
-
             const result = await response.json();
-            if (response.ok && result.success) {
-                showNotif("Pertukaran shift lintas hari berhasil diproses!", "success");
-                setIsModalOpen(false);
-                setCellTujuan(null);
-                setSelectedCell({ pegawaiId: 0, pegawaiNama: "", tanggal: "" });
-                await loadJadwalBulanan();
-            } else {
-                showNotif(result.message || "Gagal memproses tukar shift.", "error");
-            }
-        } catch (err) {
-            showNotif(`Terjadi kesalahan sistem saat menukar: ${err}`, "error");
-        } finally {
-            setIsSaving(false);
+            if (!response.ok || !result.success) throw new Error(result.message || "Gagal memproses tukar shift.");
+            return result;
+        },
+        onSuccess: () => {
+            showNotif("Pertukaran shift lintas hari berhasil diproses!", "success");
+            setIsModalOpen(false);
+            setCellTujuan(null);
+            setSelectedCell({ pegawaiId: 0, pegawaiNama: "", tanggal: "" });
+            queryClient.invalidateQueries({ queryKey: ['jadwalBulanan'] });
+        },
+        onError: (err: any) => {
+            showNotif(err.message || "Terjadi kesalahan sistem saat menukar.", "error");
         }
+    });
+
+    const handleProsesTukarShift = () => {
+        if (!cellTujuan) return showNotif("Harap pilih jadwal tujuan terlebih dahulu.", "error");
+        tukarShiftMutation.mutate();
     };
 
-    const handleProsesGenerateMassal = async () => {
-        if (!massalTanggalMulai || !massalTanggalSelesai) return showNotif("Harap lengkapi tanggal mulai, tanggal selesai, dan pilihan shift.", "error");
-        if (new Date(massalTanggalMulai) > new Date(massalTanggalSelesai)) return showNotif("Tanggal mulai tidak boleh lebih besar dari tanggal selesai!", "error");
-        if (selectedPegawaiIds.length === 0) return showNotif("Harap pilih minimal satu pegawai dari daftar target!", "error");
-
-        setIsSaving(true);
-        try {
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://ppm-sooty.vercel.app'}/api/v1/jadwal/generate-massal`, {
+    const generateMassalMutation = useMutation({
+        mutationFn: async () => {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jadwal/generate-massal`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify({
@@ -408,26 +374,32 @@ export function useMatrixJadwal() {
                     shift_id: massalShiftId
                 })
             });
-
             const result = await response.json();
-            if (response.ok && result.success) {
-                showNotif(`Sukses! ${result.message}`, "success");
-                setIsModalMassalOpen(false);
-                setMassalTanggalMulai("");
-                setMassalTanggalSelesai("");
-                setMassalShiftId("");
-                setSelectedPegawaiIds([]);
-                await loadJadwalBulanan();
-            } else {
-                showNotif(result.message || "Gagal melakukan generate massal.", "error");
-            }
-        } catch (err) {
-            console.error(err);
-            showNotif("Terjadi kesalahan sistem saat memproses generate massal.", "error");
-        } finally {
-            setIsSaving(false);
+            if (!response.ok || !result.success) throw new Error(result.message || "Gagal melakukan generate massal.");
+            return result;
+        },
+        onSuccess: (result) => {
+            showNotif(`Sukses! ${result.message}`, "success");
+            setIsModalMassalOpen(false);
+            setMassalTanggalMulai("");
+            setMassalTanggalSelesai("");
+            setMassalShiftId("");
+            setSelectedPegawaiIds([]);
+            queryClient.invalidateQueries({ queryKey: ['jadwalBulanan'] });
+        },
+        onError: (err: any) => {
+            showNotif(err.message || "Terjadi kesalahan sistem saat memproses generate massal.", "error");
         }
+    });
+
+    const handleProsesGenerateMassal = () => {
+        if (!massalTanggalMulai || !massalTanggalSelesai) return showNotif("Harap lengkapi tanggal mulai, tanggal selesai, dan pilihan shift.", "error");
+        if (new Date(massalTanggalMulai) > new Date(massalTanggalSelesai)) return showNotif("Tanggal mulai tidak boleh lebih besar dari tanggal selesai!", "error");
+        if (selectedPegawaiIds.length === 0) return showNotif("Harap pilih minimal satu pegawai dari daftar target!", "error");
+        generateMassalMutation.mutate();
     };
+
+    const isSaving = simpanHarianMutation.isPending || tukarShiftMutation.isPending || generateMassalMutation.isPending;
 
     return {
         // State Tanggal & Filter

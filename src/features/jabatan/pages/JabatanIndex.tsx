@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Briefcase, Users, Loader2 } from "lucide-react"; 
+import { Briefcase, Users, Loader2 } from "lucide-react";
 import Button from "../../../components/common/Button";
 
 import type { JabatanData, JabatanOption, PegawaiData } from "../../../types";
@@ -9,77 +9,75 @@ import { apiFetch } from "../../../utils/apiFetch";
 import Notif from "../../../components/common/Notif";
 import TabelJabatan from "../components/TabelJabatan";
 
+import { useQuery } from "@tanstack/react-query";
+
 export default function JabatanIndex() {
     const navigate = useNavigate();
     const token = useAuthStore((state) => state.token)
-    // 2. State untuk menyimpan data dari Database & status Loading
-    const [dataJabatan, setDataJabatan] = useState<JabatanData[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
         show: false,
         message: "",
         type: "success"
     });
 
-    // 3. Fungsi FETCH dari Backend (READ)
-    const fetchJabatan = async () => {
-        setIsLoading(true);
+    const fetchJabatan = async (): Promise<JabatanData[]> => {
         try {
-            // Tembak API Backend
             const [resJabatan, resPegawai] = await Promise.all([
                 apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
                 apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
             ]);
 
-            // ✅ Baca stream SATU KALI saja
             const resultJabatan = await resJabatan.json();
             const resultPegawai = await resPegawai.json();
 
             if (resJabatan.ok && resPegawai.ok) {
-               
+
                 const mappedData: JabatanData[] = resultJabatan.data.map((jab: JabatanOption) => {
-                   
+
                     const jumlah = resultPegawai.data.filter(
-                        (peg: PegawaiData) => peg.jabatan_id === jab.id
-                    ).length;
+                        (peg: PegawaiData) => peg.jabatan_id === jab.id).length;
 
                     return {
                         id: jab.id,
                         nama_jabatan: jab.nama_jabatan,
                         departemen: jab.departemen?.nama_departemen || "Tanpa Departemen",
                         departemen_id: jab.departemen_id,
-                        jumlah_pegawai: jumlah 
+                        jumlah_pegawai: jumlah
                     };
                 });
-                
-                // Simpan ke state
-                setDataJabatan(mappedData);
+
+                return (mappedData);
             } else {
-                // Opsional: Handle jika response dari backend tidak 'ok' (misal 401 atau 500)
                 console.error("Gagal mengambil data:", resultJabatan, resultPegawai);
             }
         } catch (error) {
             console.error("Error fetching jabatan:", error);
             setNotif({ show: true, message: "Gagal memuat data jabatan. Pastikan backend berjalan.", type: "error" });
-        } finally {
-            setIsLoading(false);
         }
     };
 
-    // 5. Jalankan Fetch saat halaman dibuka
-    useEffect(() => {
-        const fetchData = async () => {
-            await fetchJabatan();
-        };
-        fetchData();
-    }, []);
+    const {
+        data: dataJabatan = [],
+        isLoading,
+        isError,
+    } = useQuery({
+        queryKey: ['jabatan_pegawai'],
+        queryFn: fetchJabatan,
+        enabled: !!token
+    });
 
-   
     const totalJabatan = dataJabatan.length;
     const totalPegawai = dataJabatan.reduce((acc, curr) => acc + (curr.jumlah_pegawai || 0), 0);
 
+
     return (
         <div className="flex flex-col gap-6 w-full">
+            {isError && (
+                <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm border border-red-300">
+                    Gagal memuat data jabatan. Pastikan koneksi internet & backend berjalan lancar.
+                </div>
+            )}
 
             <div className="flex flex-wrap gap-4">
                 {/* Kotak 1: Total Jabatan */}
@@ -127,7 +125,7 @@ export default function JabatanIndex() {
                         <p>Memuat data dari database...</p>
                     </div>
                 ) : (
-                    <TabelJabatan data={dataJabatan} onRefresh={fetchJabatan} />
+                    <TabelJabatan data={dataJabatan} />
                 )}
             </section>
             <Notif

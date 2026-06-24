@@ -17,15 +17,16 @@ import { apiFetch } from "../../../utils/apiFetch";
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import Notif from '../../../components/common/Notif';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 
 // --- INTERFACES ---
 interface DepartemenTableProps {
     data?: DepartemenData[];
-    onRefresh: () => void; 
+    
 }
 
-export default function DepartemenTable({ data: initialData = [], onRefresh }: DepartemenTableProps) {
+export default function DepartemenTable({ data: initialData = [] }: DepartemenTableProps) {
     const [rows, setRows] = useState<DepartemenData[]>(initialData);
     const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
     const token = useAuthStore((state) => state.token)
@@ -37,6 +38,8 @@ export default function DepartemenTable({ data: initialData = [], onRefresh }: D
         message: "",
         type: "success"
     });
+    const queryClient = useQueryClient();
+
 
 
     useEffect(() => {
@@ -68,72 +71,93 @@ export default function DepartemenTable({ data: initialData = [], onRefresh }: D
         setShowPopUp(true);
     };
 
-    const hapus = async () =>{
-        if (!hapusId) return;
-        try {
-            const response =await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen/${hapusId}`, {
-                method:"DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                } 
+    const deleteDeptMutation = useMutation({
+        mutationFn: async (idToDelete: GridRowId) => {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen/${idToDelete}`, {
+                method: "DELETE",
+                headers:{
+                    "Content-Type" : "application/json",
+                    "Authorization" : `Bearer ${token}`
+                },
+
             });
+
             const result = await response.json();
 
-            if (response.ok && result.success){
-                setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(hapusId)));
-                setNotif({ show: true, message: "Data departemen berhasil dihapus", type: "success" });
-                setTimeout(() => {
-                    onRefresh();
-                }, 2000);
-            }else{
-                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
+            if(!response.ok || !result.success){
+                throw new Error(result.message || "Gagal menghapus data departemen");
+
             }
-        } catch (error) {
-            console.error("Error delete :", error);
-            setNotif({ show: true, message: "Gagal menghapus data. Periksa koneksi.", type: "error" });
-        } finally{
+            return idToDelete;
+        },
+        onSuccess: (deleteId) => {
+            setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(deleteId)));
+            setNotif({show: true, message: "Data departemen behasil dihapus", type: "success"});
+            queryClient.invalidateQueries({queryKey: ["departemen"]});
+
+        },
+        onError: (error) => {
+            console.error("Gagal menghapus departemen :", error);
+            setNotif({show: true, message: error.message || "Terjadi kesalahan, Periksa Koneksi", type: "error"});
+        },
+        onSettled: () => {
             setShowPopUp(false);
             setHapusId(null);
         }
 
+    });
+
+    const hapus = () =>{
+        if (hapusId) {
+            deleteDeptMutation.mutate(hapusId)
+        }
     }
 
     // Fungsi untuk PINDAH HALAMAN lihat karyawan
 
+    const editDeptMuttion = useMutation({
+        mutationFn: async (newRow: GridRowModel) =>{
+            const response = await  apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen/${newRow.id}`,{
+                method: "PUT",
+                headers: {
+                    "Content-Type" : "application/json",
+                    "Authorization" : `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    nama_departemen: newRow.nama_departemen
+                })
+
+            });
+            const result = await response.json();
+            if(!response.ok || !result.success){
+                throw new Error(result.message || "Gagal memperbarui departemen");
+            }
+            return result;
+        },
+        onSuccess: () => {
+            setNotif({show: true, message: "Data departemen berhasil di perbarui", type: "success"});
+            queryClient.invalidateQueries({queryKey: ["departemen"]});
+        },
+        onError: (error) => {
+            console.error("Gagal memperbarui departemen : ",error);
+            setNotif({show: true, message: error.message || "Terjadi kesalahan, Periksa Koneksi", type: "error"});
+        }
+    });
+
     const processRowUpdate = async (newRow: GridRowModel, oldRow: GridRowModel) => {
-        const updatedRow = { ...newRow } as DepartemenData;
         if (oldRow.nama_departemen === newRow.nama_departemen){
             return oldRow;
         }
 
         try {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen/${newRow.id}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization" : `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    nama_departemen: newRow.nama_departemen
-                }),
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.success){
-                setRows(rows.map((row) =>
-                (row.id === newRow.id ? updatedRow : row)));
-                setNotif({ show: true, message: "Perubahan data berhasil diperbarui", type: "success" });
-                return updatedRow;
-            }else{
-                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
-                return oldRow;
-            }
+            await editDeptMuttion.mutateAsync(newRow);
+            const updatedRow = {...newRow} as DepartemenData;
+            setRows((prevRows) => prevRows.map((row) => (row.id === newRow.id ? updatedRow : row)));
+            return updatedRow;
         } catch (error) {
             console.error("Error updating departemen:", error);
             setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
-            return oldRow; 
+            return Promise.reject(error); 
         }    
     };
 

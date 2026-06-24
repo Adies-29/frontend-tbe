@@ -72,6 +72,10 @@ export default function Header() {
         "/dashboard/lembur":{ title: "Lembur", showDate: false },
         "/dashboard/lembur/tambah-lembur":{ title: "Lembur", showDate: false },
 
+        "/dashboard/kasbon":{ title: "Kasbon", showDate: false },
+        "/dashboard/kasbon/tambah":{ title: "Kasbon", showDate: false },
+        
+
         "/dashboard/target-packing":{ title: "Target", showDate: false },
     };
 
@@ -89,16 +93,16 @@ export default function Header() {
         <header className="flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-4 drop-shadow-sm w-full gap-4">
             
             {/* KIRI */}
-            <div className="flex flex-col items-center justify-between w-full md:w-auto">
-                <div className="flex flex-col my-4">
+            <div className="flex flex-row items-center justify-between w-full md:w-auto">
+                <div className="my-2 md:my-4">
                     {/* 4. Cetak Judul Dinamis */}
-                    <h1 className="text-2xl md:text-3xl font-bold text-black leading-none">
+                    <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 leading-tight truncate max-w-[200px] sm:max-w-xs md:max-w-none">
                         {currentRoute.title}
                     </h1>
                 </div>
 
-               <div className="md:hidden bg-[#C90000] rounded-full flex items-center gap-2 px-3 py-1.5 my-2 shadow-md">
-                    <div className="bg-[#FFB800] w-8 h-8 rounded-full border-2 border-white/20"></div>
+               <div className="md:hidden bg-[#C90000] rounded-full flex items-center gap-2 px-3 py-1.5 my-2 shadow-md cursor-pointer">
+                    <div className="bg-[#FFB800] w-7 h-7 rounded-full border-2 border-white/20"></div>
                     
                     <span className="text-white font-medium text-base md:text-xs tracking-wide text-center">
                         {user || "Admin"}

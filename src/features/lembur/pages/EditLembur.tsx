@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Clock } from "lucide-react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import Button from "../../../components/common/Button";
@@ -30,7 +31,7 @@ export default function EditLembur() {
     const [searchParams] = useSearchParams();
     const token = useAuthStore((state) => state.token);
     const userToken = useAuthStore((state) => state.user);
-    const [isLoading, setIsLoading] = useState(false);
+    const queryClient = useQueryClient();
 
     const idPegwai = searchParams.get("pegawai_id") || "";
     const namaPegawai = searchParams.get("nama") || "";
@@ -59,72 +60,70 @@ export default function EditLembur() {
         type: "success"
     });
 
-    useEffect(() => {
-        const fetchLemburData = async () => {
-            const tgl = searchParams.get("tanggal");
-            if (idPegwai && tgl) {
-                try {
-                    const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/?pegawai_id=${idPegwai}&tanggal=${tgl}`, {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`
-                        }
-                    });
-                    const result = await response.json();
-                    if (response.ok && result.success && result.data && result.data.length > 0) {
-                        const lembur = result.data[0];
-                        // reset form with fetched data
-                        reset({
-                            pegawai_id: String(lembur.pegawai_id),
-                            tanggal: lembur.tanggal,
-                            menit_lembur_diizinkan: lembur.menit_lembur_diizinkan,
-                            alasan_lembur: lembur.alasan_lembur || ""
-                        });
-                    }
-                } catch (error) {
-                    console.error("Gagal memuat data lembur:", error);
-                }
+    const tgl = searchParams.get("tanggal");
+
+    const lemburQuery = useQuery({
+        queryKey: ['lemburDetail', idPegwai, tgl],
+        queryFn: async () => {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/?pegawai_id=${idPegwai}&tanggal=${tgl}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success || !result.data || result.data.length === 0) {
+                throw new Error("Data tidak ditemukan");
             }
-        };
+            return result.data[0];
+        },
+        enabled: !!idPegwai && !!tgl
+    });
 
-        fetchLemburData();
-    }, [idPegwai, searchParams, token, reset]);
+    useEffect(() => {
+        if (lemburQuery.data) {
+            const lembur = lemburQuery.data;
+            reset({
+                pegawai_id: String(lembur.pegawai_id),
+                tanggal: lembur.tanggal,
+                menit_lembur_diizinkan: lembur.menit_lembur_diizinkan,
+                alasan_lembur: lembur.alasan_lembur || ""
+            });
+        }
+    }, [lemburQuery.data, reset]);
 
-    const onSubmit = async (data: FormData) => {
-        setIsLoading(true);
-
-        try {
-            const payload = {
-                ...data,
-                disetujui_oleh: userToken || ""
-            };
-
+    const editLemburMutation = useMutation({
+       
+        mutationFn: async (payload: any) => {
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/spl`, {
-                method: "POST",
+                method: "POST", 
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify(payload)
             });
-
             const result = await response.json();
-
-            if (response.ok && result.success) {
-                setNotif({ show: true, message: `Sukses! Data lembur berhasil diperbarui.`, type: "success" });
-                setTimeout(() => {
-                    navigate("/dashboard");
-                }, 2000);
-            } else {
-                setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });
-            }
-        } catch (error) {
-            console.error("Error Submit:", error);
-            setNotif({ show: true, message: "Terjadi kesalahan jaringan.", type: "error" });
-        } finally {
-            setIsLoading(false);
+            if (!response.ok || !result.success) throw new Error("Gagal menyimpan ke database.");
+            return result;
+        },
+        onSuccess: () => {
+            setNotif({ show: true, message: `Sukses! Data lembur berhasil diperbarui.`, type: "success" });
+            queryClient.invalidateQueries({ queryKey: ['lemburList'] });
+            queryClient.invalidateQueries({ queryKey: ['lemburDetail', idPegwai, tgl] });
+            setTimeout(() => {
+                navigate("/dashboard/lembur");
+            }, 2000);
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onError: (error: any) => {
+            setNotif({ show: true, message: error.message || "Terjadi kesalahan jaringan.", type: "error" });
         }
+    });
+
+    const onSubmit = (data: FormData) => {
+        const payload = {
+            ...data,
+            disetujui_oleh: userToken || ""
+        };
+        editLemburMutation.mutate(payload);
     };
     return (
         <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
@@ -192,8 +191,8 @@ export default function EditLembur() {
                 <Button
                     variant="success"
                     type="submit"
-                    disabled={isLoading}
-                    label={isLoading ? "Menyimpan..." : "Simpan"}
+                    disabled={editLemburMutation.isPending}
+                    label={editLemburMutation.isPending ? "Menyimpan..." : "Simpan"}
                 />
 
             </form>

@@ -15,7 +15,8 @@ import { Input } from "../../../components/common/InputText";
 import { InputSelect } from "../../../components/common/InputSelect";
 import Notif from "../../../components/common/Notif";
 import { apiFetch } from "../../../utils/apiFetch";
-import type { DepartemenOption, JabatanOption, ShiftOption, KotaOption } from "../../../types";
+import type { JabatanOption, KotaOption } from "../../../types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const schema = z.object({
     nik: z.string()
@@ -63,18 +64,8 @@ export default function EditPegawai(){
     const navigate = useNavigate();
     const token = useAuthStore((state) => (state.token));
 
-    const [isSaving, setIsSaving] = useState(false);
-    const [isFetchingData, setIsFetchingData] = useState(true)
-
     //master data
-   
-    const [departemenList, setDepartemenList] = useState<DepartemenOption[]>([]);
-    
     const [jabatanList, setJabatanList] = useState<JabatanOption[]>([]);
-   
-    const [shiftList, setShiftList] = useState<ShiftOption[]>([]);
-   
-    const [allJabatan, setAllJabatan] = useState<JabatanOption[]>([]);
     const [kotaList, _setKotaList] = useState<KotaOption[]>(MOCK_KOTA); 
 
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
@@ -82,6 +73,8 @@ export default function EditPegawai(){
         message: "",
         type: "success"
     });
+
+    const queryClient = useQueryClient();
 
     const {
         register,
@@ -95,82 +88,65 @@ export default function EditPegawai(){
         resolver: zodResolver(schema)
     });
 
-    useEffect(() => {
-        const loadInitialData = async () => {
-            try {
-                setIsFetchingData(true);
+    const { data: pageData, isLoading: isFetchingData } = useQuery({
+        queryKey: ['editPegawai', id],
+        queryFn: async () => {
+            const [resDept, resJabatan, resShift, resPegawai] = await Promise.all([
+                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, { headers: { "Authorization": `Bearer ${token}` } }),
+                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Authorization": `Bearer ${token}` } }),
+                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, { headers: { "Authorization": `Bearer ${token}` } }),
+                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${id}`, { headers: { "Authorization": `Bearer ${token}` } })
+            ]);
+            const dept = await resDept.json();
+            const jab = await resJabatan.json();
+            const shift = await resShift.json();
+            const pegawai = await resPegawai.json();
+            return {
+                departemen: dept.success ? dept.data : [],
+                jabatan: jab.success ? jab.data : [],
+                shift: shift.success ? shift.data : [],
+                pegawai: pegawai.success ? pegawai.data : null
+            };
+        }
+    });
 
-                const[resDept, resJabatan, resShift] = await Promise.all([
-                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
-                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
-                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
-                ]);
-                const dataDept = await resDept.json();
-                const dataJabatan = await resJabatan.json();
-                const dataShift = await resShift.json();
-
-                if (resDept.ok && dataDept.success) setDepartemenList(dataDept.data);
-                let masterJabatan = [];
-                if (resJabatan.ok && dataJabatan.success) {
-                    masterJabatan = dataJabatan.data;
-                    setAllJabatan(masterJabatan);
-                }
-
-                if(resShift.ok && dataShift.success) setShiftList(dataShift.data)
-                    
-
-                const resPegawai = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${id}`, {
-                    headers: { "Authorization" : `Bearer ${token}` }
-                });
-                const dataPegawai = await resPegawai.json();
-                
-                
-                if(resPegawai.ok && dataPegawai.success){
-                    
-                    const pegawai = dataPegawai.data;
-                   
-                    const currentJabatan = masterJabatan.find((j: JabatanOption) => j.id === pegawai.jabatan_id);
-                    const pegawaiId = currentJabatan ? currentJabatan.departemen_id?.toString() : "";
-
-                    const pilihJabatan = masterJabatan.filter((j: JabatanOption) => j.departemen_id?.toString() === pegawaiId );
-                    setJabatanList(pilihJabatan);
-
-                    const { nik, bpjs, tanggal_bergabung, jenis_kelamin, nama, tempat_lahir, tanggal_lahir, no_hp, alamat, email, pin_mesin, jabatan_id, default_shift_id } = pegawai;
-
-                    reset({
-                        nik: nik || "",
-                        bpjs: bpjs || "",
-                        tanggal_bergabung: tanggal_bergabung || "",
-                        jenis_kelamin: jenis_kelamin || "",
-                        nama: nama || "",
-                        tempat_lahir: tempat_lahir || "",
-                        tanggal_lahir: tanggal_lahir || "",
-                        no_hp: no_hp || "",
-                        alamat: alamat || "",
-                        email: email || "",
-                        pin_mesin: pin_mesin || "",
-                        departemen: pegawaiId,
-                        jabatan_id: jabatan_id?.toString() || "",
-                        default_shift_id: default_shift_id?.toString() || "",
-                    });
-
-                    // Tandai departemen awal agar watcher tidak mereset jabatan saat loading pertama
-                    prevDeptRef.current = pegawaiId;
-                };
-                
-            } catch (error) {
-                console.error("Gagal memuat data:", error);
-                setNotif({ show: true, message: "Terjadi kesalahan saat memuat data dari server.", type: "error" });
-            } finally{
-                setIsFetchingData(false);
-            }
-        };
-        if (id) loadInitialData();
-    }, [id, token, reset]);
-
-   
+    const departemenList = pageData?.departemen || [];
+    const allJabatan = pageData?.jabatan || [];
+    const shiftList = pageData?.shift || [];
     const selectedDept = watch("departemen");
     const prevDeptRef = useRef<string | undefined>(undefined);
+
+    useEffect(() => {
+        if (pageData?.pegawai && pageData.jabatan.length > 0) {
+            const pegawai = pageData.pegawai;
+            const currentJabatan = pageData.jabatan.find((j: JabatanOption) => j.id === pegawai.jabatan_id);
+            const pegawaiDeptId = currentJabatan ? currentJabatan.departemen_id?.toString() : "";
+            const pilihJabatan = pageData.jabatan.filter((j: JabatanOption) => j.departemen_id?.toString() === pegawaiDeptId );
+            setJabatanList(pilihJabatan);
+            reset({
+                nik: pegawai.nik || "",
+                bpjs: pegawai.bpjs || "",
+                tanggal_bergabung: pegawai.tanggal_bergabung || "",
+                jenis_kelamin: pegawai.jenis_kelamin || "",
+                nama: pegawai.nama || "",
+                tempat_lahir: pegawai.tempat_lahir || "",
+                tanggal_lahir: pegawai.tanggal_lahir || "",
+                no_hp: pegawai.no_hp || "",
+                alamat: pegawai.alamat || "",
+                email: pegawai.email || "",
+                pin_mesin: pegawai.pin_mesin || "",
+                departemen: pegawaiDeptId,
+                jabatan_id: pegawai.jabatan_id?.toString() || "",
+                default_shift_id: pegawai.default_shift_id?.toString() || "",
+            });
+            prevDeptRef.current = pegawaiDeptId;
+        }
+    }, [pageData, reset])
+
+    
+
+   
+    
 
     useEffect(() => {
         if (!isFetchingData && selectedDept && allJabatan.length > 0) {
@@ -195,17 +171,16 @@ export default function EditPegawai(){
         }
     }, [selectedDept, allJabatan, isFetchingData, setValue]);
 
-    // 3.SIMPAN PERUBAHAN
-    const onSubmit = async (data: FormData) => {
-        setIsSaving(true);
-        try {
+
+    const EditPegawaiMutation = useMutation({
+        mutationFn: async (data: FormData) => {
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type" : "application/json",
                     "Authorization" : `Bearer ${token}`
                 },
-                 body: JSON.stringify({
+                body: JSON.stringify({
                     nik: data.nik || null,
                     bpjs: data.bpjs || null,
                     tanggal_bergabung: data.tanggal_bergabung,
@@ -221,24 +196,29 @@ export default function EditPegawai(){
                     default_shift_id: parseInt(data.default_shift_id),
                 }),
             });
-
             const result = await response.json();
 
-            
-            if(response.ok && result.success){
-                setNotif({ show: true, message: "Data Pegawai berhasil diperbarui!", type: "success" });
-                setTimeout(() => {
-                    navigate("/dashboard/data-pegawai");
-                }, 2000);
-            }else{
-                 setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });
+            if (!response.ok || !result.success){
+                throw new Error(result.message || "Gagal memperbarui data pegawai");
             }
-        } catch (error) {
-            console.error("Error Submit:", error);
-            setNotif({ show: true, message: "Terjadi kesalahan jaringan.", type: "error" });
-        }finally{
-            setIsSaving(false);
+            return result;
+        },
+        onSuccess: () => {
+            setNotif({ show: true, message: "Data pegawai berhasil diperbarui!", type: "success" });
+            queryClient.invalidateQueries({ queryKey: ['pegawai'] });
+            setTimeout(() => {
+                navigate("/dashboard/data-pegawai");
+            }, 2000);
+        },
+        onError: (error) => {
+            setNotif({ show: true, message: error.message || "Terjadi kesalahan saat memperbarui data", type: "error" });
+
         }
+    })
+
+    // 3.SIMPAN PERUBAHAN
+    const onSubmit = async (data: FormData) => {
+      EditPegawaiMutation.mutate(data);
     }
 
     if(isFetchingData) {
@@ -355,8 +335,8 @@ export default function EditPegawai(){
                          <Button
                             variant="success" 
                             type="submit" 
-                            label={isSaving ? "Menyimpan..." : "Simpan"} 
-                            disabled={isSaving} 
+                            label={EditPegawaiMutation.isPending ? "Menyimpan..." : "Simpan"} 
+                            disabled={EditPegawaiMutation.isPending} 
                         />
                         <Button 
                             type="button" 

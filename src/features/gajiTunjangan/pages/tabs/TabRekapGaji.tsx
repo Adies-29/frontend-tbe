@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+
 import { Wallet, TrendingDown, TrendingUp, Loader2, PlayCircle, Printer } from 'lucide-react';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -6,6 +6,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 
 import Button from '../../../../components/common/Button';
+import Notif from '../../../../components/common/Notif';
 import { TabelRekapGaji } from '../../../../features/gajiTunjangan/components/TabelRekapGaji';
 import SlipGajiTemplate from '../../../../features/gajiTunjangan/components/SlipGajiTemplate';
 import { useRekapGaji } from '../../hooks/useRekapGaji';
@@ -22,21 +23,24 @@ export default function TabRekapGaji() {
         setFilterValue,
         rekapGajiData,
         isLoadingRekap,
+        isErrorRekap,
         isGenerating,
         summaryCards,
-        fetchRekapGaji,
+        notif,
         handleGenerateGaji,
         handleCetakSemuaSlip,
         handleFilter,
-        handlePeriodeChange
+        handlePeriodeChange,
+        closeNotif
     } = useRekapGaji();
-
-    useEffect(() => {
-        fetchRekapGaji();
-    }, [fetchRekapGaji]);
 
     return (
         <div className="flex flex-col gap-6 animate-in fade-in duration-300">
+            {isErrorRekap && (
+                <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm border border-red-300">
+                    Gagal memuat data rekap gaji. Pastikan koneksi internet & backend berjalan lancar.
+                </div>
+            )}
             {/* WIDGETS */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print:hidden">
                 <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
@@ -124,6 +128,13 @@ export default function TabRekapGaji() {
             </section>
             
             <SlipGajiTemplate data={rekapGajiData} filterValue={filterValue} />
+
+            <Notif 
+                show={notif.show} 
+                message={notif.message} 
+                type={notif.type} 
+                onClose={closeNotif} 
+            />
         </div>
     );
 }

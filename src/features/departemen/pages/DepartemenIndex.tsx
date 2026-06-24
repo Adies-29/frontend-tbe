@@ -1,32 +1,26 @@
 import { useNavigate } from "react-router-dom";
 import Button from "../../../components/common/Button";
 import TabelDepartemen from "../../../features/departemen/components/TabelDepartemen";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import type { DepartemenData, DepartemenOption, JabatanOption } from "../../../types";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { apiFetch } from "../../../utils/apiFetch";
 import Notif from "../../../components/common/Notif";
-
-
+import { useQuery } from "@tanstack/react-query";
 
 export default function DepartemenIndex() {
     const navigate = useNavigate();
     const token = useAuthStore((state) => state.token)
 
-    // 2. State untuk menyimpan data dari Database & status Loading
-    const [dataDepartemen, setDataDepartemen] = useState<DepartemenData[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
         show: false,
         message: "",
         type: "success"
     });
 
-    const fetchDepartemen = async () => {
-        setIsLoading(true);
+    const fetchDepartemen = async (): Promise<DepartemenData[]> => {
         try {
-            // Tembak API Backend
             const [resDept, resJabatan] = await Promise.all([
                 apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
                 apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
@@ -34,6 +28,10 @@ export default function DepartemenIndex() {
 
             const resultDept = await resDept.json();
             const resultJabatan = await resJabatan.json();
+
+            if (!resJabatan.ok || !resDept.ok) {
+                throw new Error("Gagal mengambil data dari server");
+            }
 
             if (resDept.ok && resJabatan.ok) {
 
@@ -47,40 +45,46 @@ export default function DepartemenIndex() {
                         jumlah_jabatan: jumlah
                     };
                 });
-                setDataDepartemen(mappedData);
+                return (mappedData);
             }
         } catch (error) {
             console.error("Error fetching data departemen & jabatan:", error);
             setNotif({ show: true, message: "Gagal memuat data Departemen. Pastikan backend berjalan.", type: "error" });
-        } finally {
-            setIsLoading(false);
+            throw error;
         }
     };
-    // 5. Jalankan Fetch saat halaman dibuka
-    useEffect(() => {
-        const fetchData = async () => {
-            await fetchDepartemen();
-        };
-        fetchData();
-    }, []);
 
+    const {
+        data: dataDepartemen = [],
+        isLoading,
+        isError,
+        refetch
+    } = useQuery ({
+        queryKey: ['departemen'],
+        queryFn: fetchDepartemen,
+        enabled: !!token
+    })
+   
     const totalDepartemen = dataDepartemen.length;
 
     return (
         <div className="flex flex-col gap-6 w-full">
 
-            {/* 1. BAGIAN STATISTIK (Meniru desain kotak di gambarmu) */}
+            {isError && (
+                <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm border border-red-300">
+                    Gagal memuat data departemen. Pastikan koneksi internet & backend berjalan lancar.
+                </div>
+            )}
+
             <div className="flex gap-4">
                 <div className="bg-white border border-gray-300 rounded-xl p-4 w-48 shadow-sm flex flex-col items-center justify-center">
                     <span className="text-gray-800 text-sm md:text-base font-medium">Total Departemen</span>
                     <span className="text-4xl font-bold mt-2 text-black">{totalDepartemen}</span>
                 </div>
             </div>
-
-            {/* 2. BAGIAN TABEL DAN TOMBOL */}
+           
             <section className="bg-white border border-gray-300 rounded-2xl p-4 shadow-sm w-full">
 
-                {/* Header Tabel & Kumpulan Tombol */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-start mb-6 gap-4">
                     <h2 className="text-lg font-bold text-black border-l-4 border-red-600 pl-2 mt-1">
                         Data Departemen
@@ -95,14 +99,13 @@ export default function DepartemenIndex() {
                     </div>
                 </div>
 
-                {/* 3. PEMANGGILAN KOMPONEN TABEL */}
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center h-64 text-gray-400">
                         <Loader2 className="animate-spin mb-4 text-red-600" size={32} />
                         <p>Memuat data dari database...</p>
                     </div>
                 ) : (
-                    <TabelDepartemen data={dataDepartemen} onRefresh={fetchDepartemen} />
+                    <TabelDepartemen data={dataDepartemen} onRefresh={refetch} />
                 )}
 
             </section>

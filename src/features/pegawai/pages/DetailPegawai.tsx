@@ -9,13 +9,14 @@ import {
     Hash,
     Clock,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuthStore } from "../../../store/useAuthStore";
 import type { PegawaiData } from "../../../types";
 import Button from "../../../components/common/Button";
-import { getSafeErrorMessage } from "../../../utils/errorHandler";
 import { apiFetch } from "../../../utils/apiFetch";
+import { useQuery } from "@tanstack/react-query";
+
 
 
 export default function DetailPegawai() {
@@ -23,48 +24,23 @@ export default function DetailPegawai() {
     const { id } = useParams();
     const token = useAuthStore((state) => state.token);
 
-    const [pegawai, setPegawai] = useState<PegawaiData | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [errorMsg, setErrorMsg] = useState("");
+    const { data: pegawai, isLoading, error } = useQuery({
+        queryKey: ['pegawaiDetail', id],
+        queryFn: async () => {
+            if (!id) throw new Error("ID Pegawai tidak valid");
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${id}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const result = await response.json();
 
-    useEffect(() => {
-        const fetchPegawai = async () => {
-            if (!id) return;
-
-            try {
-                setIsLoading(true);
-
-                const response = await apiFetch(
-                    `${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${id}`,
-                    {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error("Gagal mengambil data pegawai");
-                }
-
-                const result = await response.json();
-                if (result.success) {
-                    setPegawai(result.data);
-                } else {
-                    throw new Error("Data pegawai tidak ditemukan");
-                }
-            } catch (error) {
-                console.error(error);
-                setErrorMsg(getSafeErrorMessage());
-            } finally {
-                setIsLoading(false);
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Gagal mengambil data pegawai dari server");
             }
-        };
-
-        fetchPegawai();
-    }, [id, token]);
+            return result.data as PegawaiData; 
+        },
+        enabled: !!id 
+    });
+    const errorMsg = error ? error.message : "";
 
     if (isLoading) {
         return (

@@ -18,6 +18,7 @@ interface ModalInputPencapaianProps {
 export default function ModalInputPencapaian(props: ModalInputPencapaianProps) {
     const [selectedTargetId, setSelectedTargetId] = useState("");
     const [jumlah, setJumlah] = useState("");
+    const [editingItem, setEditingItem] = useState<TargetDetail | null>(null);
 
     const targetDetails = useMemo(() => {
         if (!selectedTargetId) return null;
@@ -29,18 +30,34 @@ export default function ModalInputPencapaian(props: ModalInputPencapaianProps) {
         return targetDetails.harga_satuan * parseInt(jumlah);
     }, [targetDetails, jumlah]);
 
+    const handleEditClick = (item: TargetDetail) => {
+        // Klik baris yang sama = batal edit
+        if (editingItem?.pencapaian_id === item.pencapaian_id) {
+            setEditingItem(null);
+            setSelectedTargetId("");
+            setJumlah("");
+            return;
+        }
+        setEditingItem(item);
+        setSelectedTargetId(item.master_target_id.toString());
+        setJumlah(item.jumlah_pencapaian.toString());
+    };
+
     const handleSave = () => {
         if (!selectedTargetId || !jumlah) return;
         props.onSave({
             master_target_id: parseInt(selectedTargetId),
             jumlah: parseInt(jumlah)
         });
-        // reset form
+        // reset form & edit mode
+        setEditingItem(null);
         setSelectedTargetId("");
         setJumlah("");
     };
 
     if (!props.isModalOpen) return null;
+
+    const isEditMode = editingItem !== null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-150">
@@ -78,29 +95,41 @@ export default function ModalInputPencapaian(props: ModalInputPencapaianProps) {
                                                 <th className="px-3 py-2 font-semibold">Nama Target</th>
                                                 <th className="px-3 py-2 font-semibold text-right">Jumlah</th>
                                                 <th className="px-3 py-2 font-semibold text-right">Nominal</th>
-                                                <th className="px-3 py-2 w-10"></th>
+                                                <th className="px-3 py-2 w-16"></th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
-                                            {props.pencapaianExisting.details.map((item, idx) => (
-                                                <tr key={idx} className="bg-white hover:bg-red-50/50 transition-colors group">
-                                                    <td className="px-3 py-2.5 font-medium text-gray-800">{item.nama_target}</td>
-                                                    <td className="px-3 py-2.5 text-right font-bold text-emerald-600">{item.jumlah_pencapaian}</td>
-                                                    <td className="px-3 py-2.5 text-right text-gray-600">
-                                                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.nominal)}
-                                                    </td>
-                                                    <td className="px-3 py-2.5 text-right">
-                                                        <button 
-                                                            onClick={() => props.onDelete(item.pencapaian_id)}
-                                                            className="text-red-300 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all p-1"
-                                                            title="Hapus"
-                                                            disabled={props.isSaving}
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                            {props.pencapaianExisting.details.map((item, idx) => {
+                                                const isBeingEdited = editingItem?.pencapaian_id === item.pencapaian_id;
+                                                return (
+                                                    <tr 
+                                                        key={idx} 
+                                                        className={`transition-colors group cursor-pointer ${
+                                                            isBeingEdited 
+                                                                ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' 
+                                                                : 'bg-white hover:bg-blue-50/50'
+                                                        }`}
+                                                        onClick={() => handleEditClick(item)}
+                                                        title="Klik untuk edit"
+                                                    >
+                                                        <td className="px-3 py-2.5 font-medium text-gray-800">{item.nama_target}</td>
+                                                        <td className="px-3 py-2.5 text-right font-bold text-emerald-600">{item.jumlah_pencapaian}</td>
+                                                        <td className="px-3 py-2.5 text-right text-gray-600">
+                                                            {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.nominal)}
+                                                        </td>
+                                                        <td className="px-3 py-2.5 text-right">
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); props.onDelete(item.pencapaian_id); }}
+                                                                className="text-red-300 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all p-1"
+                                                                title="Hapus"
+                                                                disabled={props.isSaving}
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                             <tr className="bg-emerald-50 font-bold border-t-2 border-emerald-100">
                                                 <td className="px-3 py-2 text-emerald-800">TOTAL</td>
                                                 <td className="px-3 py-2 text-right text-emerald-800">{props.pencapaianExisting.totalPack}</td>
@@ -118,17 +147,20 @@ export default function ModalInputPencapaian(props: ModalInputPencapaianProps) {
 
                     <div className="h-px bg-gray-200 my-4"></div>
 
-                    {/* BAGIAN 2: FORM INPUT BARU */}
+                    {/* BAGIAN 2: FORM INPUT / EDIT */}
                     <div>
-                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Tambah Pencapaian Baru</h4>
+                        <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: isEditMode ? '#2563eb' : '#6b7280' }}>
+                            {isEditMode ? `Edit: ${editingItem?.nama_target}` : 'Tambah Pencapaian Baru'}
+                        </h4>
                         
-                        <div className="flex flex-col gap-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                        <div className={`flex flex-col gap-4 p-4 rounded-xl border ${isEditMode ? 'bg-blue-50/50 border-blue-200' : 'bg-blue-50/50 border-blue-100'}`}>
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-sm font-semibold text-gray-700">Pilih Jenis Target</label>
                                 <select 
                                     value={selectedTargetId}
                                     onChange={(e) => setSelectedTargetId(e.target.value)}
                                     className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:border-blue-500 shadow-sm bg-white outline-none w-full"
+                                    disabled={isEditMode}
                                 >
                                     <option value="">-- Pilih Master Target --</option>
                                     {props.listMasterTargets.map((target) => (
@@ -163,8 +195,8 @@ export default function ModalInputPencapaian(props: ModalInputPencapaianProps) {
                             </div>
 
                             <Button 
-                                label={props.isSaving ? "Menyimpan..." : "Simpan Pencapaian"} 
-                                variant='success'
+                                label={props.isSaving ? "Menyimpan..." : (isEditMode ? "Perbarui Pencapaian" : "Simpan Pencapaian")} 
+                                variant={isEditMode ? 'success' : 'success'}
                                 className="mt-2 w-full" 
                                 disabled={props.isSaving || !selectedTargetId || !jumlah || parseInt(jumlah) <= 0}
                                 onClick={handleSave} 

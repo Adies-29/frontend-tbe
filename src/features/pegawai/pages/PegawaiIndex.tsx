@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import Button from "../../../components/common/Button";
-import { useEffect, useState } from "react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { Loader2 } from "lucide-react";
 import TabelPegawai from "../../../features/pegawai/components/TabelPegawai";
@@ -8,54 +7,49 @@ import type { PegawaiData } from "../../../types";
 import { getSafeErrorMessage } from "../../../utils/errorHandler";
 import { apiFetch } from "../../../utils/apiFetch";
 
+import { useQuery } from "@tanstack/react-query";
 
 export default function PegawaiIndex() {
     const navigate = useNavigate();
-    const [dataPegawai, setDataPegawai] = useState<PegawaiData[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [errorMsg, setErrorMsg] = useState("");
     const token = useAuthStore((state) => state.token);
 
-    // Fungsi FETCH dari Backend ( Kunci Token)
-    const fetchPegawai = async () => {
-        setIsLoading(true);
-        setErrorMsg("");
-
-        try {            
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
-                method: "GET",
-                headers: {
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`
-                }
-            });
-            if (!response.ok){
-                if(response.status === 401 || response.status === 403){
-                    throw new Error ("Sesi Anda telah habis. Silakan login kembali !")
-                }
-                throw new Error ("Gagal memuat data dari server")
+    // Fungsi FETCH dari Backend untuk React Query
+    const fetchPegawai = async (): Promise<PegawaiData[]> => {
+        const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
+            method: "GET",
+            headers: {
+                "Content-Type" : "application/json",
+                "Authorization" : `Bearer ${token}`
             }
+        });
 
-            const result = await response.json();
-            if (result.success){
-                setDataPegawai(result.data);
+        if (!response.ok){
+            if(response.status === 401 || response.status === 403){
+                throw new Error ("Sesi Anda telah habis. Silakan login kembali !")
             }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error) {
-            console.error("Error fetching pegawai:", error);
-            setErrorMsg(getSafeErrorMessage());
-        }finally{
-            setIsLoading(false);
+            throw new Error ("Gagal memuat data dari server")
         }
+
+        const result = await response.json();
+        if (result.success){
+            return result.data;
+        }
+        throw new Error ("Format data tidak valid");
     };
 
-    useEffect(() => {
-        const fetchData = async () => {
-            await fetchPegawai();
-        };
-        fetchData();
-    }, []);
+    // Menggunakan useQuery dari React Query
+    const { 
+        data: dataPegawai = [], 
+        isLoading, 
+        error,
+    } = useQuery({
+        queryKey: ["pegawai"],
+        queryFn: fetchPegawai,
+        // Optional: refetchOnWindowFocus: false jika tidak ingin refresh otomatis saat pindah tab Chrome
+    });
+
+    // Ambil pesan error jika ada
+    const errorMsg = error ? (error instanceof Error ? error.message : getSafeErrorMessage()) : "";
 
     const totalPegawai = dataPegawai.length;
 
@@ -101,7 +95,7 @@ export default function PegawaiIndex() {
                         </div>
                     ) : (
                         // Panggil komponen tabelnya
-                        <TabelPegawai data={dataPegawai} onRefresh={fetchPegawai} />
+                        <TabelPegawai data={dataPegawai} />
                     )} 
                 </div>
             </section>

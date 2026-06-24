@@ -16,7 +16,8 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import Notif from "../../../components/common/Notif";
 import { apiFetch } from "../../../utils/apiFetch";
-import type { DepartemenOption, JabatanOption, ShiftOption, KotaOption } from "../../../types";
+import type { JabatanOption, KotaOption } from "../../../types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 
 
@@ -64,13 +65,6 @@ const MOCK_KOTA = [
 export default function AddPegawai() {
     const navigate = useNavigate();
     const token = useAuthStore((state) => state.token);
-    const [isSaving, setIsSaving] = useState(false);
-    const [departemenList, setDepartemenList] = useState<DepartemenOption[]>([]);
-   
-    const [shiftList, setShiftList] = useState<ShiftOption[]>([]);
-   
-    const [allJabatan, setAllJabatan] = useState<JabatanOption[]>([]);
-    
     const [jabatanList, setJabatanList] = useState<JabatanOption[]>([]);
     const [kotaList, _setKotaList] = useState<KotaOption[]>(MOCK_KOTA); 
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
@@ -78,7 +72,8 @@ export default function AddPegawai() {
         message: "",
         type: "success"
     });
-    
+    const queryClient = useQueryClient();
+
     // Tambahkan watch dan setValue di sini
     const {
         register,
@@ -92,29 +87,32 @@ export default function AddPegawai() {
     });
     
     
-    useEffect(() =>{
-        const fetctPegawai = async () => {
-            try {
-               const [resDept, resJabatan, resShift, ] = await Promise.all([
-                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, { headers: { "Authorization": `Bearer ${token}` } }),
-                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Authorization": `Bearer ${token}` } }),
-                    apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, { headers: { "Authorization": `Bearer ${token}` } }),
-                    // apiFetch(`${import.meta.env.VITE_API_BASE_URL}api/v1/kota`,{ headers: { "Authorization": `Bearer ${token}` } })
-                ]);
-                const dataDept = await resDept.json();
-                const dataJabatan = await resJabatan.json();
-                const dataShift = await resShift.json();
-               
-                if (resDept.ok && dataDept.success) setDepartemenList(dataDept.data);
-                if (resJabatan.ok && dataJabatan.success) setAllJabatan(dataJabatan.data);
-                if (resShift.ok && dataShift.success) setShiftList(dataShift.data); 
-                
-            } catch (error) {
-                console.error("Gagal memuat master data:", error);
-            }
-        };
-        fetctPegawai();
-    }, [token]);
+        const { data: masterData } = useQuery({
+        queryKey: ['masterDataPegawai'],
+        queryFn: async () => {
+            const [resDept, resJabatan, resShift] = await Promise.all([
+                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, { headers: { "Authorization": `Bearer ${token}` } }),
+                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Authorization": `Bearer ${token}` } }),
+                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, { headers: { "Authorization": `Bearer ${token}` } }),
+            ]);
+            
+            const dept = await resDept.json();
+            const jab = await resJabatan.json();
+            const shift = await resShift.json();
+            
+            return {
+                departemen: dept.success ? dept.data : [],
+                jabatan: jab.success ? jab.data : [],
+                shift: shift.success ? shift.data : []
+            };
+        }
+    });
+
+    // Otomatis ter-update jika data sudah selesai di-fetch oleh React Query
+    const departemenList = masterData?.departemen || [];
+    const allJabatan = masterData?.jabatan || [];
+    const shiftList = masterData?.shift || [];
+
     
     const selectedDept = watch("departemen"); // Menangkap ID departemen yang dipilih
 
@@ -133,15 +131,14 @@ export default function AddPegawai() {
             setJabatanList([]);
         }
     }, [selectedDept, allJabatan, setValue]);
-    
-    const onSubmit = async (data: FormData) => {
-        setIsSaving(true)
-        try {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
+
+    const addPegawaiMutation = useMutation({
+        mutationFn: async(data: FormData) => {
+            const respons = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
+                    "Content-Type" : "application/json",
+                    "Authorization" : `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     nik: data.nik || null,
@@ -159,16 +156,10 @@ export default function AddPegawai() {
                     default_shift_id: parseInt(data.default_shift_id),
                 }),
             });
+            const result = await respons.json();
 
-            const result = await response.json();
+            if(!respons.ok || !result.success){
 
-            if(response.ok && result.success){
-                setNotif({ show: true, message: `Sukses! Pegawai baru telah disimpan dengan ID: ${result.data.id}`, type: "success" });
-                setTimeout(() => {
-                    navigate("/dashboard/data-pegawai");
-                }, 2000);
-            }else{
-                // Ambil pesan error spesifik dari respons backend
                 let errorMsg = "Gagal menyimpan ke database. Coba lagi.";
                 
                 if (result.message) {
@@ -179,22 +170,30 @@ export default function AddPegawai() {
                     // Jika error berupa array/object (misal hasil validasi form dari backend)
                     errorMsg = Object.values(result.errors).flat().join(", ");
                 }
-
-                // Cek apakah pesan error terindikasi masalah data duplikat
                 const lowerError = errorMsg.toLowerCase();
                 if (lowerError.includes("duplicate") || lowerError.includes("sudah terdaftar") || lowerError.includes("already exists") || lowerError.includes("unique")) {
                     errorMsg = `Data sudah digunakan! Pastikan NIK, No BPJS, No HP, Email, atau PIN Mesin tidak sama dengan pegawai lain. (Server: ${errorMsg})`;
                 }
-
-                setNotif({ show: true, message: errorMsg, type: "error" });
+                throw new Error(errorMsg);
             }
-
-        } catch (error) {
-            console.error("Error Submit:", error);
-            setNotif({ show: true, message: "Terjadi kesalahan jaringan.", type: "error" });
-        }finally{
-            setIsSaving(false);
+            return result.data;
+        },
+        onSuccess: (data) => {
+            setNotif({ show: true, message: `Sukses! Pegawai baru disimpan (ID: ${data.id})`, type: "success" });
+            queryClient.invalidateQueries({queryKey: ['pegawai']});
+            setTimeout(() => {
+                 navigate("/dashboard/data-pegawai");
+            }, 2000)
+        },
+        onError: (error) => {
+             setNotif({ show: true, message: error.message, type: "error" });
         }
+
+    })
+
+    
+    const onSubmit = (data: FormData) => {
+       addPegawaiMutation.mutate(data);
     }
 
     
@@ -307,16 +306,16 @@ export default function AddPegawai() {
                         <Button 
                             variant="success"
                             type="submit" 
-                            label={isSaving ? "Menyimpan..." : "Simpan"} 
-                            disabled={isSaving} 
-                            icon={isSaving ? <Loader2 className="animate-spin" size={20} /> : undefined} 
+                            label={addPegawaiMutation.isPending ? "Menyimpan..." : "Simpan"} 
+                            disabled={addPegawaiMutation.isPending} 
+                            icon={addPegawaiMutation.isPending ? <Loader2 className="animate-spin" size={20} /> : undefined} 
                         />
                         <Button 
                             type="button" 
                             variant="danger" 
                             label="Batal" 
                             onClick={() => navigate(-1)} 
-                            disabled={isSaving} 
+                            disabled={addPegawaiMutation.isPending} 
                         />
                         
                     </div>

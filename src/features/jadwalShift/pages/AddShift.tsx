@@ -12,6 +12,9 @@ import Notif from '../../../components/common/Notif';
 import { apiFetch } from "../../../utils/apiFetch";
 import { formatMinutesToText } from "../../../utils/formatMinutes";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+
 // 1. SCHEMA ZOD - Disesuaikan dengan penamaan presisi dari Database
 const schema = z.object({
     kode_shift: z.string().min(1, "Kode shift wajib diisi"),
@@ -42,13 +45,13 @@ type FormData = z.infer<typeof schema>;
 export default function AddShift() {
     const navigate = useNavigate();
     const token = useAuthStore((state) => state.token);
-    const [isSaving, setIsSaving] = useState(false);
-
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
         show: false,
         message: "",
         type: "success"
     });
+
+    const queryClient = useQueryClient();
 
     const {
         register,
@@ -73,54 +76,50 @@ export default function AddShift() {
         }
     });
 
-
-    const onSubmit = async (data: FormData) => {
-        setIsSaving(true);
-        try {
-            // Log untuk mengecek data yang akan dikirim ke Backend
-            const { tipe_denda, ...restData } = data;
-            
-            // Buat object payload baru yang Type-Safe untuk Backend
-            const finalPayload = {
-                ...restData,
-                // SESUAIKAN DENGAN BACKEND (Ubah string tipe_denda menjadi boolean istetap)
-                istetap: tipe_denda === "tetap",
-                // Reset nilai batas jika checkbox dimatikan
-                batas_akhir_scan_masuk_menit: restData.is_batas_scan ? restData.batas_akhir_scan_masuk_menit : 0,
-                batas_akhir_scan_pulang_menit: restData.is_batas_scan ? restData.batas_akhir_scan_pulang_menit : 0,
-            };
-
-            console.log("==== DATA PAYLOAD SHIFT ====");
-            console.log("Data yang dikirim:", JSON.stringify(finalPayload, null, 2));
-            console.log("Batas Scan Pulang (Menit):", finalPayload.batas_akhir_scan_pulang_menit);
-            console.log("============================");
-
+    const addShiftMutation = useMutation({
+        mutationFn: async (finallyPayload: any) => {
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type" : "application/json",
+                    "Authorization" : `Bearer ${token}`
                 },
-                body: JSON.stringify(finalPayload)
+                body: JSON.stringify(finallyPayload)
             });
 
             const result = await response.json();
 
-            if (response.ok && result.success) {
-                setNotif({ show: true, message: "Jadwal & Shift berhasil disimpan!", type: "success" });
-                setTimeout(() => {
-                    navigate("/dashboard/jadwal-shift", { state: { activeTab: 'shift' } });
-                }, 2000);
-            } else {
-                setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });
+            if(!response.ok || !result.success) {
+                throw new Error(result.message || "Gagal menyimpan data shift");
             }
-
-        } catch (error) {
-            console.error("Error Submit:", error);
-            setNotif({ show: true, message: "Terjadi kesalahan jaringan.", type: "error" });
-        } finally {
-            setIsSaving(false)
+            return result;
+        },
+        onSuccess: () => {
+            setNotif({ show: true, message: "Shift berhasil disimpan!", type: "success"});
+            queryClient.invalidateQueries({ queryKey: [] })
+            setTimeout(() => {
+                navigate("/dashboard/jadwal-shift", {state: {activeTab: 'shift'}});
+            }, 2000);
+        },
+        onError: (error: any) => {
+            setNotif({ show: true, message: error.message || "Gagal menyimpan data shift", type: "error" });
         }
+    })
+
+
+    const onSubmit = async (data: FormData) => {
+
+        const { tipe_denda, ...restData } = data;
+
+        // Buat object payload baru yang Type-Safe untuk Backend
+        const finalPayload = {
+            ...restData,
+            istetap: tipe_denda === "tetap",
+            batas_akhir_scan_masuk_menit: restData.is_batas_scan ? restData.batas_akhir_scan_masuk_menit : 0,
+            batas_akhir_scan_pulang_menit: restData.is_batas_scan ? restData.batas_akhir_scan_pulang_menit : 0,
+        };
+        addShiftMutation.mutate(finalPayload)
+
     };
 
     return (
@@ -134,7 +133,7 @@ export default function AddShift() {
                         <h1 className="text-xl font-bold text-gray-800">Tambah Konfigurasi Shift</h1>
                         <p className="text-sm text-gray-500">Atur jadwal, toleransi, dan denda keterlambatan.</p>
                     </div>
-                    <Button variant="back" disabled={isSaving} icon={<ArrowLeft size={18} />} onClick={() => navigate("/dashboard/jadwal-shift", { state: { activeTab: 'shift' }})} label="Kembali" />
+                    <Button variant="back" disabled={addShiftMutation.isPending} icon={<ArrowLeft size={18} />} onClick={() => navigate("/dashboard/jadwal-shift", { state: { activeTab: 'shift' }})} label="Kembali" />
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -359,8 +358,9 @@ export default function AddShift() {
                         <Button
                             variant="success"
                             type="submit"
-                            label="Simpan Konfigurasi Shift"
-                            disabled={isSaving}
+                            label={addShiftMutation.isPending ? "Menyimpan Data Shift..." : "Simpan Konfigurasi Shift"}
+                            disabled={addShiftMutation.isPending}
+                           
                         />
                         <Button
                             type="button"

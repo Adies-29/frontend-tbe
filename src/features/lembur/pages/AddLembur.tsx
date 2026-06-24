@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { Autocomplete, TextField } from "@mui/material";
 import { ArrowLeft, Clock } from "lucide-react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import Button from "../../../components/common/Button";
@@ -29,7 +31,7 @@ export default function AddLembur() {
     const [searchParams] = useSearchParams();
     const token = useAuthStore((state) => state.token);
     const userToken = useAuthStore((state) => state.user);
-    const [isLoading, setIsLoading] = useState(false);
+    const queryClient = useQueryClient();
 
     const idPegwai = searchParams.get("pegawai_id") || "";
     const namaPegawai = searchParams.get("nama") || "";
@@ -38,6 +40,7 @@ export default function AddLembur() {
         register,
         handleSubmit,
         watch,
+        setValue,
         formState: { errors }
     } = useForm<FormData>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -51,21 +54,26 @@ export default function AddLembur() {
 
     const valMenit = watch("menit_lembur_diizinkan");
 
+    const pegawaiQuery = useQuery({
+        queryKey: ['pegawaiList'],
+        queryFn: async () => {
+            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const result = await res.json();
+            return result.data || [];
+        }
+    });
+
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
         show: false,
         message: "",
         type: "success"
     });
 
-    const onSubmit = async (data: FormData) => {
-        setIsLoading(true);
-
-        try {
-            const payload = {
-                ...data,
-                disetujui_oleh: userToken || ""
-            };
-
+    const addLemburMutation = useMutation({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        mutationFn: async (payload: any) => {
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/spl`, {
                 method: "POST",
                 headers: {
@@ -74,23 +82,29 @@ export default function AddLembur() {
                 },
                 body: JSON.stringify(payload)
             });
-
             const result = await response.json();
-
-            if (response.ok && result.success) {
-                setNotif({ show: true, message: `Sukses! Pegawai baru telah disimpan dengan ID: ${result.data.id}`, type: "success" });
-                setTimeout(() => {
-                    navigate("/dashboard");
-                }, 2000);
-            } else {
-                setNotif({ show: true, message: "Gagal menyimpan ke database. Coba lagi.", type: "error" });
-            }
-        } catch (error) {
-            console.error("Error Submit:", error);
-            setNotif({ show: true, message: "Terjadi kesalahan jaringan.", type: "error" });
-        } finally {
-            setIsLoading(false);
+            if (!response.ok || !result.success) throw new Error("Gagal menyimpan ke database.");
+            return result;
+        },
+        onSuccess: () => {
+            setNotif({ show: true, message: `Sukses! Perintah lembur telah disimpan`, type: "success" });
+            queryClient.invalidateQueries({ queryKey: ['lemburList'] });
+            setTimeout(() => {
+                navigate("/dashboard/lembur");
+            }, 2000);
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onError: (error: any) => {
+            setNotif({ show: true, message: error.message || "Terjadi kesalahan jaringan.", type: "error" });
         }
+    });
+
+    const onSubmit = (data: FormData) => {
+        const payload = {
+            ...data,
+            disetujui_oleh: userToken || ""
+        };
+        addLemburMutation.mutate(payload);
     };
     return (
         <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
@@ -105,11 +119,30 @@ export default function AddLembur() {
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
 
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">ID Pegawai <span className="text-red-500">*</span></label>
-                    <input
-                        {...register("pegawai_id")}
-                        className={`w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:outline-none ${idPegwai ? "bg-gray-100 text-gray-600" : ""}`}
-                        readOnly={!!idPegwai}
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Pilih Pegawai <span className="text-red-500">*</span></label>
+                    <Autocomplete
+                        options={pegawaiQuery.data || []}
+                        getOptionLabel={(option: any) => `${option.nama} (ID: ${option.id})`}
+                        disabled={!!idPegwai || pegawaiQuery.isLoading}
+                        value={(pegawaiQuery.data || []).find((p: any) => String(p.id) === String(watch("pegawai_id"))) || null}
+                        onChange={(_, newValue) => {
+                            setValue("pegawai_id", newValue ? String(newValue.id) : "", { shouldValidate: true });
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                placeholder={pegawaiQuery.isLoading ? "Memuat pegawai..." : "Cari nama atau ID pegawai..."}
+                                error={!!errors.pegawai_id}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        padding: '4px',
+                                        borderRadius: '0.5rem',
+                                        backgroundColor: !!idPegwai ? '#f3f4f6' : 'white',
+                                    }
+                                }}
+                            />
+                        )}
+                        noOptionsText="Pegawai tidak ditemukan"
                     />
                     {errors.pegawai_id && <p className="text-xs text-red-500 mt-1">{errors.pegawai_id.message}</p>}
                     {namaPegawai && (
@@ -161,8 +194,8 @@ export default function AddLembur() {
                 <Button
                     variant="success"
                     type="submit"
-                    disabled={isLoading}
-                    label={isLoading ? "Menyimpan..." : "Simpan"}
+                    disabled={addLemburMutation.isPending}
+                    label={addLemburMutation.isPending ? "Menyimpan..." : "Simpan"}
                 />
 
             </form>
