@@ -175,7 +175,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
         try {
             await editJabatanMutation.mutateAsync(newRow);
             const updatedRow = { ...newRow } as JabatanData;
-            const selectedDeptName = departemenOptions.find(opt => opt.value === Number(newRow.departemen_id))?.label;
+            const selectedDeptName = departemenOptions.find((opt: any) => opt.value === Number(newRow.departemen_id))?.label;
 
             if (selectedDeptName) {
                 updatedRow.departemen = { nama_departemen: selectedDeptName};
@@ -218,7 +218,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
                 let namaDept = params.row.departemen?.nama_departemen;
                 if (!namaDept && params.value) {
                     const matchedDept = departemenOptions.find(
-                        (opt) => String(opt.value) === String(params.value)
+                        (opt: any) => String(opt.value) === String(params.value)
                     );
                     namaDept = matchedDept?.label;
                 }

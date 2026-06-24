@@ -50,10 +50,12 @@ export default function JabatanIndex() {
                 return (mappedData);
             } else {
                 console.error("Gagal mengambil data:", resultJabatan, resultPegawai);
+                return [];
             }
         } catch (error) {
             console.error("Error fetching jabatan:", error);
             setNotif({ show: true, message: "Gagal memuat data jabatan. Pastikan backend berjalan.", type: "error" });
+            return [];
         }
     };
 

@@ -23,7 +23,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 // --- INTERFACES ---
 interface DepartemenTableProps {
     data?: DepartemenData[];
-    
+    onRefresh?: any;
 }
 
 export default function DepartemenTable({ data: initialData = [] }: DepartemenTableProps) {

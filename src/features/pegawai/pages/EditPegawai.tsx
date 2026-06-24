@@ -154,7 +154,7 @@ export default function EditPegawai(){
             // Cek apakah nilai departemen benar-benar berubah (bukan dari proses loading awal)
             if (prevDeptRef.current !== selectedDept) {
                 // 1. Filter daftar jabatan sesuai departemen yang baru dipilih
-                const filteredJabatan = allJabatan.filter((j) => j.departemen_id?.toString() === selectedDept.toString());
+                const filteredJabatan = allJabatan.filter((j: any) => j.departemen_id?.toString() === selectedDept.toString());
                 
                 // 2. Perbarui pilihan di dalam dropdown Jabatan
                 setJabatanList(filteredJabatan);
@@ -323,9 +323,9 @@ export default function EditPegawai(){
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                             <Input label="Tanggal Bergabung *" nama="tanggal_bergabung" type="date" register={register} error={errors.tanggal_bergabung?.message} />
                             <Input label="PIN Mesin Absensi *" nama="pin_mesin" register={register} error={errors.pin_mesin?.message} />
-                            <InputSelect label="Departemen" nama="departemen" register={register} error={errors.departemen?.message} options={departemenList.map(dept => ({ value: dept.id, label: dept.nama_departemen }))} />
+                            <InputSelect label="Departemen" nama="departemen" register={register} error={errors.departemen?.message} options={departemenList.map((dept: any) => ({ value: dept.id, label: dept.nama_departemen }))} />
                             <InputSelect label="Jabatan" nama="jabatan_id" register={register} error={errors.jabatan_id?.message} options={jabatanList.map(jabatan => ({ value: jabatan.id, label: jabatan.nama_jabatan }))} disabled={!selectedDept} />
-                            <InputSelect label="Shift" nama="default_shift_id" register={register} error={errors.default_shift_id?.message} options={shiftList.map(shift => ({ value: shift.id, label: shift.kode_shift || shift.nama_shift || `Shift ${shift.id}` }))} />
+                            <InputSelect label="Shift" nama="default_shift_id" register={register} error={errors.default_shift_id?.message} options={shiftList.map((shift: any) => ({ value: shift.id, label: shift.kode_shift || shift.nama_shift || `Shift ${shift.id}` }))} />
                         </div>
                     </div>
 
