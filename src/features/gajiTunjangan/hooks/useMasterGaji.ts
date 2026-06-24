@@ -41,6 +41,7 @@
                 });
                     return (formattedData);
             }
+            return [];
             } catch (error) {
                 console.error("Gagal memuat master jabatan:", error);
                 setNotif({ show: true, message: "Terjadi kesalahan koneksi.", type: "error" });

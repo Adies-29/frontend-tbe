@@ -191,7 +191,7 @@ export function useMatrixJadwal() {
 
     const filteredMatrixKaryawan = useMemo(() => {
         return matrixKaryawan.filter(pegawai => {
-            const pegMatch = listPegawai.find(p => p.id === pegawai.id);
+            const pegMatch = listPegawai.find((p: any) => p.id === pegawai.id);
             const actualDepartemen = pegMatch?.jabatan?.departemen?.nama_departemen || pegawai.departemen;
 
             const matchSearch = pegawai.nama.toLowerCase().includes(searchQuery.toLowerCase());
@@ -205,7 +205,7 @@ export function useMatrixJadwal() {
         return Array.from(new Set(
             matrixKaryawan
                 .filter(p => {
-                    const pegMatch = listPegawai.find(listP => listP.id === p.id);
+                    const pegMatch = listPegawai.find((listP: any) => listP.id === p.id);
                     const actualDepartemen = pegMatch?.jabatan?.departemen?.nama_departemen || p.departemen;
                     return filterDepartemen === "" || actualDepartemen === filterDepartemen;
                 })
@@ -218,7 +218,7 @@ export function useMatrixJadwal() {
         return Array.from(
             new Set(
                 matrixKaryawan.map(p => {
-                    const pegMatch = listPegawai.find(listP => listP.id === p.id);
+                    const pegMatch = listPegawai.find((listP: any) => listP.id === p.id);
                     return pegMatch?.jabatan?.departemen?.nama_departemen || p.departemen;
                 }).filter(d => d && d !== "-")
             )
