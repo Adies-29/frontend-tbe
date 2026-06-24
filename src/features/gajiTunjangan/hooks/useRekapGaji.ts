@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { useAuthStore } from '../../../store/useAuthStore';
 import type { RekapGajiData } from '../components/TabelRekapGaji';
 import { apiFetch } from '../../../utils/apiFetch';
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-
 
 interface GajiApiResponse {
     id: number;
@@ -41,7 +38,6 @@ const getCurrentMonth = () => {
 const getCurrentYear = () => {
     return new Date().getFullYear().toString();
 };
-
 
 export function useRekapGaji() {
     const token = useAuthStore((state) => state.token);
@@ -175,30 +171,56 @@ export function useRekapGaji() {
         }
     });
 
+    // ==========================================================
+    // FITUR BARU: MUTASI PELUNASAN GAJI
+    // ==========================================================
+    const pelunasanGajiMutation = useMutation({
+        mutationFn: async (id_gaji: string) => {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/gaji/${id_gaji}/lunas`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success) throw new Error(result.message || "Gagal memproses pelunasan.");
+            return result;
+        },
+        onSuccess: (result) => {
+            setNotif({ show: true, message: `Sukses! ${result.message}`, type: "success" });
+            queryClient.invalidateQueries({ queryKey: ['rekapGaji'] }); // Refresh tabel otomatis
+        },
+        onError: (error: any) => {
+            setNotif({ show: true, message: error.message || "Terjadi kesalahan saat pelunasan gaji.", type: "error" });
+        }
+    });
+
+    const handlePelunasanGaji = (id_gaji: string) => {
+        const confirmLunas = window.confirm("Apakah Anda yakin ingin menandai gaji ini sebagai Lunas? (Tindakan ini akan mengunci slip gaji dan memotong saldo kasbon karyawan secara permanen jika ada).");
+        if (!confirmLunas) return;
+        
+        pelunasanGajiMutation.mutate(id_gaji);
+    };
+
     const handleGenerateGaji = () => {
         if (!filterValue) {
             setNotif({ show: true, message: "Harap pilih periode di kalender terlebih dahulu sebelum men-generate gaji.", type: "error" });
             return;
         }
 
-        // 1. Validasi tipe periode di awal untuk mencegah inisialisasi variabel sia-sia
         if (periode !== 'bulan' && periode !== 'minggu') {
             setNotif({ show: true, message: "Sistem Generate Gaji hanya mendukung periode Mingguan dan Bulanan.", type: "error" });
             return;
         }
 
-        // 2. Sekarang variabel aman diinisialisasi karena validasi di atas sudah lolos
         let tanggalMulai = "";
         let tanggalSelesai = "";
         let targetBulan = 1;
         let targetTahun = 2026;
         let labelPeriode = "";
 
-        // ==========================================================
-        // KALKULASI RENTANG TANGGAL BERDASARKAN MODE PERIODE
-        // ==========================================================
         if (periode === 'bulan') {
-            // Mode Bulanan: "2026-06"
             const [tahun, bulan] = filterValue.split('-');
             targetTahun = parseInt(tahun);
             targetBulan = parseInt(bulan);
@@ -210,30 +232,26 @@ export function useRekapGaji() {
             labelPeriode = `Bulan ${bulan} Tahun ${tahun}`;
 
         } else if (periode === 'minggu') {
-            // Mode Mingguan: "2026-W24"
             const [tahunStr, mingguStr] = filterValue.split('-W');
             const year = parseInt(tahunStr);
             const week = parseInt(mingguStr);
 
-            // Algoritma ISO 8601 untuk mencari hari Senin di minggu tersebut
             const jan4 = new Date(year, 0, 4);
             const dayOfJan4 = jan4.getDay() || 7;
             const week1Start = new Date(year, 0, 4 - dayOfJan4 + 1);
 
             const startDate = new Date(week1Start.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
-            const endDate = new Date(startDate.getTime() + 6 * 24 * 60 * 60 * 1000); // Tambah 6 hari ke hari Minggu
+            const endDate = new Date(startDate.getTime() + 6 * 24 * 60 * 60 * 1000); 
 
-            tanggalMulai = startDate.toLocaleDateString('en-CA'); // YYYY-MM-DD
+            tanggalMulai = startDate.toLocaleDateString('en-CA'); 
             tanggalSelesai = endDate.toLocaleDateString('en-CA');
 
-            // Ambil bulan & tahun berdasarkan hari Senin di minggu tersebut
             targetBulan = startDate.getMonth() + 1;
             targetTahun = startDate.getFullYear();
 
             labelPeriode = `Mingguan (${tanggalMulai} s/d ${tanggalSelesai})`;
         }
 
-        // Konfirmasi sebelum eksekusi
         const confirmGenerate = window.confirm(`Apakah Anda yakin ingin menghitung dan menerbitkan gaji untuk periode ${labelPeriode}?`);
         if (!confirmGenerate) return;
 
@@ -244,7 +262,6 @@ export function useRekapGaji() {
             periode_tahun: targetTahun
         });
     };
-
 
     const handleCetakSemuaSlip = () => {
         if (rekapGajiData.length === 0) {
@@ -280,10 +297,12 @@ export function useRekapGaji() {
         rekapGajiData,
         isLoadingRekap,
         isGenerating: generateGajiMutation.isPending,
+        isPelunasanPending: pelunasanGajiMutation.isPending, // Expose status loading pelunasan
         summaryCards,
         notif,
         isErrorRekap,
         handleGenerateGaji,
+        handlePelunasanGaji, // Expose fungsi pelunasan
         handleCetakSemuaSlip,
         handleFilter,
         handlePeriodeChange,

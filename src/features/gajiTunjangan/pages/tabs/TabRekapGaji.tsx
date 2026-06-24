@@ -28,6 +28,7 @@ export default function TabRekapGaji() {
         summaryCards,
         notif,
         handleGenerateGaji,
+        handlePelunasanGaji,
         handleCetakSemuaSlip,
         handleFilter,
         handlePeriodeChange,
@@ -123,7 +124,9 @@ export default function TabRekapGaji() {
                     </div>
                 </div>
 
-                <TabelRekapGaji data={rekapGajiData} />
+                <TabelRekapGaji 
+                data={rekapGajiData}
+                onPelunasan={handlePelunasanGaji} />
 
             </section>
             
