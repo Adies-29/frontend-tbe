@@ -182,10 +182,10 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                                         </tr>
                                     ))}
 
-                                    <tr className="border-b border-black">
+                                    {/* <tr className="border-b border-black">
                                         <td className="py-1 px-2 border-r border-black">Tabungan Mingguan :</td>
                                         <td className="py-1 px-2 text-right align-middle">{formatAngka(rt.tabungan_mingguan_terkumpul)}</td>
-                                    </tr>
+                                    </tr> */}
                                     <tr className="border-b border-black">
                                         <td className="py-1 px-2 border-r border-black">Tabungan Lembur :</td>
                                         <td className="py-1 px-2 text-right align-middle">{formatAngka(rt.tabungan_lembur_tahunan_terkumpul)}</td>
@@ -228,6 +228,23 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                                             <td className="py-0.5 px-2 align-middle">{formatAngka(rb.bonus_kerapian_harian)}</td>
                                         </tr>
                                     )}
+                                    
+                                    {/* Pembatas Kotor & Potongan */}
+                                    <tr><td colSpan={2} className="border-b border-black"></td></tr>
+                                    
+                                    {/* --- [SUNTIKAN KODE UI BONUS CUSTOM] --- */}
+                                    {rb.detail_bonus_custom && rb.detail_bonus_custom.length > 0 && (
+                                        <>
+                                            <tr><td colSpan={2} className="py-0.5 pr-2 border-r border-black font-semibold text-blue-800 text-left bg-gray-50 pl-1">Pendapatan Lain:</td></tr>
+                                            {rb.detail_bonus_custom.map((b_custom: any, i: number) => (
+                                                <tr key={'bonus-'+i}>
+                                                    <td className="py-0.5 pr-2 border-r border-black italic pl-2 leading-tight">- {b_custom.keterangan}</td>
+                                                    <td className="py-0.5 px-2 align-middle">{formatAngka(b_custom.nominal)}</td>
+                                                </tr>
+                                            ))}
+                                        </>
+                                    )}
+                                    {/* --------------------------------------- */}
                                     
                                     {/* Pembatas Kotor & Potongan */}
                                     <tr><td colSpan={2} className="border-b border-black"></td></tr>

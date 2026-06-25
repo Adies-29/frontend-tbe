@@ -37,6 +37,9 @@ const AturGajiJabatan = lazy(() => import('./features/gajiTunjangan/pages/AturGa
 
 const DetailPegawai = lazy(() => import('./features/pegawai/pages/DetailPegawai'))
 
+const BonusCustomIndex = lazy(() => import('./features/bonusCustom/pages/BonusCustomIndex'))
+
+
 function PageLoader() {
   return (
     <div className="flex items-center justify-center h-64">
@@ -102,6 +105,8 @@ function App() {
 
                 <Route path="/dashboard/kasbon" element={<KasbonIndex />} />
                 <Route path="/dashboard/kasbon/tambah" element={<AddKasbon />} />
+
+                <Route path="/dashboard/bonus-custom" element={<BonusCustomIndex />} />
 
               </Route>
             </Route>
