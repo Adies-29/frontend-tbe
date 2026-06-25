@@ -134,7 +134,7 @@ export function useRekapGaji() {
                 const formattedData = data.map((item: GajiApiResponse) => {
                     const totalPotonganKasbon = item.rincian_potongan?.potongan_kasbon || 0;
                     const totalKotor = (item.gaji_dasar || 0) + (item.total_bonus || 0);
-
+                    const bonusMingguan = item.rincian_bonus?.bonus_kehadiran_mingguan || 0;
                     return {
                         // Data Inti & Kebutuhan Tabel
                         id: String(item.id),
@@ -157,6 +157,7 @@ export function useRekapGaji() {
                         potongan_bon: totalPotonganKasbon,
                         bayar_kerupuk: 0, // Placeholder tabungan (Jika ada tabungan harian)
                         total_upah: item.total_gaji || 0,
+                        bonus_mingguan: bonusMingguan,
                         
                         // Sisa Hutang Kasbon (Jika ada endpoint untuk cek saldo utang)
                         hutang_awal: 0, 

@@ -194,6 +194,13 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                             {/* Kanan: Kotak Total */}
                             <table className="text-right w-64">
                                 <tbody>
+                                    {/* Tampilkan baris Bonus Mingguan jika pegawai tersebut mendapatkannya */}
+                                    {pegawai.bonus_mingguan > 0 && (
+                                        <tr>
+                                            <td className="py-1 pr-4 text-gray-700 italic">Bonus Mingguan Full</td>
+                                            <td className="py-1 border border-black px-2">{formatAngka(pegawai.bonus_mingguan)}</td>
+                                        </tr>
+                                    )}
                                     <tr>
                                         <td className="py-1 pr-4 font-semibold">Jumlah</td>
                                         <td className="py-1 font-semibold border border-black px-2">{formatAngka(pegawai.total_kotor)}</td>
@@ -202,7 +209,7 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                                         <td className="py-1 pr-4">Potongan Bon</td>
                                         <td className="py-1 border border-black px-2">{formatAngka(pegawai.potongan_bon)}</td>
                                     </tr>
-                                    {pegawai.bayar_kerupuk !== undefined && (
+                                    {pegawai.bayar_kerupuk !== undefined && pegawai.bayar_kerupuk > 0 && (
                                         <tr>
                                             <td className="py-1 pr-4">Bayar Kerupuk</td>
                                             <td className="py-1 border border-black px-2">{formatAngka(pegawai.bayar_kerupuk)}</td>
@@ -216,8 +223,10 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                             </table>
 
                         </div>
-                        {/* --- Garis Pemisah Antar Slip (Jika dicetak atas-bawah) --- */}
-                        <div className="mt-8 mb-4 border-t-2 border-dashed border-gray-400 w-full"></div>
+                        {/* --- Garis Pemisah Antar Slip --- */}
+                        <div className="mt-12 mb-8 border-t-2 border-dashed border-gray-400 w-full relative">
+                             <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-2 text-[9px] text-gray-400 italic">Gunting di sini</span>
+                        </div>
                     </div>
                 );
             })}
