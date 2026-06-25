@@ -238,7 +238,7 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                                             <tr><td colSpan={2} className="py-0.5 pr-2 border-r border-black font-semibold text-blue-800 text-left bg-gray-50 pl-1">Pendapatan Lain:</td></tr>
                                             {rb.detail_bonus_custom.map((b_custom: any, i: number) => (
                                                 <tr key={'bonus-'+i}>
-                                                    <td className="py-0.5 pr-2 border-r border-black italic pl-2 leading-tight">- {b_custom.keterangan}</td>
+                                                    <td className="py-0.5 pr-2 italic pl-2 text-left    ">- {b_custom.keterangan}</td>
                                                     <td className="py-0.5 px-2 align-middle">{formatAngka(b_custom.nominal)}</td>
                                                 </tr>
                                             ))}
