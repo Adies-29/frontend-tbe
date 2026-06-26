@@ -43,7 +43,7 @@ interface SlipGajiTemplateProps {
     filterValue: string;
 }
 
-const formatAngka = (angka: number) => {
+const formatAngka = (angka?: number | null) => {
     if (!angka) return "0";
     return new Intl.NumberFormat('id-ID').format(Math.round(angka));
 };
