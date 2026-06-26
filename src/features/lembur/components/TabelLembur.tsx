@@ -125,18 +125,19 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
             }
         },
         {
-            field: "upah_lembur_per_jam_custom",
+            field: "nominal_upah_custom",
             headerName: "Upah/Jam",
             flex: 1,
             minWidth: 140,
             align: "center",
             headerAlign: "center",
             renderCell: (params) => {
-                const custom = params.value;
-                if (custom && custom > 0) {
+                const isCustom = params.row.is_custom_upah;
+                const customValue = params.value;
+                if (isCustom && customValue > 0) {
                     return (
                         <span className="bg-amber-100 text-amber-700 font-bold px-2 py-1 rounded text-xs">
-                            Rp {Number(custom).toLocaleString('id-ID')} (Custom)
+                            Rp {Number(customValue).toLocaleString('id-ID')} (Custom)
                         </span>
                     );
                 }

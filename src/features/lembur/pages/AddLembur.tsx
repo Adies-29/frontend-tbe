@@ -132,8 +132,11 @@ export default function AddLembur() {
             disetujui_oleh: userToken || ""
         };
 
+        payload.is_custom_upah = aturUpahLembur;
         if (aturUpahLembur && customUpahValue) {
-            payload.upah_lembur_per_jam_custom = Number(customUpahValue);
+            payload.nominal_upah_custom = Number(customUpahValue);
+        } else {
+            payload.nominal_upah_custom = 0;
         }
 
         addLemburMutation.mutate(payload);

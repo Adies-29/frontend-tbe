@@ -108,9 +108,9 @@ export default function EditLembur() {
             });
 
             // Pre-populate toggle jika ada custom upah
-            if (lembur.upah_lembur_per_jam_custom && lembur.upah_lembur_per_jam_custom > 0) {
+            if (lembur.is_custom_upah && lembur.nominal_upah_custom) {
                 setAturUpahLembur(true);
-                setCustomUpahValue(String(lembur.upah_lembur_per_jam_custom));
+                setCustomUpahValue(String(lembur.nominal_upah_custom));
             } else {
                 setAturUpahLembur(false);
                 setCustomUpahValue("");
@@ -173,8 +173,11 @@ export default function EditLembur() {
             disetujui_oleh: userToken || ""
         };
 
+        payload.is_custom_upah = aturUpahLembur;
         if (aturUpahLembur && customUpahValue) {
-            payload.upah_lembur_per_jam_custom = Number(customUpahValue);
+            payload.nominal_upah_custom = Number(customUpahValue);
+        } else {
+            payload.nominal_upah_custom = 0;
         }
 
         editLemburMutation.mutate(payload);

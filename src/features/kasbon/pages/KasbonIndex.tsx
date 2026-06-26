@@ -85,13 +85,18 @@ export default function KasbonIndex() {
     // 4. Mutasi Bayar Kasbon
     const bayarMutation = useMutation({
         mutationFn: async ({ id, nominal_bayar, keterangan }: { id: number, nominal_bayar: number, keterangan: string }) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/kasbon/${id}/bayar`, {
-                method: 'POST',
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/kasbon/${id}/bayar-manual`, {
+                method: 'PATCH',
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify({ nominal_bayar, keterangan })
+                body: JSON.stringify({ 
+                    nominal_bayar, 
+                    keterangan,
+                    tanggal_pembayaran: new Date().toISOString().split('T')[0],
+                    metode_pembayaran: 'Tunai'
+                })
             });
             const result = await response.json();
             if (!response.ok || !result.success) throw new Error(result.message || "Gagal memproses pembayaran");
