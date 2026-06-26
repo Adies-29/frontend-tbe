@@ -1,5 +1,3 @@
-import React from 'react';
-
 export interface DetailHarian {
     hari_tanggal: string; 
     gaji_kehadiran?: number;
