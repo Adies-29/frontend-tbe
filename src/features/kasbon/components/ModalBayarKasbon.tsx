@@ -7,19 +7,21 @@ interface ModalBayarKasbonProps {
     onClose: () => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     kasbon: any | null;
-    onSubmit: (nominal: number, keterangan: string) => void;
+    onSubmit: (nominal: number, keterangan: string, metode: string) => void;
     isPending: boolean;
 }
 
 export default function ModalBayarKasbon({ isOpen, onClose, kasbon, onSubmit, isPending }: ModalBayarKasbonProps) {
     const [nominal, setNominal] = useState<string>("");
     const [keterangan, setKeterangan] = useState<string>("");
+    const [metode, setMetode] = useState<string>("Tunai");
     const [error, setError] = useState<string>("");
 
     useEffect(() => {
         if (isOpen) {
             setNominal("");
             setKeterangan("");
+            setMetode("Tunai");
             setError("");
         }
     }, [isOpen]);
@@ -52,7 +54,7 @@ export default function ModalBayarKasbon({ isOpen, onClose, kasbon, onSubmit, is
             return;
         }
 
-        onSubmit(cleanNominal, keterangan);
+        onSubmit(cleanNominal, keterangan, metode);
     };
 
     const sisaPinjaman = kasbon.sisa_pinjaman || 0;
@@ -122,6 +124,21 @@ export default function ModalBayarKasbon({ isOpen, onClose, kasbon, onSubmit, is
                                 Bayar Lunas
                             </button>
                         </div>
+                    </div>
+
+                    {/* Input Metode */}
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-sm font-semibold text-gray-700">Metode Pembayaran</label>
+                        <select
+                            value={metode}
+                            onChange={(e) => setMetode(e.target.value)}
+                            className="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm outline-none transition-all bg-white"
+                            disabled={isPending}
+                        >
+                            <option value="Tunai">Tunai</option>
+                            <option value="Transfer">Transfer</option>
+                            <option value="Potong Gaji">Potong Gaji</option>
+                        </select>
                     </div>
 
                     {/* Input Keterangan */}

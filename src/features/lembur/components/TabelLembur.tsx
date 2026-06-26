@@ -133,7 +133,10 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
             headerAlign: "center",
             renderCell: (params) => {
                 const isCustom = params.row.is_custom_upah;
-                const customValue = params.value;
+                const customValue = params.row.nominal_upah_custom;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const upahLemburDefault = (params.row.pegawai as any)?.jabatan?.upah_lembur_per_jam;
+
                 if (isCustom && customValue > 0) {
                     return (
                         <span className="bg-amber-100 text-amber-700 font-bold px-2 py-1 rounded text-xs">
@@ -141,9 +144,18 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
                         </span>
                     );
                 }
+
+                if (upahLemburDefault) {
+                    return (
+                        <span className="bg-gray-100 text-gray-700 font-medium px-2 py-1 rounded text-xs">
+                            Rp {Number(upahLemburDefault).toLocaleString('id-ID')} (Default)
+                        </span>
+                    );
+                }
+
                 return (
                     <span className="bg-gray-100 text-gray-500 font-medium px-2 py-1 rounded text-xs">
-                        Default Jabatan
+                        Belum Diatur
                     </span>
                 );
             }
