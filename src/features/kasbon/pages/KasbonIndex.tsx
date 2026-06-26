@@ -6,6 +6,7 @@ import { Wallet } from "lucide-react";
 import Button from "../../../components/common/Button";
 import Notif from "../../../components/common/Notif";
 import TabelKasbon from "../components/TabelKasbon";
+import ModalBayarKasbon from "../components/ModalBayarKasbon";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function KasbonIndex() {
@@ -17,6 +18,11 @@ export default function KasbonIndex() {
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
         show: false, message: "", type: "success"
     });
+    
+    // State untuk Modal Bayar
+    const [isModalBayarOpen, setIsModalBayarOpen] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [selectedKasbon, setSelectedKasbon] = useState<any>(null);
 
     // 1. Ambil Data Kasbon
     const kasbonQuery = useQuery({
@@ -56,7 +62,7 @@ export default function KasbonIndex() {
         }
     });
 
-    // 3. Mutasi Hapus Kasbon (Sebelumnya cuma dummy!)
+    // 3. Mutasi Hapus Kasbon
     const deleteMutation = useMutation({
         mutationFn: async (id: number) => {
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/kasbon/${id}`, {
@@ -75,6 +81,53 @@ export default function KasbonIndex() {
             setNotif({ show: true, message: error.message || "Terjadi kesalahan server", type: "error" });
         }
     });
+
+    // 4. Mutasi Bayar Kasbon
+    const bayarMutation = useMutation({
+        mutationFn: async ({ id, nominal_bayar, keterangan }: { id: number, nominal_bayar: number, keterangan: string }) => {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/kasbon/${id}/bayar-manual`, {
+                method: 'PATCH',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ 
+                    nominal_bayar, 
+                    keterangan,
+                    tanggal_pembayaran: new Date().toISOString().split('T')[0],
+                    metode_pembayaran: 'Tunai'
+                })
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success) throw new Error(result.message || "Gagal memproses pembayaran");
+            return result;
+        },
+        onSuccess: () => {
+            setNotif({ show: true, message: "Pembayaran kasbon berhasil dicatat", type: "success" });
+            setIsModalBayarOpen(false);
+            setSelectedKasbon(null);
+            queryClient.invalidateQueries({ queryKey: ['kasbonList'] });
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onError: (error: any) => {
+            setNotif({ show: true, message: error.message || "Terjadi kesalahan server", type: "error" });
+        }
+    });
+
+    const handleBayarClick = (kasbon: any) => {
+        setSelectedKasbon(kasbon);
+        setIsModalBayarOpen(true);
+    };
+
+    const handleBayarSubmit = (nominal: number, keterangan: string) => {
+        if (selectedKasbon) {
+            bayarMutation.mutate({
+                id: selectedKasbon.id,
+                nominal_bayar: nominal,
+                keterangan
+            });
+        }
+    };
 
     return (
         <div className="flex flex-col gap-6 w-full p-2">
@@ -102,9 +155,21 @@ export default function KasbonIndex() {
                     data={kasbonQuery.data || []} 
                     isLoading={kasbonQuery.isLoading} 
                     onDelete={(id) => deleteMutation.mutate(id)} 
-                    onStatusChange={(id, newStatus) => statusMutation.mutate({ id, newStatus })} 
+                    onStatusChange={(id, newStatus) => statusMutation.mutate({ id, newStatus })}
+                    onBayar={handleBayarClick}
                 />
             </div>
+
+            <ModalBayarKasbon
+                isOpen={isModalBayarOpen}
+                onClose={() => {
+                    setIsModalBayarOpen(false);
+                    setSelectedKasbon(null);
+                }}
+                kasbon={selectedKasbon}
+                onSubmit={handleBayarSubmit}
+                isPending={bayarMutation.isPending}
+            />
         </div>
     );
 }

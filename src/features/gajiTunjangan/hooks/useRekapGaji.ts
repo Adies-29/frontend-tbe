@@ -238,7 +238,7 @@ export function useRekapGaji() {
     const handlePelunasanGaji = (id_gaji: string) => {
         const confirmLunas = window.confirm("Apakah Anda yakin ingin menandai gaji ini sebagai Lunas? (Tindakan ini akan mengunci slip gaji dan memotong saldo kasbon karyawan secara permanen jika ada).");
         if (!confirmLunas) return;
-        
+
         pelunasanGajiMutation.mutate(id_gaji);
     };
 
@@ -284,13 +284,13 @@ export function useRekapGaji() {
             const week1Start = new Date(year, 0, 4 - dayOfJan4 + 1);
 
             const startDate = new Date(week1Start.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
-            const endDate = new Date(startDate.getTime() + 6 * 24 * 60 * 60 * 1000); 
+            const endDate = new Date(startDate.getTime() + 6 * 24 * 60 * 60 * 1000);
 
             // FORMAT TANGGAL MANUAL KE YYYY-MM-DD UNTUK MENCEGAH ERROR POSTGRES
             const startYear = startDate.getFullYear();
             const startMonth = String(startDate.getMonth() + 1).padStart(2, '0');
             const startDay = String(startDate.getDate()).padStart(2, '0');
-            
+
             const endYear = endDate.getFullYear();
             const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
             const endDay = String(endDate.getDate()).padStart(2, '0');

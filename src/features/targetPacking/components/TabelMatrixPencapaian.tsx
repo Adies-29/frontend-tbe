@@ -33,7 +33,6 @@ export default function TabelMatrixPencapaian() {
         onSuccess: () => {
             hookParams.showNotif("Pencapaian berhasil disimpan", "success");
             queryClient.invalidateQueries({ queryKey: ['pencapaianList'] });
-            hookParams.setIsModalOpen(false);
         },
         onError: (err: any) => hookParams.showNotif(err.message, "error")
     });

@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Autocomplete, TextField } from "@mui/material";
-import { ArrowLeft, Clock } from "lucide-react";
+import { ArrowLeft, Clock, Banknote } from "lucide-react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import Button from "../../../components/common/Button";
 import Notif from "../../../components/common/Notif";
@@ -54,6 +54,13 @@ export default function AddLembur() {
 
     const valMenit = watch("menit_lembur_diizinkan");
 
+    // State untuk fitur atur upah lembur
+    const [aturUpahLembur, setAturUpahLembur] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [selectedPegawai, setSelectedPegawai] = useState<any>(null);
+    const [customUpahValue, setCustomUpahValue] = useState<string>("");
+    const [customUpahError, setCustomUpahError] = useState("");
+
     const pegawaiQuery = useQuery({
         queryKey: ['pegawaiList'],
         queryFn: async () => {
@@ -64,6 +71,15 @@ export default function AddLembur() {
             return result.data || [];
         }
     });
+
+    // Set selectedPegawai saat data pegawai dimuat dan idPegwai sudah ada dari URL
+    useEffect(() => {
+        if (idPegwai && pegawaiQuery.data) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const found = (pegawaiQuery.data as any[]).find((p: any) => String(p.id) === String(idPegwai));
+            if (found) setSelectedPegawai(found);
+        }
+    }, [idPegwai, pegawaiQuery.data]);
 
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
         show: false,
@@ -100,10 +116,29 @@ export default function AddLembur() {
     });
 
     const onSubmit = (data: FormData) => {
-        const payload = {
+        // Validasi custom upah jika checkbox dicentang
+        if (aturUpahLembur) {
+            const numVal = Number(customUpahValue);
+            if (!customUpahValue || isNaN(numVal) || numVal <= 0) {
+                setCustomUpahError("Nominal upah/jam wajib diisi (minimal Rp 1)");
+                return;
+            }
+            setCustomUpahError("");
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const payload: any = {
             ...data,
             disetujui_oleh: userToken || ""
         };
+
+        payload.is_custom_upah = aturUpahLembur;
+        if (aturUpahLembur && customUpahValue) {
+            payload.nominal_upah_custom = Number(customUpahValue);
+        } else {
+            payload.nominal_upah_custom = 0;
+        }
+
         addLemburMutation.mutate(payload);
     };
     return (
@@ -127,6 +162,10 @@ export default function AddLembur() {
                         value={(pegawaiQuery.data || []).find((p: any) => String(p.id) === String(watch("pegawai_id"))) || null}
                         onChange={(_, newValue) => {
                             setValue("pegawai_id", newValue ? String(newValue.id) : "", { shouldValidate: true });
+                            setSelectedPegawai(newValue);
+                            setAturUpahLembur(false);
+                            setCustomUpahValue("");
+                            setCustomUpahError("");
                         }}
                         renderInput={(params) => (
                             <TextField
@@ -179,6 +218,68 @@ export default function AddLembur() {
                         </p>
                     )}
                     {errors.menit_lembur_diizinkan && <p className="text-xs text-red-500 mt-1">{errors.menit_lembur_diizinkan.message}</p>}
+                </div>
+
+                {/* === TOGGLE ATUR UPAH LEMBUR === */}
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50/50">
+                    <label htmlFor="atur_upah_lembur" className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-red-50 transition-colors cursor-pointer select-none">
+                        <span className="text-sm font-semibold text-gray-700">Atur Upah Lembur</span>
+                        <div className="relative">
+                            <input
+                                type="checkbox"
+                                id="atur_upah_lembur"
+                                checked={aturUpahLembur}
+                                onChange={(e) => {
+                                    setAturUpahLembur(e.target.checked);
+                                    if (!e.target.checked) {
+                                        setCustomUpahValue("");
+                                        setCustomUpahError("");
+                                    }
+                                }}
+                                className="sr-only peer" />
+                            <div className="w-12 h-7 bg-gray-300 rounded-full peer-checked:bg-red-500 transition-colors duration-200"></div>
+                            <div className="absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-md peer-checked:translate-x-5 transition-transform duration-200"></div>
+                        </div>
+                    </label>
+
+                    {!aturUpahLembur ? (
+                        <div className="ml-8 mt-1">
+                            {selectedPegawai?.jabatan?.upah_lembur_per_jam ? (
+                                <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 flex items-center gap-2">
+                                    <Banknote size={14} />
+                                    Upah lembur sesuai jabatan:{" "}
+                                    <strong>Rp {Number(selectedPegawai.jabatan.upah_lembur_per_jam).toLocaleString('id-ID')}/jam</strong>
+                                </p>
+                            ) : (
+                                <p className="text-xs text-gray-500 italic ml-1">
+                                    {selectedPegawai ? "Data upah lembur jabatan belum diatur" : "Pilih pegawai terlebih dahulu"}
+                                </p>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="ml-8 mt-2">
+                            <label className="block text-sm font-medium text-gray-600 mb-1">
+                                Nominal Upah/Jam (Rp) <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                value={customUpahValue}
+                                onChange={(e) => {
+                                    setCustomUpahValue(e.target.value);
+                                    if (customUpahError) setCustomUpahError("");
+                                }}
+                                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:outline-none"
+                                placeholder="Contoh: 15000"
+                            />
+                            {customUpahError && <p className="text-xs text-red-500 mt-1">{customUpahError}</p>}
+                            {customUpahValue && Number(customUpahValue) > 0 && (
+                                <p className="text-xs text-blue-600 mt-1 font-medium italic">
+                                    Rp {Number(customUpahValue).toLocaleString('id-ID')}/jam
+                                </p>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div>

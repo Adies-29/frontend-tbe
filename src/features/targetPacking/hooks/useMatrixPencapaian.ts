@@ -153,6 +153,27 @@ export function useMatrixPencapaian() {
         }
     });
 
+    // Fetch daftar jabatan untuk mengetahui tipe_penggajian
+    const jabatanQuery = useQuery({
+        queryKey: ['jabatanListForTarget'],
+        queryFn: async () => {
+            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error("Gagal memuat daftar jabatan");
+            return data.data || [];
+        }
+    });
+
+    // Daftar nama jabatan yang bertipe "Target"
+    const targetJabatanNames = useMemo(() => {
+        if (!jabatanQuery.data) return [];
+        return (jabatanQuery.data as any[])
+            .filter((j: any) => j.tipe_penggajian === 'Target')
+            .map((j: any) => j.nama_jabatan as string);
+    }, [jabatanQuery.data]);
+
     const listPegawai = pegawaiQuery.data || [];
     const listMasterTargets = masterTargetsQuery.data || [];
 
@@ -226,9 +247,11 @@ export function useMatrixPencapaian() {
             const matchSearch = pegawai.nama.toLowerCase().includes(searchQuery.toLowerCase());
             const matchDepartemen = filterDepartemen === "" || pegawai.departemen === filterDepartemen;
             const matchJabatan = filterJabatan === "" || pegawai.jabatan === filterJabatan;
-            return matchSearch && matchDepartemen && matchJabatan;
+            // Hanya tampilkan pegawai yang jabatannya bertipe Target
+            const isTargetJabatan = targetJabatanNames.length === 0 || targetJabatanNames.includes(pegawai.jabatan);
+            return matchSearch && matchDepartemen && matchJabatan && isTargetJabatan;
         });
-    }, [matrixKaryawan, searchQuery, filterDepartemen, filterJabatan]);
+    }, [matrixKaryawan, searchQuery, filterDepartemen, filterJabatan, targetJabatanNames]);
 
     const uniqueJabatanList = useMemo(() => {
         return Array.from(new Set(
@@ -236,8 +259,10 @@ export function useMatrixPencapaian() {
                 .filter(p => filterDepartemen === "" || p.departemen === filterDepartemen)
                 .map(p => p.jabatan)
                 .filter(j => j !== "-")
+                // Hanya jabatan bertipe Target yang muncul di dropdown
+                .filter(j => targetJabatanNames.length === 0 || targetJabatanNames.includes(j))
         ));
-    }, [matrixKaryawan, filterDepartemen]);
+    }, [matrixKaryawan, filterDepartemen, targetJabatanNames]);
 
     const uniqueDepartemenList = useMemo(() => {
         return Array.from(
@@ -247,7 +272,7 @@ export function useMatrixPencapaian() {
         );
     }, [matrixKaryawan]);
 
-    const isLoading = pegawaiQuery.isLoading || pencapaianQuery.isLoading;
+    const isLoading = pegawaiQuery.isLoading || pencapaianQuery.isLoading || jabatanQuery.isLoading;
     const errorMsg = pencapaianQuery.error?.message || "";
 
     const handleCellClick = (pegawaiId: number, pegawaiNama: string, tglFormat: string, pegawaiJabatan?: string) => {

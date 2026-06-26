@@ -17,6 +17,8 @@ export interface LemburData{
     menit_lembur_diizinkan: number;
     alasan_lembur: string;
     disetujui_oleh: string;
+    is_custom_upah?: boolean;
+    nominal_upah_custom?: number | null;
     nama?: string;
     pegawai?: { nama: string };
 }
