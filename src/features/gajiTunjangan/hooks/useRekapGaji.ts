@@ -4,33 +4,6 @@ import { apiFetch } from '../../../utils/apiFetch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // =========================================================================
-// INTERFACE API RESPONSE DARI BACKEND
-// =========================================================================
-interface GajiApiResponse {
-    id: number;
-    gaji_dasar?: number;
-    total_bonus?: number;
-    total_potongan?: number;
-    total_gaji?: number;
-    status_pembayaran?: string;
-    tanggal_awal_periode?: string;
-    tanggal_akhir_periode?: string;
-    
-    detail_harian?: any[];
-    rincian_bonus?: any;
-    rincian_potongan?: any;
-    informasi_tabungan?: any;
-
-    pegawai?: {
-        nama: string;
-        jabatan?: { 
-            nama_jabatan: string;
-            tipe_penggajian?: 'Harian' | 'Target' | 'Bulanan';
-        };
-    };
-}
-
-// =========================================================================
 // HELPER FUNCTIONS
 // =========================================================================
 const getCurrentWeek = () => {
