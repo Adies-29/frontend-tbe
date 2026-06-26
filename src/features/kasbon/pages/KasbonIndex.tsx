@@ -8,6 +8,7 @@ import Notif from "../../../components/common/Notif";
 import TabelKasbon from "../components/TabelKasbon";
 import ModalBayarKasbon from "../components/ModalBayarKasbon";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import TabelRiwayatKasbon from "../components/TabelRiwayatKasbon";
 
 export default function KasbonIndex() {
     const navigate = useNavigate();
@@ -23,6 +24,7 @@ export default function KasbonIndex() {
     const [isModalBayarOpen, setIsModalBayarOpen] = useState(false);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [selectedKasbon, setSelectedKasbon] = useState<any>(null);
+    const [activeTab, setActiveTab] = useState<'daftar' | 'riwayat'>('daftar');
 
     // 1. Ambil Data Kasbon
     const kasbonQuery = useQuery({
@@ -84,7 +86,7 @@ export default function KasbonIndex() {
 
     // 4. Mutasi Bayar Kasbon
     const bayarMutation = useMutation({
-        mutationFn: async ({ id, nominal_bayar, keterangan }: { id: number, nominal_bayar: number, keterangan: string }) => {
+        mutationFn: async ({ id, nominal_bayar, keterangan, metode_pembayaran }: { id: number, nominal_bayar: number, keterangan: string, metode_pembayaran: string }) => {
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/kasbon/${id}/bayar-manual`, {
                 method: 'PATCH',
                 headers: {
@@ -95,7 +97,7 @@ export default function KasbonIndex() {
                     nominal_bayar, 
                     keterangan,
                     tanggal_pembayaran: new Date().toISOString().split('T')[0],
-                    metode_pembayaran: 'Tunai'
+                    metode_pembayaran
                 })
             });
             const result = await response.json();
@@ -119,12 +121,13 @@ export default function KasbonIndex() {
         setIsModalBayarOpen(true);
     };
 
-    const handleBayarSubmit = (nominal: number, keterangan: string) => {
+    const handleBayarSubmit = (nominal: number, keterangan: string, metode: string) => {
         if (selectedKasbon) {
             bayarMutation.mutate({
                 id: selectedKasbon.id,
                 nominal_bayar: nominal,
-                keterangan
+                keterangan,
+                metode_pembayaran: metode
             });
         }
     };
@@ -150,14 +153,42 @@ export default function KasbonIndex() {
                 </div>
             </div>
 
+            {/* TAB NAVIGATION */}
+            <div className="flex border-b border-gray-200">
+                <button
+                    className={`py-3 px-6 text-sm font-semibold border-b-2 transition-colors ${
+                        activeTab === 'daftar' 
+                        ? 'border-emerald-600 text-emerald-600' 
+                        : 'border-transparent text-gray-500 hover:text-emerald-600 hover:border-emerald-200'
+                    }`}
+                    onClick={() => setActiveTab('daftar')}
+                >
+                    Daftar Kasbon Aktif
+                </button>
+                <button
+                    className={`py-3 px-6 text-sm font-semibold border-b-2 transition-colors ${
+                        activeTab === 'riwayat' 
+                        ? 'border-emerald-600 text-emerald-600' 
+                        : 'border-transparent text-gray-500 hover:text-emerald-600 hover:border-emerald-200'
+                    }`}
+                    onClick={() => setActiveTab('riwayat')}
+                >
+                    Riwayat Pembayaran
+                </button>
+            </div>
+
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <TabelKasbon 
-                    data={kasbonQuery.data || []} 
-                    isLoading={kasbonQuery.isLoading} 
-                    onDelete={(id) => deleteMutation.mutate(id)} 
-                    onStatusChange={(id, newStatus) => statusMutation.mutate({ id, newStatus })}
-                    onBayar={handleBayarClick}
-                />
+                {activeTab === 'daftar' ? (
+                    <TabelKasbon 
+                        data={kasbonQuery.data || []} 
+                        isLoading={kasbonQuery.isLoading} 
+                        onDelete={(id) => deleteMutation.mutate(id)} 
+                        onStatusChange={(id, newStatus) => statusMutation.mutate({ id, newStatus })}
+                        onBayar={handleBayarClick}
+                    />
+                ) : (
+                    <TabelRiwayatKasbon />
+                )}
             </div>
 
             <ModalBayarKasbon

@@ -209,6 +209,7 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
     return (
         <div style={{ height: 500, width: '100%' }}>
             <DataGrid
+                showToolbar
                 rows={sortedData}
                 columns={columns}
                 loading={isLoading}
