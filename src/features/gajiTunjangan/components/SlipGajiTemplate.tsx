@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 export interface DetailHarian {
     hari_tanggal: string; 
@@ -53,7 +53,7 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
 
     return (
         // Gunakan absolute dan z-index tinggi agar menimpa seluruh aplikasi saat print
-        <div className="hidden print:block bg-white text-black font-sans absolute top-0 left-0 w-full z-[99999] m-0 p-0">
+        <div className="hidden print:block bg-white text-black font-sans absolute top-0 left-0 w-full z-99999 m-0 p-0">
             
             {/* =====================================================================
                 CSS SAKTI UNTUK MENGATASI BUG CETAK 1 HALAMAN (OVERRIDE PARENT)

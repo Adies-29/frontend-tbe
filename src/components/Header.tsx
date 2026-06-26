@@ -71,6 +71,7 @@ export default function Header() {
 
         "/dashboard/lembur":{ title: "Lembur", showDate: false },
         "/dashboard/lembur/tambah-lembur":{ title: "Lembur", showDate: false },
+        "/dashboard/lembur/edit/:id":{ title: "Lembur", showDate: false },
 
         "/dashboard/kasbon":{ title: "Kasbon", showDate: false },
         "/dashboard/kasbon/tambah":{ title: "Kasbon", showDate: false },

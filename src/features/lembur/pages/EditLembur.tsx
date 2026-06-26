@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Clock } from "lucide-react";
+import { ArrowLeft, Clock, Banknote } from "lucide-react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import Button from "../../../components/common/Button";
 import Notif from "../../../components/common/Notif";
@@ -54,6 +54,13 @@ export default function EditLembur() {
 
     const valMenit = watch("menit_lembur_diizinkan");
 
+    // State untuk fitur atur upah lembur
+    const [aturUpahLembur, setAturUpahLembur] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [selectedPegawai, setSelectedPegawai] = useState<any>(null);
+    const [customUpahValue, setCustomUpahValue] = useState<string>("");
+    const [customUpahError, setCustomUpahError] = useState("");
+
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
         show: false,
         message: "",
@@ -77,6 +84,19 @@ export default function EditLembur() {
         enabled: !!idPegwai && !!tgl
     });
 
+    // Fetch data pegawai untuk mendapatkan info jabatan
+    const pegawaiQuery = useQuery({
+        queryKey: ['pegawaiList'],
+        queryFn: async () => {
+            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const result = await res.json();
+            return result.data || [];
+        }
+    });
+
+    // Set data awal saat lemburQuery selesai
     useEffect(() => {
         if (lemburQuery.data) {
             const lembur = lemburQuery.data;
@@ -86,8 +106,26 @@ export default function EditLembur() {
                 menit_lembur_diizinkan: lembur.menit_lembur_diizinkan,
                 alasan_lembur: lembur.alasan_lembur || ""
             });
+
+            // Pre-populate toggle jika ada custom upah
+            if (lembur.upah_lembur_per_jam_custom && lembur.upah_lembur_per_jam_custom > 0) {
+                setAturUpahLembur(true);
+                setCustomUpahValue(String(lembur.upah_lembur_per_jam_custom));
+            } else {
+                setAturUpahLembur(false);
+                setCustomUpahValue("");
+            }
         }
     }, [lemburQuery.data, reset]);
+
+    // Set selectedPegawai dari data pegawai
+    useEffect(() => {
+        if (idPegwai && pegawaiQuery.data) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const found = (pegawaiQuery.data as any[]).find((p: any) => String(p.id) === String(idPegwai));
+            if (found) setSelectedPegawai(found);
+        }
+    }, [idPegwai, pegawaiQuery.data]);
 
     const editLemburMutation = useMutation({
        
@@ -119,10 +157,26 @@ export default function EditLembur() {
     });
 
     const onSubmit = (data: FormData) => {
-        const payload = {
+        // Validasi custom upah jika toggle dicentang
+        if (aturUpahLembur) {
+            const numVal = Number(customUpahValue);
+            if (!customUpahValue || isNaN(numVal) || numVal <= 0) {
+                setCustomUpahError("Nominal upah/jam wajib diisi (minimal Rp 1)");
+                return;
+            }
+            setCustomUpahError("");
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const payload: any = {
             ...data,
             disetujui_oleh: userToken || ""
         };
+
+        if (aturUpahLembur && customUpahValue) {
+            payload.upah_lembur_per_jam_custom = Number(customUpahValue);
+        }
+
         editLemburMutation.mutate(payload);
     };
     return (
@@ -177,6 +231,68 @@ export default function EditLembur() {
                         )
                     }
                 />
+
+                {/* === TOGGLE ATUR UPAH LEMBUR === */}
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50/50">
+                    <label htmlFor="atur_upah_lembur_edit" className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-red-50 transition-colors cursor-pointer select-none">
+                        <span className="text-sm font-semibold text-gray-700">Atur Upah Lembur</span>
+                        <div className="relative">
+                            <input
+                                type="checkbox"
+                                id="atur_upah_lembur_edit"
+                                checked={aturUpahLembur}
+                                onChange={(e) => {
+                                    setAturUpahLembur(e.target.checked);
+                                    if (!e.target.checked) {
+                                        setCustomUpahValue("");
+                                        setCustomUpahError("");
+                                    }
+                                }}
+                                className="sr-only peer" />
+                            <div className="w-12 h-7 bg-gray-300 rounded-full peer-checked:bg-red-500 transition-colors duration-200"></div>
+                            <div className="absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-md peer-checked:translate-x-5 transition-transform duration-200"></div>
+                        </div>
+                    </label>
+
+                    {!aturUpahLembur ? (
+                        <div className="ml-8 mt-1">
+                            {selectedPegawai?.jabatan?.upah_lembur_per_jam ? (
+                                <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 flex items-center gap-2">
+                                    <Banknote size={14} />
+                                    Upah lembur sesuai jabatan:{" "}
+                                    <strong>Rp {Number(selectedPegawai.jabatan.upah_lembur_per_jam).toLocaleString('id-ID')}/jam</strong>
+                                </p>
+                            ) : (
+                                <p className="text-xs text-gray-500 italic ml-1">
+                                    Data upah lembur jabatan belum diatur
+                                </p>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="ml-8 mt-2">
+                            <label className="block text-sm font-medium text-gray-600 mb-1">
+                                Nominal Upah/Jam (Rp) <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                value={customUpahValue}
+                                onChange={(e) => {
+                                    setCustomUpahValue(e.target.value);
+                                    if (customUpahError) setCustomUpahError("");
+                                }}
+                                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:outline-none"
+                                placeholder="Contoh: 15000"
+                            />
+                            {customUpahError && <p className="text-xs text-red-500 mt-1">{customUpahError}</p>}
+                            {customUpahValue && Number(customUpahValue) > 0 && (
+                                <p className="text-xs text-blue-600 mt-1 font-medium italic">
+                                    Rp {Number(customUpahValue).toLocaleString('id-ID')}/jam
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
 
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Alasan Lembur <span className="text-gray-400 font-normal text-xs">(Opsional)</span></label>

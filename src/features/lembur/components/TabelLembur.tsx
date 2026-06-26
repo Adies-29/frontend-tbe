@@ -125,6 +125,29 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
             }
         },
         {
+            field: "upah_lembur_per_jam_custom",
+            headerName: "Upah/Jam",
+            flex: 1,
+            minWidth: 140,
+            align: "center",
+            headerAlign: "center",
+            renderCell: (params) => {
+                const custom = params.value;
+                if (custom && custom > 0) {
+                    return (
+                        <span className="bg-amber-100 text-amber-700 font-bold px-2 py-1 rounded text-xs">
+                            Rp {Number(custom).toLocaleString('id-ID')} (Custom)
+                        </span>
+                    );
+                }
+                return (
+                    <span className="bg-gray-100 text-gray-500 font-medium px-2 py-1 rounded text-xs">
+                        Default Jabatan
+                    </span>
+                );
+            }
+        },
+        {
             field: "alasan_lembur",
             headerName: "Alasan",
             flex: 1.5,

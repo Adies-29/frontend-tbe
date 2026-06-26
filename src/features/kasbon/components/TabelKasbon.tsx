@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { DataGrid, type GridColDef, GridActionsCellItem, type GridRowId } from "@mui/x-data-grid";
-import { Trash2 } from "lucide-react";
+import { Trash2, Banknote } from "lucide-react";
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import Notif from '../../../components/common/Notif';
@@ -10,9 +10,10 @@ interface TabelKasbonProps {
     isLoading?: boolean;
     onDelete: (id: number) => void;
     onStatusChange?: (id: number, newStatus: string) => void;
+    onBayar?: (kasbon: any) => void;
 }
 
-export default function TabelKasbon({ data, isLoading = false, onDelete, onStatusChange }: TabelKasbonProps) {
+export default function TabelKasbon({ data, isLoading = false, onDelete, onStatusChange, onBayar }: TabelKasbonProps) {
     const [showPopUp, setShowPopUp] = useState(false);
     const [hapusId, setHapusId] = useState<GridRowId | null>(null);
     const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
@@ -90,6 +91,28 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
             }
         },
         { 
+            field: 'sisa_pinjaman', 
+            headerName: 'Sisa Pinjaman', 
+            width: 160,
+            renderCell: (params) => {
+                const sisa = params.value || 0;
+                if (sisa > 0) {
+                    return (
+                        <span className="font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded-md text-xs border border-orange-100">
+                            {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(sisa)}
+                        </span>
+                    );
+                } else if (sisa === 0 && params.row.status === 'Lunas') {
+                     return (
+                        <span className="font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md text-xs border border-blue-100">
+                            Rp 0 (Lunas)
+                        </span>
+                    );
+                }
+                return <span className="text-gray-400">-</span>;
+            }
+        },
+        { 
             field: 'keterangan_pinjaman', 
             headerName: 'Keterangan', 
             flex: 1,
@@ -139,25 +162,54 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
             field: 'actions',
             type: 'actions', 
             headerName: 'Aksi',
-            width: 80,
-            getActions: ({ id }) => {
-                return [
+            width: 120,
+            cellClassName: 'actions',
+            getActions: (params) => {
+                const actions = [];
+                
+                // Hanya munculkan tombol bayar jika status Disetujui
+                if (params.row.status === 'Disetujui' && params.row.sisa_pinjaman > 0) {
+                    actions.push(
+                        <GridActionsCellItem
+                            key="bayar"
+                            icon={<Banknote size={20} className="text-emerald-600" />}
+                            label="Bayar Kasbon"
+                            onClick={() => onBayar && onBayar(params.row)}
+                            className="min-w-[44px] min-h-[44px] p-2 hover:bg-emerald-50 rounded-full transition-colors"
+                            color="inherit"
+                        />
+                    );
+                }
+
+                actions.push(
                     <GridActionsCellItem
                         key="delete"
-                        icon={<Trash2 size={18} className="text-red-500 hover:text-red-700" />}
+                        icon={<Trash2 size={20} className="text-gray-600 hover:text-red-600" />}
                         label="Hapus"
-                        onClick={handleDeleteClick(id)}
-                        className="textPrimary"
+                        onClick={handleDeleteClick(params.id)}
+                        className="min-w-[44px] min-h-[44px] p-2 hover:bg-red-50 rounded-full transition-colors"
+                        color="inherit"
                     />
-                ];
+                );
+
+                return actions;
             }
         }
     ];
 
+    // Urutkan data: yang Lunas taruh paling bawah
+    const sortedData = [...data].sort((a, b) => {
+        if (a.status === 'Lunas' && b.status !== 'Lunas') return 1;
+        if (a.status !== 'Lunas' && b.status === 'Lunas') return -1;
+        
+        // Opsional: Urutkan berdasarkan tanggal terbaru jika statusnya sama
+        return new Date(b.tanggal_pengajuan).getTime() - new Date(a.tanggal_pengajuan).getTime();
+    });
+
     return (
         <div style={{ height: 500, width: '100%' }}>
             <DataGrid
-                rows={data}
+                rows={sortedData}
                 columns={columns}
                 loading={isLoading}
                 disableRowSelectionOnClick
