@@ -131,37 +131,44 @@ export function useRekapGaji() {
                 const data = result.data || [];
                 
                 // 3. MAPPING KE FORMAT SLIP GAJI LENGKAP & TABEL REKAP
-                const formattedData = data.map((item: GajiApiResponse) => {
-                    const totalPotonganKasbon = item.rincian_potongan?.potongan_kasbon || 0;
-                    const totalKotor = (item.gaji_dasar || 0) + (item.total_bonus || 0);
+                const formattedData = data.map((item: any) => {
+                    const rincianBonus = item.rincian_bonus || {};
+                    const rincianPotongan = item.rincian_potongan || {};
+                    const infoTabungan = item.informasi_tabungan || {};
+                    
+                    const totalPotonganKasbon = rincianPotongan.potongan_kasbon || 0;
+                    const dendaSistem = (rincianPotongan.denda_sistem_absensi || 0) + (rincianPotongan.denda_alpha_void || 0);
+                    
+                    // Ekstrak sisa hutang terkini dari array detail_kasbon (ambil yang pertama jika ada)
+                    const sisaHutang = rincianPotongan.detail_kasbon?.[0]?.sisa_pinjaman_terkini || 0;
 
                     return {
-                        // Data Inti & Kebutuhan Tabel
                         id: String(item.id),
                         nama: item.pegawai?.nama || "Tanpa Nama",
                         jabatan: item.pegawai?.jabatan?.nama_jabatan || "-",
+                        shift: "-", 
+                        tipe_penggajian: item.pegawai?.jabatan?.tipe_penggajian || 'Bulanan',
+                        periode_tanggal: formatPeriodeGaji(item.tanggal_awal_periode, item.tanggal_akhir_periode, filterValue),
+                        
+                        detail_harian: item.detail_harian || [],
+                        
                         gaji_dasar: item.gaji_dasar || 0,
                         total_bonus: item.total_bonus || 0,
                         total_potongan: item.total_potongan || 0,
                         gaji_bersih: item.total_gaji || 0,
                         status: item.status_pembayaran || "Pending",
-
-                        // Data Spesifik Cetak Slip Gaji Kas Muda Mudi
-                        shift: "-", // (Opsional) Jika di DB ada relasi shift, tarik dari sini
-                        tipe_penggajian: item.pegawai?.jabatan?.tipe_penggajian || 'Bulanan',
-                        periode_tanggal: formatPeriodeGaji(item.tanggal_awal_periode, item.tanggal_akhir_periode, filterValue),
                         
-                        detail_harian: item.detail_harian || [], // Data rincian harian dari Backend
+                        // JSON Data Lengkap
+                        rincian_bonus: rincianBonus,
+                        rincian_potongan: rincianPotongan,
+                        informasi_tabungan: infoTabungan,
                         
-                        total_kotor: totalKotor,
+                        // Kalkulasi Bawah
+                        total_kotor: (item.gaji_dasar || 0) + (item.total_bonus || 0),
                         potongan_bon: totalPotonganKasbon,
-                        bayar_kerupuk: 0, // Placeholder tabungan (Jika ada tabungan harian)
+                        denda_sistem: dendaSistem,
                         total_upah: item.total_gaji || 0,
-                        
-                        // Sisa Hutang Kasbon (Jika ada endpoint untuk cek saldo utang)
-                        hutang_awal: 0, 
-                        sisa_hutang: 0, 
-                        bon_kerupuk_info: 0, 
+                        sisa_hutang: sisaHutang,
                     };
                 });
 
