@@ -44,17 +44,20 @@ export default function LemburIndex() {
     });
 
     return (
-        <div className="flex flex-col gap-6 w-full">
-            <section className="bg-white border border-gray-300 rounded-2xl p-4 shadow-sm w-full min-h-[400px]">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                    <h2 className="text-lg font-bold text-black border-l-4 border-red-600 pl-2 mt-1 flex items-center gap-2">
-                        <Clock size={20} className="text-red-600" /> Data Perintah Lembur
-                    </h2>
-                    <Button
-                        label="Tambah Lembur"
-                        icon={<Plus size={18} />}
-                        onClick={() => navigate('/dashboard/lembur/tambah-lembur')}
-                    />
+        <div className="flex flex-col gap-4 md:gap-6 w-full">
+            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-[400px]">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4">
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                        <Clock size={28} className="text-red-600" /> Data Perintah Lembur
+                    </h1>
+                    <div className="w-full md:w-auto">
+                        <Button
+                            label="Tambah Lembur"
+                            icon={<Plus size={18} />}
+                            onClick={() => navigate('/dashboard/lembur/tambah-lembur')}
+                            className="w-full md:w-auto"
+                        />
+                    </div>
                 </div>
 
                 <TabelLembur 

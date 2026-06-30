@@ -77,50 +77,58 @@ export default function TabRekapGaji() {
 
             {/* TABEL DATA GAJI */}
             <section className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col print:hidden">
-                <div className="p-4 border-b flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50 gap-4">
-                    <h2 className="text-lg font-bold text-gray-700">Rincian Gaji Pegawai</h2>
-
-                    <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
-                        <Button 
-                            label="Cetak Slip Gaji" 
-                            variant="info" 
-                            icon={<Printer size={16} />} 
-                            onClick={handleCetakSemuaSlip} 
-                            className="mr-2"
-                        />
-
-                        <select value={periode} onChange={handlePeriodeChange} className="border border-gray-300 rounded-lg px-3 py-1.5 bg-white outline-none focus:border-red-500 shadow-sm text-sm">
-                            <option value="minggu">Mingguan</option>
-                            <option value="bulan">Bulanan</option>
-                            <option value="tahun">Tahunan</option>
-                        </select>
-
-                        {periode === "minggu" && <input type="week" value={filterValue} onChange={(e) => setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-1.5 outline-none focus:border-red-500 shadow-sm text-sm" />}
-                        {periode === "bulan" && <input type="month" value={filterValue} onChange={(e) => setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-1.5 outline-none focus:border-red-500 shadow-sm text-sm" />}
-                        {periode === "tahun" && (
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker
-                                    views={['year']}
-                                    value={filterValue ? dayjs().year(parseInt(filterValue)) : null}
-                                    onChange={(newValue: Dayjs | null) => newValue && setFilterValue(newValue.year().toString())}
-                                    slotProps={{ textField: { size: 'small', className: "bg-white w-32", sx: { '& .MuiOutlinedInput-root': { borderRadius: '8px' } } } }}
-                                />
-                            </LocalizationProvider>
-                        )}
-                        <Button label="Filter" variant='warning' onClick={handleFilter} />
-
-                        {/* Tampilkan tombol Generate untuk Mingguan ATAU Bulanan */}
-                        {(periode === "bulan" || periode === "minggu") && (
+                <div className="p-4 border-b flex flex-col gap-4 items-start bg-gray-50">
+                    <div className="flex flex-col md:flex-row justify-between w-full items-start md:items-center gap-4">
+                        <h2 className="text-lg font-bold text-gray-700">Rincian Gaji Pegawai</h2>
+                        
+                        <div className="w-full md:w-auto">
                             <Button 
-                                label={isGenerating ? "Memproses..." : "Generate Gaji"} 
-                                variant="primary" 
-                                icon={isGenerating ? <Loader2 className="animate-spin" size={16} /> : <PlayCircle size={16} />} 
-                                onClick={handleGenerateGaji} 
-                                isLoading={isGenerating}
-                                disabled={!filterValue}
-                                className="ml-2 border border-transparent"
+                                label="Cetak Slip Gaji" 
+                                variant="info" 
+                                icon={<Printer size={16} />} 
+                                onClick={handleCetakSemuaSlip} 
+                                className="w-full md:w-auto"
                             />
-                        )}
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row flex-wrap gap-3 items-start md:items-center w-full">
+                        <div className="flex gap-2 w-full md:w-auto">
+                            <select value={periode} onChange={handlePeriodeChange} className="border border-gray-300 rounded-lg px-3 py-2 bg-white outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none">
+                                <option value="minggu">Mingguan</option>
+                                <option value="bulan">Bulanan</option>
+                                <option value="tahun">Tahunan</option>
+                            </select>
+
+                            {periode === "minggu" && <input type="week" value={filterValue} onChange={(e) => setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none" />}
+                            {periode === "bulan" && <input type="month" value={filterValue} onChange={(e) => setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none" />}
+                            {periode === "tahun" && (
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        views={['year']}
+                                        value={filterValue ? dayjs().year(parseInt(filterValue)) : null}
+                                        onChange={(newValue: Dayjs | null) => newValue && setFilterValue(newValue.year().toString())}
+                                        slotProps={{ textField: { size: 'small', className: "bg-white flex-1 md:w-32", sx: { '& .MuiOutlinedInput-root': { borderRadius: '8px' } } } }}
+                                    />
+                                </LocalizationProvider>
+                            )}
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto mt-1 md:mt-0">
+                            <Button label="Filter" variant='warning' onClick={handleFilter} className="w-full sm:w-auto" />
+                            
+                            {(periode === "bulan" || periode === "minggu") && (
+                                <Button 
+                                    label={isGenerating ? "Memproses..." : "Generate Gaji"} 
+                                    variant="primary" 
+                                    icon={isGenerating ? <Loader2 className="animate-spin" size={16} /> : <PlayCircle size={16} />} 
+                                    onClick={handleGenerateGaji} 
+                                    isLoading={isGenerating}
+                                    disabled={!filterValue}
+                                    className="w-full sm:w-auto border border-transparent"
+                                />
+                            )}
+                        </div>
                     </div>
                 </div>
 

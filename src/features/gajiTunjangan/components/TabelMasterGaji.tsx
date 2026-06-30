@@ -21,12 +21,14 @@ export const TabelMasterGaji = ({ data, onAturGaji }: TabelMasterGajiProps) => {
             field: 'nama_jabatan',
             headerName: 'Nama Jabatan',
             flex: 1,
+            minWidth: 180,
             renderCell: (params) => <span className="font-semibold text-gray-800">{params.value}</span>
         },
         {
             field: 'departemen',
             headerName: 'Departemen',
             flex: 1,
+            minWidth: 180,
             renderCell: (params) => {
                 const namaDept = params.value;
                 return (
@@ -39,7 +41,7 @@ export const TabelMasterGaji = ({ data, onAturGaji }: TabelMasterGajiProps) => {
         {
             field: 'aksi',
             headerName: 'Aksi',
-            width: 150,
+            minWidth: 150,
             sortable: false,
             align: 'center',
             headerAlign: 'center',

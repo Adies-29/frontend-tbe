@@ -6,8 +6,9 @@ import { jwtDecode } from "jwt-decode";
 interface AuthState{
     isAuthenticated : boolean;
     user : string | null
+    role: string | null;
     token: string | null;
-    login: (user: string, token: string) => void;
+    login: (user: string, token: string, role?: string) => void;
     logout : () => void;
     isTokenValid: () => boolean;
 }
@@ -18,25 +19,24 @@ export const useAuthStore = create<AuthState>()(
     persist(
         (set, get) => ({
             user: null,
+            role: null,
             token: null,
             isAuthenticated: false,
-            login: (user, token) => set({
+            login: (user, token, role = "admin") => set({
                 user,
                 token,
+                role,
                 isAuthenticated: true,
             }),
             logout: () => {
-                set({ user: null, token: null, isAuthenticated: false });
-                // Bersihkan storage secara eksplisit
+                set({ user: null, role: null, token: null, isAuthenticated: false });
                 sessionStorage.removeItem("auth-storage");
             },
-            // Validasi apakah token masih berlaku
             isTokenValid: () => {
                 const token = get().token;
                 if (!token) return false;
                 try {
                     const decoded = jwtDecode<{ exp: number }>(token);
-                    // Cek apakah token sudah expired (bandingkan dengan waktu sekarang)
                     return decoded.exp * 1000 > Date.now();
                 } catch {
                     return false;

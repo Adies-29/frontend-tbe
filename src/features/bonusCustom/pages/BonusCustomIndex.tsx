@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Gift, PlusCircle, Loader2 } from 'lucide-react';
+import { PlusCircle, Loader2 } from 'lucide-react';
 import Button from '../../../components/common/Button';
 import Notif from '../../../components/common/Notif';
 import { TabelBonusCustom } from '../components/TabelBonusCustom';
@@ -51,12 +51,9 @@ export default function BonusCustomIndex() {
             
             {/* HEADER */}
             <div className="flex items-center gap-3 border-b pb-4">
-                <div className="p-3 bg-blue-100 text-blue-600 rounded-lg">
-                    <Gift size={28} />
-                </div>
                 <div>
-                    <h1 className="text-2xl font-black text-gray-800">Bonus Custom & Ad-Hoc</h1>
-                    <p className="text-sm text-gray-500">Berikan bonus manual di luar sistem absensi yang akan otomatis masuk ke struk gaji.</p>
+                    <h1 className="text-2xl font-black text-gray-800">Bonus Custom</h1>
+
                 </div>
             </div>
 

@@ -69,7 +69,7 @@ export default function DepartemenIndex() {
     const totalDepartemen = dataDepartemen.length;
 
     return (
-        <div className="flex flex-col gap-6 w-full">
+        <div className="flex flex-col gap-4 md:gap-6 w-full">
 
             {isError && (
                 <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm border border-red-300">
@@ -77,25 +77,26 @@ export default function DepartemenIndex() {
                 </div>
             )}
 
-            <div className="flex gap-4">
-                <div className="bg-white border border-gray-300 rounded-xl p-4 w-48 shadow-sm flex flex-col items-center justify-center">
+            <div className="flex gap-4 w-full">
+                <div className="bg-white border border-gray-300 rounded-xl p-4 w-full md:w-48 shadow-sm flex flex-col items-center justify-center">
                     <span className="text-gray-800 text-sm md:text-base font-medium">Total Departemen</span>
                     <span className="text-4xl font-bold mt-2 text-black">{totalDepartemen}</span>
                 </div>
             </div>
            
-            <section className="bg-white border border-gray-300 rounded-2xl p-4 shadow-sm w-full">
+            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
 
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-start mb-6 gap-4">
-                    <h2 className="text-lg font-bold text-black border-l-4 border-red-600 pl-2 mt-1">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4">
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">
                         Data Departemen
-                    </h2>
+                    </h1>
 
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-3 w-full md:w-auto">
                         <Button
                             variant="primary"
                             label="Tambah Departemen"
                             onClick={() => navigate("/dashboard/departemen/tambah-departemen")}
+                            className="w-full md:w-auto"
                         />
                     </div>
                 </div>

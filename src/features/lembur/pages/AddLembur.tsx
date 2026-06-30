@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Autocomplete, TextField } from "@mui/material";
-import { ArrowLeft, Clock, Banknote } from "lucide-react";
+import { ArrowLeft, Banknote } from "lucide-react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import Button from "../../../components/common/Button";
 import Notif from "../../../components/common/Notif";
@@ -143,13 +143,22 @@ export default function AddLembur() {
     };
     return (
         <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
-            <button onClick={() => navigate(-1)} className="mb-6 flex items-center gap-2 text-gray-600 hover:text-red-600 font-medium">
-                <ArrowLeft size={18} /> Kembali
-            </button>
+            <div className="flex justify-between items-center mb-6 mt-2">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    Buat Perintah Lembur Baru
+                </h1>
 
-            <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                <Clock className="text-red-600" /> Buat Perintah Lembur Baru
-            </h1>
+                <div className="shrink-0 flex items-center justify-end">
+                    <Button variant="back" icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)} label="Kembali" className="hidden sm:flex" />
+                    <button 
+                        onClick={() => navigate(-1)}
+                        type="button"
+                        className="sm:hidden p-2 text-gray-500 hover:text-black hover:bg-gray-200 rounded-full focus:ring-gray-300 transition-colors flex items-center justify-center"
+                        title="Kembali"
+                    >
+                    </button>
+                </div>
+            </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
 
@@ -291,13 +300,22 @@ export default function AddLembur() {
                     />
                     {errors.alasan_lembur && <p className="text-xs text-red-500 mt-1">{errors.alasan_lembur.message}</p>}
                 </div>
-
-                <Button
-                    variant="success"
-                    type="submit"
-                    disabled={addLemburMutation.isPending}
-                    label={addLemburMutation.isPending ? "Menyimpan..." : "Simpan"}
-                />
+                
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <Button
+                        variant="success"
+                        type="submit"
+                        disabled={addLemburMutation.isPending}
+                        label={addLemburMutation.isPending ? "Menyimpan..." : "Simpan"}
+                    />
+                    <Button
+                        variant="danger"
+                        type="button"
+                        label="Batal"
+                        onClick={() => navigate(-1)}
+                        className="w-full sm:w-auto"
+                    />
+                </div>
 
             </form>
             <Notif

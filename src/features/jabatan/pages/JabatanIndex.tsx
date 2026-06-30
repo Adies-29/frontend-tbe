@@ -74,48 +74,49 @@ export default function JabatanIndex() {
 
 
     return (
-        <div className="flex flex-col gap-6 w-full">
+        <div className="flex flex-col gap-4 md:gap-6 w-full">
             {isError && (
                 <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm border border-red-300">
                     Gagal memuat data jabatan. Pastikan koneksi internet & backend berjalan lancar.
                 </div>
             )}
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-col md:flex-row gap-4 w-full">
                 {/* Kotak 1: Total Jabatan */}
-                <div className="bg-white border border-gray-300 rounded-xl p-4 min-w-48 shadow-sm flex items-center gap-4">
+                <div className="bg-white border border-gray-300 rounded-xl p-4 w-full md:min-w-48 shadow-sm flex items-center gap-4">
                     <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
                         <Briefcase size={24} />
                     </div>
                     <div>
-                        <p className="text-gray-500 text-sm font-medium">Total Jabatan</p>
+                        <p className="text-gray-500 text-sm md:text-base font-medium">Total Jabatan</p>
                         <p className="text-2xl font-bold text-black">{totalJabatan}</p>
                     </div>
                 </div>
 
                 {/* Kotak 2: Total Karyawan Menjabat */}
-                <div className="bg-white border border-gray-300 rounded-xl p-4 min-w-48 shadow-sm flex items-center gap-4">
+                <div className="bg-white border border-gray-300 rounded-xl p-4 w-full md:min-w-48 shadow-sm flex items-center gap-4">
                     <div className="w-12 h-12 bg-green-50 text-green-600 rounded-lg flex items-center justify-center">
                         <Users size={24} />
                     </div>
                     <div>
-                        <p className="text-gray-500 text-sm font-medium">Pegawai Terisi</p>
+                        <p className="text-gray-500 text-sm md:text-base font-medium">Pegawai Terisi</p>
                         <p className="text-2xl font-bold text-black">{totalPegawai}</p>
                     </div>
                 </div>
             </div>
 
             {/* 2. BAGIAN TABEL DAN TOMBOL */}
-            <section className="bg-white border border-gray-300 rounded-2xl p-4 shadow-sm w-full min-h-100">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-start mb-6 gap-4">
-                    <h2 className="text-lg font-bold text-black border-l-4 border-red-600 pl-2 mt-1">
+            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-100">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4">
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">
                         Data Jabatan
-                    </h2>
+                    </h1>
 
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-3 w-full md:w-auto">
                         <Button
                             label="Tambah Jabatan"
                             onClick={() => navigate("/dashboard/jabatan/tambah-jabatan")}
+                            className="w-full md:w-auto"
                         />
                     </div>
                 </div>

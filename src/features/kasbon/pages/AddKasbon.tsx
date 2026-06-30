@@ -138,14 +138,15 @@ export default function AddKasbon() {
             <Notif show={notif.show} message={notif.message} type={notif.type} onClose={() => setNotif(prev => ({ ...prev, show: false }))} />
 
             <div className="bg-white rounded-xl shadow-md p-4 md:p-8 border border-gray-100">
-                <div className="flex justify-between items-center bg-white p-5 rounded-xl border border-gray-200 shadow-sm mb-6">
+                <div className="flex justify-between items-center mb-6 mt-2">
                     <div>
                         <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                            <Wallet size={24} className="text-emerald-600" /> Tambah Kasbon Pegawai
+                            Tambah Kasbon Pegawai
                         </h1>
-                        <p className="text-sm text-gray-500 mt-1">Formulir pengajuan pinjaman/kasbon baru.</p>
                     </div>
-                    <Button variant="back" icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)} label="Kembali" />
+                    <div className="shrink-0 flex items-center justify-end">
+                        <Button variant="back" icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)} label="Kembali" className="hidden sm:flex" />
+                    </div>
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)}>
@@ -231,9 +232,13 @@ export default function AddKasbon() {
                         </section>
                     </div>
 
-                    <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-gray-100">
-                        <Button variant="success" label={addKasbonMutation.isPending ? "Menyimpan..." : "Simpan Kasbon Baru"} type="submit" disabled={addKasbonMutation.isPending} />
-                        <Button variant="danger" label="Batal" type="button" onClick={() => navigate(-1)} disabled={addKasbonMutation.isPending} />
+                    <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 sm:gap-4 mt-8 pt-6 border-t border-gray-100">
+                        <div className="w-full sm:w-auto">
+                            <Button variant="danger" label="Batal" type="button" onClick={() => navigate(-1)} disabled={addKasbonMutation.isPending} className="w-full sm:w-auto" />
+                        </div>
+                        <div className="w-full sm:w-auto">
+                            <Button variant="success" label={addKasbonMutation.isPending ? "Menyimpan..." : "Simpan Kasbon Baru"} type="submit" disabled={addKasbonMutation.isPending} className="w-full sm:w-auto" />
+                        </div>
                     </div>
                 </form>
             </div>

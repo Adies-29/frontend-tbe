@@ -28,9 +28,6 @@ export default function TabMasterGaji() {
                 )}
 
                 <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm w-full">
-                    <h1 className="text-xl font-bold text-gray-800 mb-1">Standar Upah & Bonus</h1>
-                    <p className="text-sm text-gray-500">Atur nominal gaji pokok, tunjangan, dan bonus berdasarkan masing-masing jabatan.</p>
-
                     <TabelMasterGaji data={masterJabatanData} onAturGaji={handleNavigasiAturGaji} />
                 </div>
             </div>

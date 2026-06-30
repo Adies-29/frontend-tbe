@@ -257,7 +257,7 @@ export default function TabelPegawai({ data: initialData }: TabelPegawaiProps) {
                 }}
                 pageSizeOptions={[10, 20]}
                 disableRowSelectionOnClick
-                sx={{ ...defaultDataGridSx, width: "100%", minWidth: "700px" }}
+                sx={{ ...defaultDataGridSx, width: "100%" }}
             />
             <ConfirmPopUp
                 isOpen={showPopUp}

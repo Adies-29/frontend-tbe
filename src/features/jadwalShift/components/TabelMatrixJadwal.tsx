@@ -32,74 +32,81 @@ export default function TabelMatrixJadwal() {
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col w-full overflow-hidden relative">
 
             {/* TOOLBAR TIMELINE FLEKSIBEL */}
-            <div className="p-4 border-b border-gray-200 flex flex-wrap items-center bg-gray-50 gap-4">
-                <div className="flex gap-2 w-full md:w-auto mr-auto">
-                    <div className="relative w-full md:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Cari nama Pegawai..."
-                            value={hookParams.searchQuery}
-                            onChange={(e) => hookParams.setSearchQuery(e.target.value)}
-                            className="border border-gray-300 rounded-lg pl-9 pr-3 py-1.5 outline-none focus:border-red-500 shadow-sm text-sm w-full"
-                        />
+            <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col gap-4">
+                {/* Bagian Atas: Pencarian */}
+                <div className="w-full relative md:w-72">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    <input
+                        type="text"
+                        placeholder="Cari nama Pegawai..."
+                        value={hookParams.searchQuery}
+                        onChange={(e) => hookParams.setSearchQuery(e.target.value)}
+                        className="border border-gray-300 rounded-lg pl-9 pr-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm w-full"
+                    />
+                </div>
+
+                {/* Bagian Bawah: Filter Dropdown & Tombol */}
+                <div className="flex flex-col md:flex-row flex-wrap gap-3 items-start md:items-center w-full">
+                    {/* Grup Periode */}
+                    <div className="flex gap-2 w-full md:w-auto">
+                        <select
+                            value={hookParams.periode}
+                            onChange={hookParams.handlePeriodeChange}
+                            className="border border-gray-300 rounded-lg px-3 py-2 bg-white outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none"
+                        >
+                            <option value="minggu">Mingguan</option>
+                            <option value="bulan">Bulanan</option>
+                            <option value="tahun">Tahunan</option>
+                        </select>
+
+                        {hookParams.periode === "minggu" && <input type="week" value={hookParams.filterValue} onChange={(e) => hookParams.setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none" />}
+                        {hookParams.periode === "bulan" && <input type="month" value={hookParams.filterValue} onChange={(e) => hookParams.setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none" />}
+                        {hookParams.periode === "tahun" && (
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    views={['year']}
+                                    value={hookParams.filterValue ? dayjs().year(parseInt(hookParams.filterValue)) : null}
+                                    onChange={(newValue: Dayjs | null) => newValue && hookParams.setFilterValue(newValue.year().toString())}
+                                    slotProps={{ textField: { size: 'small', className: "bg-white flex-1 md:w-32", sx: { '& .MuiOutlinedInput-root': { borderRadius: '8px' } } } }}
+                                />
+                            </LocalizationProvider>
+                        )}
                     </div>
-                </div>
 
-                <div className="flex flex-wrap gap-2 items-center w-full md:w-auto px-3">
-                    <select
-                        value={hookParams.periode}
-                        onChange={hookParams.handlePeriodeChange}
-                        className="border border-gray-300 rounded-lg px-3 py-1.5 bg-white outline-none focus:border-red-500 shadow-sm text-sm"
-                    >
-                        <option value="minggu">Mingguan</option>
-                        <option value="bulan">Bulanan</option>
-                        <option value="tahun">Tahunan</option>
-                    </select>
+                    <div className="hidden md:block h-6 w-px bg-gray-300 mx-1"></div>
 
-                    {hookParams.periode === "minggu" && <input type="week" value={hookParams.filterValue} onChange={(e) => hookParams.setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-1.5 outline-none focus:border-red-500 shadow-sm text-sm" />}
-                    {hookParams.periode === "bulan" && <input type="month" value={hookParams.filterValue} onChange={(e) => hookParams.setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-1.5 outline-none focus:border-red-500 shadow-sm text-sm" />}
-                    {hookParams.periode === "tahun" && (
-                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                            <DatePicker
-                                views={['year']}
-                                value={hookParams.filterValue ? dayjs().year(parseInt(hookParams.filterValue)) : null}
-                                onChange={(newValue: Dayjs | null) => newValue && hookParams.setFilterValue(newValue.year().toString())}
-                                slotProps={{ textField: { size: 'small', className: "bg-white w-32", sx: { '& .MuiOutlinedInput-root': { borderRadius: '8px' } } } }}
-                            />
-                        </LocalizationProvider>
-                    )}
-                    <div className="hidden sm:block h-6 w-px bg-gray-300 mx-1"></div>
+                    {/* Grup Departemen & Jabatan */}
+                    <div className="flex gap-2 w-full md:w-auto">
+                        <select
+                            value={hookParams.filterDepartemen}
+                            onChange={(e) => hookParams.setFilterDepartemen(e.target.value)}
+                            className="border border-gray-300 rounded-lg px-3 py-2 bg-white outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none md:max-w-[150px] truncate"
+                        >
+                            <option value="">Semua Dept</option>
+                            {hookParams.uniqueDepartemenList.map((dept: string, idx: number) => (
+                                <option key={idx} value={dept}>{dept}</option>
+                            ))}
+                        </select>
 
-                    <select
-                        value={hookParams.filterDepartemen}
-                        onChange={(e) => hookParams.setFilterDepartemen(e.target.value)}
-                        className="border border-gray-300 rounded-lg px-3 py-1.5 bg-white outline-none focus:border-red-500 shadow-sm text-sm max-w-[150px] truncate"
-                    >
-                        <option value="">Semua Dept</option>
-                        {hookParams.uniqueDepartemenList.map((dept: string, idx: number) => (
-                            <option key={idx} value={dept}>{dept}</option>
-                        ))}
-                    </select>
+                        <select
+                            value={hookParams.filterJabatan}
+                            onChange={(e) => hookParams.setFilterJabatan(e.target.value)}
+                            disabled={!hookParams.filterDepartemen}
+                            className={`border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none md:max-w-[150px] truncate ${!hookParams.filterDepartemen ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
+                            title={!hookParams.filterDepartemen ? "Pilih Departemen terlebih dahulu" : "Filter berdasarkan Jabatan"}
+                        >
+                            <option value="">{hookParams.filterDepartemen ? "Semua Jabatan" : "Pilih Departemen Dulu"}</option>
+                            {hookParams.uniqueJabatanList?.map((jab: string, idx: number) => (
+                                <option key={idx} value={jab}>{jab}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                    <select
-                        value={hookParams.filterJabatan}
-                        onChange={(e) => hookParams.setFilterJabatan(e.target.value)}
-                        disabled={!hookParams.filterDepartemen}
-                        className={`border border-gray-300 rounded-lg px-3 py-1.5 outline-none focus:border-red-500 shadow-sm text-sm max-w-[150px] truncate ${!hookParams.filterDepartemen ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
-                        title={!hookParams.filterDepartemen ? "Pilih Departemen terlebih dahulu" : "Filter berdasarkan Jabatan"}
-                    >
-                        <option value="">{hookParams.filterDepartemen ? "Semua Jabatan" : "Pilih Departemen Dulu"}</option>
-                        {hookParams.uniqueJabatanList?.map((jab: string, idx: number) => (
-                            <option key={idx} value={jab}>{jab}</option>
-                        ))}
-                    </select>
-
-                    <Button label="Load Data" variant='warning' onClick={hookParams.handleFilter} />
-                </div>
-
-                <div className="flex gap-2">
-                    <Button variant="primary" label="Generate Jadwal Massal" onClick={() => hookParams.setIsModalMassalOpen(true)} />
+                    {/* Tombol Load & Generate */}
+                    <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto mt-1 md:mt-0">
+                        <Button label="Load Data" variant='warning' onClick={hookParams.handleFilter} className="w-full sm:w-auto" />
+                        <Button variant="primary" label="Generate Jadwal Massal" onClick={() => hookParams.setIsModalMassalOpen(true)} className="w-full sm:w-auto" />
+                    </div>
                 </div>
             </div>
 
@@ -118,7 +125,7 @@ export default function TabelMatrixJadwal() {
                     <table className="w-full text-sm text-left border-collapse min-w-max">
                         <thead className="text-xs text-gray-600 uppercase bg-gray-100 sticky top-0 z-20 shadow-sm">
                             <tr>
-                                <th scope="col" className="px-4 py-3 border-r border-gray-200 sticky left-0 z-30 bg-gray-100 min-w-[220px]">
+                                <th scope="col" className="px-4 py-3 border-r border-gray-200 sticky left-0 z-30 bg-gray-100 min-w-[150px] md:min-w-[220px]">
                                     Nama Pegawai
                                 </th>
                                 {daysArray.map((dateObj, idx) => {
@@ -202,12 +209,14 @@ export default function TabelMatrixJadwal() {
 
             {/* FLOATING BANNER SAAT MODE PICKER AKTIF */}
             {hookParams.pickerActive !== 'none' && (
-                <div className="fixed top-6 left-1/2 -translate-x-1/2 z-100 bg-blue-600 text-white px-6 py-3 rounded-full shadow-2xl font-bold flex items-center gap-3 animate-in slide-in-from-top-10">
-                    <MousePointerClick size={20} className="animate-bounce" />
-                    <span className="text-sm">Silakan klik kotak jadwal di tabel untuk memilih sel {hookParams.pickerActive === 'asal' ? 'ASAL' : 'TUJUAN'}...</span>
+                <div className="fixed top-6 left-1/2 -translate-x-1/2 z-100 w-[90%] md:w-auto max-w-sm md:max-w-none bg-blue-600 text-white px-4 md:px-6 py-3 rounded-2xl md:rounded-full shadow-2xl font-bold flex flex-col md:flex-row items-center justify-between md:justify-start gap-3 animate-in slide-in-from-top-10 text-center md:text-left">
+                    <div className="flex flex-col md:flex-row items-center gap-2">
+                        <MousePointerClick size={20} className="animate-bounce shrink-0" />
+                        <span className="text-xs md:text-sm">Silakan klik kotak jadwal di tabel untuk memilih sel {hookParams.pickerActive === 'asal' ? 'ASAL' : 'TUJUAN'}...</span>
+                    </div>
                     <button
                         onClick={() => { hookParams.setPickerActive('none'); hookParams.setIsModalOpen(true); }}
-                        className="ml-4 bg-white/20 p-1.5 rounded-full hover:bg-white/40 transition-colors"
+                        className="bg-white/20 p-1.5 rounded-full hover:bg-white/40 transition-colors shrink-0"
                         title="Batal Memilih"
                     >
                         <X size={16} />

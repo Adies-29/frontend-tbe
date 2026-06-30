@@ -11,44 +11,46 @@ export default function GajiTunjanganIndex() {
     const [activeTab, setActiveTab] = useState<'rekap' | 'master'>(location.state?.tab || 'rekap');
 
     return (
-        <div className="flex flex-col gap-6 w-full p-2">
+        <div className="flex flex-col gap-4 md:gap-6 w-full">
             
-            {/* HEADER */}
-            <div className="flex justify-between items-center bg-white p-5 rounded-xl border border-gray-200 shadow-sm print:hidden">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Manajemen Gaji & Tunjangan</h1>
-                    <p className="text-sm text-gray-500 mt-1">Kelola rekapitulasi gaji pegawai dan atur master nominal gaji berdasarkan jabatan.</p>
+            {/* HEADER & TAB NAVIGATION */}
+            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full print:hidden">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800">Manajemen Gaji & Tunjangan</h1>
+                        <p className="text-sm text-gray-500 mt-1">Kelola rekapitulasi gaji pegawai dan atur master nominal gaji berdasarkan jabatan.</p>
+                    </div>
                 </div>
-            </div>
 
-            {/* SISTEM TAB NAVIGASI UI */}
-            <div className="flex border-b border-gray-300 print:hidden">
-                <button
-                    onClick={() => setActiveTab('rekap')}
-                    className={`flex items-center gap-2 py-3 px-6 font-semibold transition-all duration-200 ${
-                        activeTab === 'rekap'
-                            ? 'border-b-2 border-blue-600 text-blue-600'
-                            : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                    }`}
-                >
-                    <ReceiptText size={18} />
-                    Rekap Gaji Pegawai
-                </button>
-                <button
-                    onClick={() => setActiveTab('master')}
-                    className={`flex items-center gap-2 py-3 px-6 font-semibold transition-all duration-200 ${
-                        activeTab === 'master'
-                            ? 'border-b-2 border-blue-600 text-blue-600'
-                            : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                    }`}
-                >
-                    <Briefcase size={18} />
-                    Master Gaji Jabatan
-                </button>
-            </div>
+                {/* SISTEM TAB NAVIGASI UI */}
+                <div className="flex mt-6 gap-6 border-b border-gray-300">
+                    <button
+                        onClick={() => setActiveTab('rekap')}
+                        className={`flex items-center gap-2 pb-3 px-2 text-[15px] md:text-sm font-semibold transition-all duration-200 ${
+                            activeTab === 'rekap'
+                                ? 'border-b-2 border-blue-600 text-blue-600'
+                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 active:scale-95'
+                        }`}
+                    >
+                        <ReceiptText size={18} />
+                        Rekap Gaji
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('master')}
+                        className={`flex items-center gap-2 pb-3 px-2 text-[15px] md:text-sm font-semibold transition-all duration-200 ${
+                            activeTab === 'master'
+                                ? 'border-b-2 border-blue-600 text-blue-600'
+                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 active:scale-95'
+                        }`}
+                    >
+                        <Briefcase size={18} />
+                        Master Jabatan
+                    </button>
+                </div>
+            </section>
 
             {/* RENDER KONTEN BERDASARKAN TAB AKTIF */}
-            <div className="min-h-[400px]">
+            <div className="w-full min-h-[400px]">
                 {activeTab === 'rekap' ? <TabRekapGaji /> : <TabMasterGaji />}
             </div>
 
