@@ -12,6 +12,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: SidebarProps) {
     const logout = useAuthStore((state) => state.logout);
+    const role = useAuthStore((state) => state.role);
     const navigate = useNavigate();
     const currentYear = new Date().getFullYear();
 
@@ -80,7 +81,12 @@ export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: Sidebar
 
                 <nav>
                     <ul className="flex flex-col gap-2 w-full font-medium">
-                        {navItems.map((item, index) => {
+                        {navItems.filter((item) => {
+                            if (role?.toLowerCase() === "mandor") {
+                                return item.title === "Monitoring" || item.title === "Target" || item.title === "Lembur";
+                            }
+                            return true;
+                        }).map((item, index) => {
                             const Icon = item.icon; 
                             
                             return (

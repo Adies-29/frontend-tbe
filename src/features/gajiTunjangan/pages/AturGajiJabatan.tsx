@@ -171,24 +171,25 @@ export default function AturGajiJabatan() {
             )}
 
             {/* HEADER HALAMAN */}
-            <div className="bg-white border border-gray-300 rounded-xl p-4 md:p-5 shadow-sm flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                <div>
+            <div className="bg-white border border-gray-300 rounded-xl p-4 md:p-5 shadow-sm flex justify-between items-start md:items-center gap-3">
+                <div className="flex flex-col">
                     <h2 className="text-sm md:text-xl text-gray-500 font-semibold mb-1">Pengaturan Gaji & Tunjangan</h2>
-                    <div className="flex items-center gap-2">
-                        <h1 className="text-lg md:text-2xl font-bold text-gray-900 break-word">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h1 className="text-lg md:text-2xl font-bold text-gray-900 wrap-break-words">
                             {jabatanInfo.nama_jabatan}
                         </h1>
-                        <span className=" w-fit bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold border border-gray-200">
+                        <span className="w-fit bg-gray-100 text-gray-600 px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-bold border border-gray-200">
                             Dept: {jabatanInfo.departemen}
                         </span>
                     </div>
                 </div>
-                <div className='w-full md:w-auto flex justify-end'>
+                <div className="shrink-0 flex items-center justify-end mt-1 md:mt-0">
                     <Button
                         variant="back"
                         icon={<ArrowLeft size={18} />}
                         onClick={() => navigate(-1)}
                         label="Kembali"
+                        className="hidden md:flex"
                     />
                 </div>
             </div>

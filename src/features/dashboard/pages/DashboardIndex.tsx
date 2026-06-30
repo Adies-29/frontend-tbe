@@ -152,30 +152,32 @@ export default function DashboardIndex() {
             </div>
 
 
-            <section className="bg-white border border-gray-300 rounded-2xl p-4 shadow-sm w-full min-h-100">
-                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-4 w-full">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-bold text-gray-800">Aktivitas Absensi Karyawan Hari Ini</h2>
+            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-[400px]">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4">
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">
+                        Aktivitas Absensi Karyawan Hari Ini
+                    </h1>
+                    <div className="w-full md:w-auto">
                         <button 
                             onClick={() => setIsModalAbsenOpen(true)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors shadow-sm"
+                            className="w-full md:w-auto active:scale-95 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 md:py-2.5 rounded-xl font-semibold text-[15px] md:text-sm flex items-center justify-center gap-2 transition-all duration-200 shadow-sm"
                         >
                             <PlusCircle size={18} /> Input Manual
                         </button>
                     </div>
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-2">
+                </div>
 
-                        {isLoading ? (
-                            <div className="flex items-center gap-2 text-sm text-blue-600 font-semibold">
-                                <Loader2 className="animate-spin" size={16} /> Menyinkronkan...
-                            </div>
-                        ) : (
-                            <TabelDashboard
-                                data={rows}
-                                onRefresh={fetchLiveDashboard}
-                            />
-                        )}
-                    </div>
+                <div className="w-full">
+                    {isLoading ? (
+                        <div className="flex items-center justify-center gap-2 text-sm text-blue-600 font-semibold my-8">
+                            <Loader2 className="animate-spin" size={16} /> Menyinkronkan...
+                        </div>
+                    ) : (
+                        <TabelDashboard
+                            data={rows}
+                            onRefresh={fetchLiveDashboard}
+                        />
+                    )}
                 </div>
             </section>
 

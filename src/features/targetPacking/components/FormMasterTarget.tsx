@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PackageSearch, Pencil, Trash2, Plus, Loader2 } from 'lucide-react';
+import { Pencil, Trash2, Loader2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Button from '../../../components/common/Button';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
@@ -10,15 +10,15 @@ import { useAuthStore } from '../../../store/useAuthStore';
 
 interface FormMasterTargetProps {
     jabatanId: string;
-  
+    isAdding: boolean;
+    setIsAdding: (val: boolean) => void;
 }
 
-export default function FormMasterTarget({ jabatanId }: FormMasterTargetProps) {
+export default function FormMasterTarget({ jabatanId, isAdding, setIsAdding }: FormMasterTargetProps) {
     const queryClient = useQueryClient();
     const token = useAuthStore((state) => state.token);
     
-    // Inline Add state
-    const [isAdding, setIsAdding] = useState(false);
+    // Inline Add state (isAdding moved to props)
     const [newTargetName, setNewTargetName] = useState("");
     const [newTargetPrice, setNewTargetPrice] = useState("");
 
@@ -55,12 +55,6 @@ export default function FormMasterTarget({ jabatanId }: FormMasterTargetProps) {
     });
 
     const targets: MasterTargetData[] = targetsQuery.data || [];
-
-    const handleAddClick = () => {
-        setIsAdding(true);
-        setNewTargetName("");
-        setNewTargetPrice("");
-    };
 
     const handleCancelAdd = () => {
         setIsAdding(false);
@@ -166,24 +160,6 @@ export default function FormMasterTarget({ jabatanId }: FormMasterTargetProps) {
 
     return (
         <section className="flex flex-col gap-4 mt-2">
-            <div className="flex items-center gap-2 text-indigo-700 font-bold border-b border-gray-300 pb-3 justify-between">
-                <div className='flex gap-5 items-center'>
-                      <PackageSearch size={22} />
-                    <div>
-                    <h2 className="text-lg">Kelola Master Target</h2>
-                    <p className="text-xs font-normal text-gray-500 mt-0.5">Atur jenis target kemasan dan harga satuan untuk jabatan ini.</p>
-                    </div>
-                </div>
-                {!isAdding && (
-                        <div>
-                            <Button 
-                                label="Tambah Target Baru" 
-                                icon={<Plus size={16} />} 
-                                onClick={handleAddClick} 
-                            />
-                        </div>
-                    )}
-            </div>
 
             {targetsQuery.isLoading ? (
                 <div className="flex justify-center items-center h-32">
@@ -191,8 +167,8 @@ export default function FormMasterTarget({ jabatanId }: FormMasterTargetProps) {
                 </div>
             ) : (
                 <div className="flex flex-col gap-3">
-                    <div className="border border-gray-200 rounded-lg overflow-hidden">
-                        <table className="w-full text-sm text-left">
+                    <div className="border border-gray-200 rounded-lg overflow-x-auto w-full relative">
+                        <table className="w-full text-sm text-left min-w-[500px]">
                             <thead className="bg-gray-50 text-gray-600 text-[11px] uppercase border-b border-gray-200">
                                 <tr>
                                     <th className="px-4 py-3 font-semibold">Nama Target</th>

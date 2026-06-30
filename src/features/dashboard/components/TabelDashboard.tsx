@@ -254,7 +254,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                             type="checkbox"
                             checked={status === true}
                             onChange={(e) => cekKerapihan(params.row, e.target.checked)}
-                            className="w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2 cursor-pointer transition-all disabled:opacity-50"
+                            className="w-6 h-6 md:w-5 md:h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2 cursor-pointer transition-all disabled:opacity-50"
                            disabled={params.row.waktu_masuk === "-" || isNuklir}
                         />
 
@@ -325,7 +325,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                     <div className="flex justify-center w-full">
                         <button
                             onClick={() => navigate(`/dashboard/lembur/tambah-lembur?pegawai_id=${params.row.id}&nama=${params.row.nama}`)}
-                            className=" w-25 flex justify-center items-center gap-1  text-purple-600 px-3 md:py-1 hover:text-black cursor-pointer font-semibold min-h-[40px] md:min-h-0 rounded-md active:bg-purple-50 ">
+                            className="w-25 flex justify-center items-center gap-1 text-purple-600 px-3 md:py-1 hover:text-black cursor-pointer font-semibold min-h-[44px] md:min-h-0 rounded-md active:bg-purple-50 active:scale-95 transition-transform">
                                 
                             <PlusCircle size={14} />
                             Lembur
@@ -368,7 +368,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                     <div className="flex justify-center items-center w-full h-full">
                         <button
                             onClick={() => handleBukaPopUp(params.row.id, params.row.nama)}
-                            className="flex justify-center items-center gap-1 text-black hover:text-red-600 font-bold px-3 py-2 md:py-1 rounded-md text-xs cursor-pointer min-h-[40px] md:min-h-0 active:bg-red-50"
+                            className="flex justify-center items-center gap-1 text-black hover:text-red-600 font-bold px-3 py-2 md:py-1 rounded-md text-xs cursor-pointer min-h-[44px] md:min-h-0 active:bg-red-50 active:scale-95 transition-transform"
                         >
                             <Trash2 size={18} /> Hapus
                         </button>

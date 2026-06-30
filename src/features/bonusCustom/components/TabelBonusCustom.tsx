@@ -22,9 +22,9 @@ interface TabelBonusCustomProps {
 export const TabelBonusCustom = ({ data, onDelete }: TabelBonusCustomProps) => {
     
     const columns: GridColDef[] = [
-        { field: 'tanggal_diberikan', headerName: 'Tanggal', width: 130 },
-        { field: 'nama_pegawai', headerName: 'Nama Pegawai', flex: 1, renderCell: (params) => <span className="font-semibold text-gray-800">{params.value}</span> },
-        { field: 'keterangan', headerName: 'Keterangan Bonus', flex: 1.5 },
+        { field: 'tanggal_diberikan', headerName: 'Tanggal', width: 100, },
+        { field: 'nama_pegawai', headerName: 'Nama Pegawai',width: 130, renderCell: (params) => <span className="font-semibold text-gray-800">{params.value}</span> },
+        { field: 'keterangan', headerName: 'Keterangan Bonus', width:155 },
         { field: 'nominal', headerName: 'Nominal', width: 150, renderCell: (params) => <span className="font-bold text-green-600">+{formatRupiah(params.value)}</span> },
         { 
             field: 'aksi', 

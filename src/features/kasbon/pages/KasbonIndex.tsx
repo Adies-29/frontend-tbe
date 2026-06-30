@@ -133,51 +133,54 @@ export default function KasbonIndex() {
     };
 
     return (
-        <div className="flex flex-col gap-6 w-full p-2">
+        <div className="flex flex-col gap-4 md:gap-6 w-full">
             <Notif show={notif.show} message={notif.message} type={notif.type} onClose={() => setNotif(prev => ({ ...prev, show: false }))} />
 
-            {/* HEADER */}
-            <div className="flex justify-between items-center bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                        <Wallet size={28} className="text-emerald-600" /> Manajemen Kasbon
-                    </h1>
-                    <p className="text-sm text-gray-500 mt-1">Kelola data pinjaman dan potongan cicilan pegawai.</p>
+            {/* HEADER & TAB NAVIGATION */}
+            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                            <Wallet size={28} className="text-emerald-600" /> Manajemen Kasbon
+                        </h1>
+                        <p className="text-sm text-gray-500 mt-1">Kelola data pinjaman dan potongan cicilan pegawai.</p>
+                    </div>
+                    <div className="flex gap-3 items-center w-full md:w-auto">
+                        <Button
+                            label="Tambah Kasbon"
+                            variant="primary"
+                            onClick={() => navigate('/dashboard/kasbon/tambah')}
+                            className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl"
+                        />
+                    </div>
                 </div>
-                <div className="flex gap-3 items-center">
-                    <Button
-                        label="Tambah Kasbon"
-                        variant="primary"
-                        onClick={() => navigate('/dashboard/kasbon/tambah')}
-                    />
+
+                {/* TAB NAVIGATION */}
+                <div className="flex gap-6 mt-6 border-b border-gray-300">
+                    <button
+                        className={`pb-3 px-2 text-[15px] md:text-sm font-semibold transition-colors duration-200 ${
+                            activeTab === 'daftar' 
+                            ? 'border-b-2 border-emerald-600 text-emerald-600' 
+                            : 'text-gray-500 hover:text-emerald-600 active:scale-95'
+                        }`}
+                        onClick={() => setActiveTab('daftar')}
+                    >
+                        Daftar Kasbon Aktif
+                    </button>
+                    <button
+                        className={`pb-3 px-2 text-[15px] md:text-sm font-semibold transition-colors duration-200 ${
+                            activeTab === 'riwayat' 
+                            ? 'border-b-2 border-emerald-600 text-emerald-600' 
+                            : 'text-gray-500 hover:text-emerald-600 active:scale-95'
+                        }`}
+                        onClick={() => setActiveTab('riwayat')}
+                    >
+                        Riwayat Pembayaran
+                    </button>
                 </div>
-            </div>
+            </section>
 
-            {/* TAB NAVIGATION */}
-            <div className="flex border-b border-gray-200">
-                <button
-                    className={`py-3 px-6 text-sm font-semibold border-b-2 transition-colors ${
-                        activeTab === 'daftar' 
-                        ? 'border-emerald-600 text-emerald-600' 
-                        : 'border-transparent text-gray-500 hover:text-emerald-600 hover:border-emerald-200'
-                    }`}
-                    onClick={() => setActiveTab('daftar')}
-                >
-                    Daftar Kasbon Aktif
-                </button>
-                <button
-                    className={`py-3 px-6 text-sm font-semibold border-b-2 transition-colors ${
-                        activeTab === 'riwayat' 
-                        ? 'border-emerald-600 text-emerald-600' 
-                        : 'border-transparent text-gray-500 hover:text-emerald-600 hover:border-emerald-200'
-                    }`}
-                    onClick={() => setActiveTab('riwayat')}
-                >
-                    Riwayat Pembayaran
-                </button>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="w-full">
                 {activeTab === 'daftar' ? (
                     <TabelKasbon 
                         data={kasbonQuery.data || []} 

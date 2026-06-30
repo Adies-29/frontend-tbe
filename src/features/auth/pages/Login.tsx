@@ -67,7 +67,7 @@ export default function Login() {
             // Jika status 200 OK dan dari backend mengirim success: true
             if (response.ok && result.success) {
                 // Simpan token JWT ke Zustand (dan LocalStorage)
-                login(data.username, result.token);
+                login(data.username, result.token, result.role || "admin");
 
                 setNotif({ show: true, message: "Login berhasil", type: "success" });
                 setTimeout(() => {
@@ -75,7 +75,8 @@ export default function Login() {
                 }, 2000);
             } else {
                 // Tampilkan pesan error dari backend (misal: "Username salah")
-                setNotif({ show: true, message: getSafeErrorMessage(response.status), type: "error" });
+                const errorMessage = result.message || (response.status === 401 ? "Username atau password salah." : getSafeErrorMessage(response.status));
+                setNotif({ show: true, message: errorMessage, type: "error" });
             }
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars

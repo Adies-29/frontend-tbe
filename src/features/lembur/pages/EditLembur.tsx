@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Clock, Banknote } from "lucide-react";
+import { ArrowLeft, Banknote } from "lucide-react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import Button from "../../../components/common/Button";
 import Notif from "../../../components/common/Notif";
@@ -187,7 +187,7 @@ export default function EditLembur() {
 
             <div className="flex justify-between items-center mt-4" >
                 <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                    <Clock className="text-red-600" /> Edit Perintah Lembur
+                    Edit Perintah Lembur
                 </h1>
 
                 <Button variant="back" icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)} label="Kembali" />
@@ -307,12 +307,22 @@ export default function EditLembur() {
                     {errors.alasan_lembur && <p className="text-xs text-red-500 mt-1">{errors.alasan_lembur.message}</p>}
                 </div>
 
-                <Button
-                    variant="success"
-                    type="submit"
-                    disabled={editLemburMutation.isPending}
-                    label={editLemburMutation.isPending ? "Menyimpan..." : "Simpan"}
-                />
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <Button
+                        variant="success"
+                        type="submit"
+                        disabled={editLemburMutation.isPending}
+                        label={editLemburMutation.isPending ? "Menyimpan..." : "Simpan"}
+                        className="w-full sm:w-auto"
+                    />
+                    <Button
+                        variant="danger"
+                        type="button"
+                        label="Batal"
+                        onClick={() => navigate(-1)}
+                        className="w-full sm:w-auto"
+                    />
+                </div>
 
             </form>
             <Notif

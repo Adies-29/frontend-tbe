@@ -72,41 +72,47 @@ function App() {
               } />
               <Route element={<DashboardLayout />}>
 
+                {/* RUTE UNTUK SEMUA ROLE (ADMIN & MANDOR) */}
                 <Route path="/dashboard" element={<DashboardIndex />} />
-
-
-                <Route path="/dashboard/data-pegawai" element={<PegawaiIndex />} />
-                <Route path="/dashboard/data-pegawai/tambah-pegawai" element={<AddPegawai />} />
-                <Route path="/dashboard/data-pegawai/:id" element={<DetailPegawai />} />
-                <Route path="/dashboard/data-pegawai/edit/:id" element={<EditPegawai />} />
-
-
-                <Route path="/dashboard/departemen" element={<DepartemenIndex />} />
-                <Route path="/dashboard/departemen/tambah-departemen" element={<AddDepartemen />} />
-
-
-                <Route path="/dashboard/jabatan" element={<JabatanIndex />} />
-                <Route path="/dashboard/jabatan/tambah-jabatan" element={<AddJabatan />} />
-
-
-                <Route path="/dashboard/jadwal-shift" element={<JadwalShiftIndex />} />
-                <Route path="/dashboard/jadwal-shift/tambah" element={<AddShift />} />
-                <Route path="/dashboard/jadwal-shift/edit/:id" element={<EditShift />} />
-
-
-                <Route path="/dashboard/gaji-tunjangan" element={<GajiTunjanganIndex />} />
-                <Route path="/dashboard/gaji-tunjangan/master-gaji/:id" element={<AturGajiJabatan />} />
-
-                <Route path="/dashboard/lembur" element={<LemburIndex />} />
-                <Route path="/dashboard/lembur/tambah-lembur" element={<AddLembur />} />
-                <Route path="/dashboard/lembur/edit/:id" element={<EditLembur />} />
-
                 <Route path="/dashboard/target-packing" element={<TargetPackingIndex />} />
 
-                <Route path="/dashboard/kasbon" element={<KasbonIndex />} />
-                <Route path="/dashboard/kasbon/tambah" element={<AddKasbon />} />
 
-                <Route path="/dashboard/bonus-custom" element={<BonusCustomIndex />} />
+                {/* RUTE KHUSUS ADMIN */}
+                <Route element={<ProtectedRoute allowedRoles={["admin", "hrd"]} />}>
+                  <Route path="/dashboard/data-pegawai" element={<PegawaiIndex />} />
+                  <Route path="/dashboard/data-pegawai/tambah-pegawai" element={<AddPegawai />} />
+                  <Route path="/dashboard/data-pegawai/:id" element={<DetailPegawai />} />
+                  <Route path="/dashboard/data-pegawai/edit/:id" element={<EditPegawai />} />
+
+
+                  <Route path="/dashboard/departemen" element={<DepartemenIndex />} />
+                  <Route path="/dashboard/departemen/tambah-departemen" element={<AddDepartemen />} />
+
+
+                  <Route path="/dashboard/jabatan" element={<JabatanIndex />} />
+                  <Route path="/dashboard/jabatan/tambah-jabatan" element={<AddJabatan />} />
+
+
+                  <Route path="/dashboard/jadwal-shift" element={<JadwalShiftIndex />} />
+                  <Route path="/dashboard/jadwal-shift/tambah" element={<AddShift />} />
+                  <Route path="/dashboard/jadwal-shift/edit/:id" element={<EditShift />} />
+
+
+                  <Route path="/dashboard/gaji-tunjangan" element={<GajiTunjanganIndex />} />
+                  <Route path="/dashboard/gaji-tunjangan/master-gaji/:id" element={<AturGajiJabatan />} />
+
+                  <Route path="/dashboard/kasbon" element={<KasbonIndex />} />
+                  <Route path="/dashboard/kasbon/tambah" element={<AddKasbon />} />
+
+                  <Route path="/dashboard/bonus-custom" element={<BonusCustomIndex />} />
+                </Route>
+
+                {/* RUTE ADMIN, HRD, DAN MANDOR */}
+                <Route element={<ProtectedRoute allowedRoles={["admin", "hrd", "mandor"]} />}>
+                  <Route path="/dashboard/lembur" element={<LemburIndex />} />
+                  <Route path="/dashboard/lembur/tambah-lembur" element={<AddLembur />} />
+                  <Route path="/dashboard/lembur/edit/:id" element={<EditLembur />} />
+                </Route>
 
               </Route>
             </Route>
