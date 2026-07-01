@@ -2,6 +2,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
 import { CalendarDays, ChevronLeft, Coffee, DollarSign, LaptopMinimal, Layers, LogOut,  Menu,  Rows2,  Users, X, ListCheck, Wallet, Gift } from "lucide-react";
+import logoTbe from "../assets/r3a.png";
 
 interface SidebarProps {
     isOpen: boolean;
@@ -56,12 +57,13 @@ export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: Sidebar
                     
                     {/* Teks Logo T-Be (Disembunyikan saat tertutup) */}
                     <div className={`transition-all duration-300 ${isOpen ? "opacity-100 block" : "hidden"}`}>
-                        <h1 className="font-bold text-3xl text-center text-white tracking-wider">
-                            T-Be
-                        </h1>
-                        <span className="text-white text-[11px] font-light text-center block leading-none mt-1">
-                            (tiga berlian)
-                        </span>
+                       <div className="flex justify-center items-center">
+                        <img 
+                            src={logoTbe}
+                            alt="T-Be Logo" 
+                            className="h-10 w-auto object-contain" 
+                        />
+                        </div>
                     </div>
 
                     {/* Tombol Close untuk Mobile */}

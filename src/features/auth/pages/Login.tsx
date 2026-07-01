@@ -12,7 +12,8 @@ import { Input } from "../../../components/common/InputText";
 import { InputPassword } from "../../../components/common/InputPassword";
 import Button from "../../../components/common/Button";
 import Notif from "../../../components/common/Notif";
-
+import backgroundImage from "../../../assets/bg_login.png";
+import tb from "../../../assets/tb.jpg";
 
 
 // 1. Ubah email menjadi username agar sesuai dengan backend
@@ -88,48 +89,123 @@ export default function Login() {
     };
 
 
-    return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6 md:p-8">
-                <div className="mb-6 text-center">
-                    <p className="text-sm text-gray-500 mt-1">Silakan login ke akun Anda</p>
-                </div>
+   return (
+    <>
+        {/* Background */}
+        <div
+            className="fixed inset-0 -z-20"
+            style={{
+                backgroundImage: `url(${backgroundImage})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+            }}
+        />
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                    {/* 4. Ubah input UI menjadi username */}
-                    <Input
-                        label="Username"
-                        nama="username"
-                        register={register}
-                        error={errors.username?.message}
-                    />
+        {/* Overlay */}
+        <div className="fixed inset-0 bg-black/40 -z-10" />
 
-                    <InputPassword
-                        label="Password"
-                        nama="password"
-                        register={register}
-                        error={errors.password?.message}
-                    />
+        {/* Content */}
+        <div className="min-h-screen flex items-center justify-center px-6">
 
-                    <div className="pt-2">
+            <div className="w-full max-w-130">
+
+                <div className="rounded-3xl bg-white/95 backdrop-blur-sm shadow-2xl p-10">
+
+                    {/* Logo */}
+
+                    <div className="flex justify-center">
+
+                        <img
+                            src={tb}
+                            alt="Logo"
+                            className="w-16 h-16 object-contain"
+                        />
+
+                    </div>
+
+                    {/* Heading */}
+
+                    <div className="mt-8 text-center">
+
+                        <p className="text-sm uppercase tracking-[4px] text-gray-500">
+                            Attendance System
+                        </p>
+
+                        <h1 className="mt-3 text-4xl font-bold text-gray-900">
+                            Sistem Absensi
+                        </h1>
+
+                        <p className="mt-2 text-green-700 font-medium">
+                            TBE (Tiga Berlian)
+                        </p>
+
+                        <p className="mt-5 text-gray-500 leading-7">
+                            Silakan login menggunakan akun yang telah diberikan
+                            administrator.
+                        </p>
+
+                    </div>
+
+                    {/* Form */}
+
+                    <form
+                        onSubmit={handleSubmit(onSubmit)}
+                        className="mt-10 space-y-5"
+                    >
+
+                        <Input
+                            type="text"
+                            placeholder="Masukkan username"
+                            label="Username"
+                            nama="username"
+                            register={register}
+                            error={errors.username?.message}
+                        />
+
+                        <InputPassword
+                            label="Password"
+                            nama="password"
+                            register={register}
+                            error={errors.password?.message}
+                        />
+
                         <Button
                             type="submit"
-                            label={isLoading ? "Memproses..." : "Login"}
                             disabled={isLoading}
-                            className="w-full py-3 text-lg"
+                            label={isLoading ? "Memproses..." : "Masuk"}
+                            className="w-full h-12 rounded-xl bg-green-700 hover:bg-green-800 text-white font-medium transition-colors"
                         />
+
+                    </form>
+
+                    {/* Footer */}
+
+                    <div className="mt-8 text-center">
+
+                        <p className="text-sm text-gray-500">
+                            Hanya dapat diakses oleh karyawan yang telah terdaftar.
+                        </p>
+
                     </div>
-                </form>
+
+                </div>
 
             </div>
-            <Notif
-                show={notif.show}
-                message={notif.message}
-                type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
-            />
 
         </div>
-    );
-};
 
+        <Notif
+            show={notif.show}
+            message={notif.message}
+            type={notif.type}
+            onClose={() =>
+                setNotif({
+                    show: false,
+                    message: "",
+                    type: "success",
+                })
+            }
+        />
+    </>
+);}
