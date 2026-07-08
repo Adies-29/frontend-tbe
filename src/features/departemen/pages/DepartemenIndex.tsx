@@ -84,7 +84,7 @@ export default function DepartemenIndex() {
                 </div>
             </div>
            
-            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
+            <section data-tour="departemen-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
 
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4">
                     <h1 className="text-xl md:text-2xl font-bold text-gray-800">

@@ -137,7 +137,7 @@ export default function KasbonIndex() {
             <Notif show={notif.show} message={notif.message} type={notif.type} onClose={() => setNotif(prev => ({ ...prev, show: false }))} />
 
             {/* HEADER & TAB NAVIGATION */}
-            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
+            <section data-tour="kasbon-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">

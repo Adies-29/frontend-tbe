@@ -142,7 +142,7 @@ export default function AddLembur() {
         addLemburMutation.mutate(payload);
     };
     return (
-        <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
+        <div data-tour="add-lembur-form" className="max-w-2xl mx-auto p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
             <div className="flex justify-between items-center mb-6 mt-2">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
                     Buat Perintah Lembur Baru

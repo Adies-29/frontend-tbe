@@ -17,7 +17,7 @@ export default function TargetPackingIndex() {
     return (
         <div className="flex flex-col gap-4 md:gap-6 w-full">
             {/* HEADER & TAB NAVIGATION */}
-            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full print:hidden">
+            <section data-tour="target-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full print:hidden">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800">Target Pegawai</h1>

@@ -14,7 +14,7 @@ export default function GajiTunjanganIndex() {
         <div className="flex flex-col gap-4 md:gap-6 w-full">
             
             {/* HEADER & TAB NAVIGATION */}
-            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full print:hidden">
+            <section data-tour="gaji-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full print:hidden">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800">Manajemen Gaji & Tunjangan</h1>
@@ -25,6 +25,7 @@ export default function GajiTunjanganIndex() {
                 {/* SISTEM TAB NAVIGASI UI */}
                 <div className="flex mt-6 gap-6 border-b border-gray-300">
                     <button
+                        data-tour="gaji-tab-rekap"
                         onClick={() => setActiveTab('rekap')}
                         className={`flex items-center gap-2 pb-3 px-2 text-[15px] md:text-sm font-semibold transition-all duration-200 ${
                             activeTab === 'rekap'
@@ -36,6 +37,7 @@ export default function GajiTunjanganIndex() {
                         Rekap Gaji
                     </button>
                     <button
+                        data-tour="gaji-tab-master"
                         onClick={() => setActiveTab('master')}
                         className={`flex items-center gap-2 pb-3 px-2 text-[15px] md:text-sm font-semibold transition-all duration-200 ${
                             activeTab === 'master'

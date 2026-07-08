@@ -15,7 +15,7 @@ export default function JadwalShiftIndex() {
     return (
         <div className="flex flex-col gap-4 md:gap-6 w-full">
             {/* HEADER & TAB NAVIGATION */}
-            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
+            <section data-tour="shift-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800">Manajemen Jadwal & Shift</h1>
@@ -25,6 +25,7 @@ export default function JadwalShiftIndex() {
                     {activeTab === 'shift' && (
                         <div className="w-full md:w-auto">
                             <Button  
+                                data-tour="btn-add-shift"
                                 label="Tambah Master Shift" 
                                 onClick={() => navigate('/dashboard/jadwal-shift/tambah')}
                                 className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl"
@@ -36,6 +37,7 @@ export default function JadwalShiftIndex() {
                 {/* SISTEM TAB NAVIGASI UI */}
                 <div className="flex mt-6 gap-6 border-b border-gray-300">
                     <button
+                        data-tour="shift-tab-jadwal"
                         onClick={() => setActiveTab('jadwal')}
                         className={`flex items-center gap-2 pb-3 px-2 text-[15px] md:text-sm font-semibold transition-all duration-200 ${
                             activeTab === 'jadwal'
@@ -47,6 +49,7 @@ export default function JadwalShiftIndex() {
                         Jadwal Pegawai
                     </button>
                     <button
+                        data-tour="shift-tab-master"
                         onClick={() => setActiveTab('shift')}
                         className={`flex items-center gap-2 pb-3 px-2 text-[15px] md:text-sm font-semibold transition-all duration-200 ${
                             activeTab === 'shift'

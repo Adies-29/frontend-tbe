@@ -1,0 +1,126 @@
+/* ============================================================
+   CUSTOM STYLING UNTUK DRIVER.JS POPOVER
+   Menyesuaikan warna dan desain popover tour agar senada
+   dengan tema aplikasi T-Be (merah #C90003 + biru modern)
+   ============================================================ */
+
+/* Overlay background (SVG container harus transparan agar cutout terang 100%, path SVG yang diberi warna gelap) */
+.driver-overlay {
+    background: transparent !important;
+}
+
+.driver-overlay path {
+    fill: rgb(15, 23, 42) !important;
+    fill-opacity: 0.7 !important;
+}
+
+/* Popover container */
+.driver-popover {
+    background-color: #ffffff !important;
+    border-radius: 16px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+    padding: 20px 24px !important;
+    max-width: 380px !important;
+    border: none !important;
+}
+
+/* Title styling */
+.driver-popover-title {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    color: #1f2937 !important;
+    line-height: 1.4 !important;
+    margin-bottom: 8px !important;
+}
+
+/* Description styling */
+.driver-popover-description {
+    font-size: 13px !important;
+    color: #6b7280 !important;
+    line-height: 1.6 !important;
+}
+
+/* Progress text */
+.driver-popover-progress-text {
+    font-size: 11px !important;
+    color: #9ca3af !important;
+    font-weight: 600 !important;
+}
+
+/* Navigation buttons container */
+.driver-popover-navigation-btns {
+    gap: 8px !important;
+}
+
+/* Previous button */
+.driver-popover-prev-btn {
+    background-color: #f3f4f6 !important;
+    color: #374151 !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 10px !important;
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.driver-popover-prev-btn:hover {
+    background-color: #e5e7eb !important;
+}
+
+/* Next / Done button */
+.driver-popover-next-btn {
+    background: linear-gradient(135deg, #3b82f6, #4f46e5) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 8px 20px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3) !important;
+}
+
+.driver-popover-next-btn:hover {
+    box-shadow: 0 6px 12px -2px rgba(59, 130, 246, 0.4) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Close button */
+.driver-popover-close-btn {
+    color: #9ca3af !important;
+    font-size: 18px !important;
+    transition: color 0.2s ease !important;
+}
+
+.driver-popover-close-btn:hover {
+    color: #ef4444 !important;
+}
+
+/* Arrow styling */
+.driver-popover-arrow {
+    border: none !important;
+}
+
+.driver-popover-arrow-side-top {
+    border-color: #ffffff transparent transparent transparent !important;
+}
+
+.driver-popover-arrow-side-bottom {
+    border-color: transparent transparent #ffffff transparent !important;
+}
+
+.driver-popover-arrow-side-left {
+    border-color: transparent transparent transparent #ffffff !important;
+}
+
+.driver-popover-arrow-side-right {
+    border-color: transparent #ffffff transparent transparent !important;
+}
+
+/* Highlighted element stage */
+.driver-active-element {
+    border-radius: 12px !important;
+}

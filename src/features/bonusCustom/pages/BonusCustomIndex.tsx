@@ -50,7 +50,7 @@ export default function BonusCustomIndex() {
         <div className="p-6 max-w-7xl mx-auto flex flex-col gap-6 animate-in fade-in duration-300">
             
             {/* HEADER */}
-            <div className="flex items-center gap-3 border-b pb-4">
+            <div data-tour="bonus-header" className="flex items-center gap-3 border-b pb-4">
                 <div>
                     <h1 className="text-2xl font-black text-gray-800">Bonus Custom</h1>
 

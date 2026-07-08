@@ -3,6 +3,9 @@ import { Outlet } from "react-router-dom";
 import { Menu } from "lucide-react";
 import Sidebar from "../Sidebar";
 import Header from "../Header";
+import FloatingHelpButton from "../common/guidance/FloatingHelpButton";
+import HelpDrawer from "../common/guidance/HelpDrawer";
+
 
 
 export default function DashboardLayout() {
@@ -54,6 +57,9 @@ export default function DashboardLayout() {
                 
             </div>
             
+            {/* Modul Panduan In-App Guidance */}
+            <FloatingHelpButton />
+            <HelpDrawer />
         </div>
     );
 }

@@ -106,7 +106,7 @@ export default function JabatanIndex() {
             </div>
 
             {/* 2. BAGIAN TABEL DAN TOMBOL */}
-            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-100">
+            <section data-tour="jabatan-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-100">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4">
                     <h1 className="text-xl md:text-2xl font-bold text-gray-800">
                         Data Jabatan

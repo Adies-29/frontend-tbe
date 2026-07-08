@@ -171,7 +171,7 @@ export default function AturGajiJabatan() {
             )}
 
             {/* HEADER HALAMAN */}
-            <div className="bg-white border border-gray-300 rounded-xl p-4 md:p-5 shadow-sm flex justify-between items-start md:items-center gap-3">
+            <div data-tour="atur-gaji-header" className="bg-white border border-gray-300 rounded-xl p-4 md:p-5 shadow-sm flex justify-between items-start md:items-center gap-3">
                 <div className="flex flex-col">
                     <h2 className="text-sm md:text-xl text-gray-500 font-semibold mb-1">Pengaturan Gaji & Tunjangan</h2>
                     <div className="flex flex-wrap items-center gap-2">
@@ -200,7 +200,7 @@ export default function AturGajiJabatan() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 pb-0">
                         {/* GRUP 1: UPAH UTAMA */}
-                        <section className="bg-gray-50 p-6 rounded-xl border border-gray-200 flex flex-col gap-4">
+                        <section data-tour="atur-gaji-upah" className="bg-gray-50 p-6 rounded-xl border border-gray-200 flex flex-col gap-4">
                             <div className="flex items-center gap-2 mb-2 text-green-700 font-bold border-b border-gray-300 pb-2">
                                 <Banknote size={20} /> <h2>Upah Dasar & Lembur</h2>
                             </div>
@@ -258,7 +258,7 @@ export default function AturGajiJabatan() {
                         </section>
 
                         {/* GRUP 2: BONUS & REWARD */}
-                        <section className="bg-gray-50 p-6 rounded-xl border border-gray-200 flex flex-col gap-4">
+                        <section data-tour="atur-gaji-bonus" className="bg-gray-50 p-6 rounded-xl border border-gray-200 flex flex-col gap-4">
                             <div className="flex items-center gap-2 mb-2 text-yellow-600 font-bold border-b border-gray-300 pb-2">
                                 <Award size={20} /> <h2>Bonus Performa</h2>
                             </div>

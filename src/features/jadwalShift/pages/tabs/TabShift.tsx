@@ -18,7 +18,7 @@ export default function TabShift() {
     return (
         <div className="flex flex-col gap-6">
             {/* INFO BANNER */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex gap-3 shadow-sm transition-all duration-300">
+            <div data-tour="shift-info-banner" className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex gap-3 shadow-sm transition-all duration-300">
                 <p className="text-sm text-yellow-700">
                     💡 <strong>Catatan:</strong> Perubahan aturan master shift dan nominal denda akan otomatis berlaku pada kalkulasi absensi di hari berikutnya.
                 </p>
@@ -35,7 +35,9 @@ export default function TabShift() {
                         <p>Memuat data Master Shift...</p>
                     </div>
                 ) : (
-                    <TabelJadwalShift data={dataJadwalShift} onRefresh={fetchJadwalShift} />
+                    <div data-tour="shift-table">
+                        <TabelJadwalShift data={dataJadwalShift} onRefresh={fetchJadwalShift} />
+                    </div>
                 )}
             </div>
         </div>
