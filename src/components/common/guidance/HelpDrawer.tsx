@@ -376,7 +376,7 @@ export default function HelpDrawer() {
                 </div>
 
                 {/* ===== FOOTER ===== */}
-                <div className="border-t border-gray-200 px-5 py-3 bg-gray-50 flex-shrink-0 flex items-center justify-between">
+                <div className="border-t border-gray-200 px-5 py-3 bg-gray-50 shrink-0 flex items-center justify-between">
                     <div className="text-xs text-gray-400">
                         {completedTours.length} / {allGuides.length} panduan selesai
                     </div>

@@ -11,15 +11,15 @@ export default function FloatingHelpButton() {
             aria-label="Pusat Bantuan"
             title="Pusat Bantuan"
             className={`
-                fixed bottom-6 right-6 z-[9998]
+                fixed bottom-6 right-6 z-9998
                 w-14 h-14 rounded-full
-                bg-gradient-to-br from-blue-600 to-indigo-700
+                bg-linear-to-br from-blue-600 to-indigo-700
                 text-white shadow-lg shadow-blue-500/30
                 flex items-center justify-center
                 transition-all duration-300 ease-in-out
                 hover:scale-110 hover:shadow-xl hover:shadow-blue-500/40
                 active:scale-95
-                ${isHelpDrawerOpen ? 'rotate-45 bg-gradient-to-br from-red-500 to-red-700 shadow-red-500/30' : ''}
+                ${isHelpDrawerOpen ? 'rotate-45 bg-linear-to-br from-red-500 to-red-700 shadow-red-500/30' : ''}
                 group
             `}
         >
