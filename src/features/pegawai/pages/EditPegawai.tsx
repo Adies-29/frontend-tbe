@@ -232,7 +232,7 @@ export default function EditPegawai(){
     
     return(
         <div className="p-3 md:p-6 w-full">
-            <div className="bg-white rounded-xl shadow-md p-4 md:p-8 border border-gray-100">
+            <div data-tour="edit-pegawai" className="bg-white rounded-xl shadow-md p-4 md:p-8 border border-gray-100">
                 <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                     <h2 className="text-xl md:text-2xl font-bold text-gray-800">
                         Edit Pegawai

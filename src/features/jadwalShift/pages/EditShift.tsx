@@ -155,7 +155,7 @@ export default function EditShift() {
             <div className="bg-white rounded-xl shadow-md p-4 md:p-8 border border-gray-100">
 
                 {/* HEADER */}
-                <div className="flex justify-between items-center bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <div data-tour="add-shift-header" className="flex justify-between items-center bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
                     <div>
                         <h1 className="text-xl font-bold text-gray-800">Edit Konfigurasi Shift</h1>
                         <p className="text-sm text-gray-500">Atur jadwal, toleransi, dan denda keterlambatan.</p>

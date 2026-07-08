@@ -128,7 +128,7 @@ export default function AddShift() {
             <div className="bg-white rounded-xl shadow-md p-4 md:p-8 border border-gray-100">
 
                 {/* HEADER */}
-                <div className="flex justify-between items-center bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <div data-tour="add-shift-header" className="flex justify-between items-center bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
                     <div>
                         <h1 className="text-xl font-bold text-gray-800">Tambah Konfigurasi Shift</h1>
                         <p className="text-sm text-gray-500">Atur jadwal, toleransi, dan denda keterlambatan.</p>
@@ -139,7 +139,7 @@ export default function AddShift() {
                 <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     {/* GRUP 1: WAKTU UTAMA */}
-                    <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-5">
+                    <section data-tour="add-shift-waktu" className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-5">
                         <div className="flex items-center gap-3 text-blue-600 font-bold border-b border-gray-100 pb-3">
                             <Clock size={20} /> <h2>Informasi Waktu & Utama</h2>
                         </div>
@@ -179,7 +179,7 @@ export default function AddShift() {
                     </section>
 
                     {/* GRUP 2: TOLERANSI & SCAN */}
-                    <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-5">
+                    <section data-tour="add-shift-toleransi" className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-5">
                         <div className="flex items-center gap-3 text-orange-600 font-bold border-b border-gray-100 pb-3">
                             <AlertCircle size={20} /> <h2>Toleransi & Batas Scan</h2>
                         </div>
@@ -233,7 +233,7 @@ export default function AddShift() {
                     </section>
 
                     {/* GRUP 2.5: PENGATURAN TIPE DENDA (GLOBAL) */}
-                    <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-5 md:col-span-2">
+                    <section data-tour="add-shift-tipe-denda" className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-5 md:col-span-2">
                         <div className="flex items-center gap-3 text-emerald-600 font-bold border-b border-gray-100 pb-3">
                             <Banknote size={20} /> <h2>Sistem Perhitungan Denda (Global)</h2>
                         </div>
@@ -265,7 +265,7 @@ export default function AddShift() {
                     </section>
 
                     {/* GRUP 3: DENDA TERLAMBAT */}
-                    <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-5">
+                    <section data-tour="add-shift-denda-telat" className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-5">
                         <div className="flex items-center gap-3 text-red-600 font-bold pb-3">
                             <Banknote size={20} /> <h2>Aturan Denda Terlambat</h2>
                         </div>
@@ -313,7 +313,7 @@ export default function AddShift() {
                     </section>
 
                     {/* GRUP 4: DENDA PULANG AWAL */}
-                    <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-5">
+                    <section data-tour="add-shift-pulang-awal" className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-5">
                         <div className="flex items-center gap-3 text-purple-600 font-bold border-b border-gray-100 pb-3">
                             <Banknote size={20} /> <h2>Aturan Pulang Awal</h2>
                         </div>

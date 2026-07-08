@@ -137,7 +137,7 @@ export default function AddKasbon() {
         <div className="flex flex-col gap-6 w-full p-2 max-w-4xl mx-auto">
             <Notif show={notif.show} message={notif.message} type={notif.type} onClose={() => setNotif(prev => ({ ...prev, show: false }))} />
 
-            <div className="bg-white rounded-xl shadow-md p-4 md:p-8 border border-gray-100">
+            <div data-tour="add-kasbon-form" className="bg-white rounded-xl shadow-md p-4 md:p-8 border border-gray-100">
                 <div className="flex justify-between items-center mb-6 mt-2">
                     <div>
                         <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">

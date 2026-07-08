@@ -152,7 +152,7 @@ export default function DashboardIndex() {
             </div>
 
 
-            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-[400px]">
+            <section data-tour="dashboard-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-[400px]">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4">
                     <h1 className="text-xl md:text-2xl font-bold text-gray-800">
                         Aktivitas Absensi Karyawan Hari Ini

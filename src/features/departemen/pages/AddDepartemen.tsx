@@ -76,7 +76,7 @@ export default function AddDepartemen() {
     };
 
     return (
-        <div className="p-6 max-w-2xlmx-auto w-full">
+        <div data-tour="add-dept-form" className="p-6 max-w-2xlmx-auto w-full">
             <div className="bg-white rounded-xl shadow-md p-8 border border-gray-100">
 
                 <div className="flex grid-cols-1 md:grid-cols-2 justify-between">

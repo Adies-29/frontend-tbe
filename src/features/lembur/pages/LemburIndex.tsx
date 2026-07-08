@@ -45,7 +45,7 @@ export default function LemburIndex() {
 
     return (
         <div className="flex flex-col gap-4 md:gap-6 w-full">
-            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-[400px]">
+            <section data-tour="lembur-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-[400px]">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4">
                     <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
                         <Clock size={28} className="text-red-600" /> Data Perintah Lembur

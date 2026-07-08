@@ -202,7 +202,7 @@ export default function AddPegawai() {
         <div className="p-3 md:p-6 w-full"> 
             
         
-            <div className="bg-white rounded-xl shadow-md p-4 md:p-8 border border-gray-100">
+            <div data-tour="add-pegawai-form" className="bg-white rounded-xl shadow-md p-4 md:p-8 border border-gray-100">
                 
                 {/* --- HEADER --- */}
                 <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
@@ -220,7 +220,7 @@ export default function AddPegawai() {
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                     
                     {/* --- SEKSI 1: INFORMASI PRIBADI --- */}
-                    <div>
+                    <div data-tour="add-pegawai-pribadi">
                         <h3 className="text-base md:text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4 md:mb-5">
                             Informasi Pribadi
                         </h3>
@@ -275,7 +275,7 @@ export default function AddPegawai() {
                     </div>
 
                     {/* --- SEKSI 2: KONTAK & ALAMAT --- */}
-                    <div>
+                    <div data-tour="add-pegawai-kontak">
                         <h3 className="text-base md:text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4 md:mb-5">
                             Kontak & Alamat
                         </h3>
@@ -288,7 +288,7 @@ export default function AddPegawai() {
 
                     {/* --- SEKSI 3: DATA PEKERJAAN --- */}
                     {/* Padding dikurangi sedikit untuk layar HP (p-4) */}
-                    <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-100">
+                    <div data-tour="add-pegawai-pekerjaan" className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-100">
                         <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-4 md:mb-5">
                             Data Pekerjaan & Perusahaan
                         </h3>
@@ -302,7 +302,7 @@ export default function AddPegawai() {
                     </div>
 
                     {/* --- TOMBOL SUBMIT --- */}
-                    <div className="flex justify-end gap-3 mt-8 pt-5 border-t border-gray-100">
+                    <div data-tour="add-pegawai-submit" className="flex justify-end gap-3 mt-8 pt-5 border-t border-gray-100">
                         <Button 
                             variant="success"
                             type="submit" 
