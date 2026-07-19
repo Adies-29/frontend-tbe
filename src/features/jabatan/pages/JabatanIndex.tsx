@@ -81,7 +81,7 @@ export default function JabatanIndex() {
                 </div>
             )}
 
-            <div className="flex flex-col md:flex-row gap-4 w-full">
+            <div data-tour="jabatan-stats" className="flex flex-col md:flex-row gap-4 w-full">
                 {/* Kotak 1: Total Jabatan */}
                 <div className="bg-white border border-gray-300 rounded-xl p-4 w-full md:min-w-48 shadow-sm flex items-center gap-4">
                     <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
@@ -117,6 +117,7 @@ export default function JabatanIndex() {
                             label="Tambah Jabatan"
                             onClick={() => navigate("/dashboard/jabatan/tambah-jabatan")}
                             className="w-full md:w-auto"
+                            data-tour="btn-add-jabatan"
                         />
                     </div>
                 </div>
