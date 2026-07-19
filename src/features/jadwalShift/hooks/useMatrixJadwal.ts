@@ -109,8 +109,20 @@ export function useMatrixJadwal() {
     }, [filterDepartemen]);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const transformToMatrix = (backendData: any[]): PegawaiMatrix[] => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const transformToMatrix = (backendData: any[], allPegawai: any[] = []): PegawaiMatrix[] => {
         const matrixMap: { [key: number]: PegawaiMatrix } = {};
+
+        // Inisialisasi seluruh pegawai master agar tetap tampil di tabel matrix
+        allPegawai.forEach(peg => {
+            matrixMap[peg.id] = {
+                id: peg.id,
+                nama: peg.nama || "Tanpa Nama",
+                jabatan: peg.jabatan?.nama_jabatan || "-",
+                departemen: peg.jabatan?.departemen?.nama_departemen || "-",
+                jadwal: {}
+            };
+        });
 
         backendData.forEach(item => {
             const pegId = item.pegawai_id;
@@ -141,7 +153,10 @@ export function useMatrixJadwal() {
                 }
             }
 
-            matrixMap[pegId].jadwal[item.tanggal] = {
+            // Sanitasi format YYYY-MM-DD (potong T00:00:00 jika ada)
+            const tglKey = item.tanggal ? String(item.tanggal).split('T')[0] : "";
+
+            matrixMap[pegId].jadwal[tglKey] = {
                 id_jadwal: item.id,
                 kode: kode,
                 warna: warnaBorders,
@@ -175,14 +190,14 @@ export function useMatrixJadwal() {
     });
 
     const { data: matrixKaryawan = [], isLoading, error: jadwalError } = useQuery({
-        queryKey: ['jadwalBulanan', filterStartDate, filterEndDate],
+        queryKey: ['jadwalBulanan', filterStartDate, filterEndDate, listPegawai.length],
         queryFn: async () => {
             const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jadwal?start_date=${filterStartDate}&end_date=${filterEndDate}`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const json = await res.json();
             if (!res.ok || !json.success) throw new Error(json.message || "Gagal memuat jadwal.");
-            return transformToMatrix(json.data);
+            return transformToMatrix(json.data, listPegawai);
         },
         enabled: !!token && !!filterStartDate && !!filterEndDate
     });

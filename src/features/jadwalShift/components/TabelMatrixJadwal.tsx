@@ -7,20 +7,32 @@ import Button from '../../../components/common/Button';
 
 import ModalKelolaShift from './ModalKelolaShift';
 import ModalGenerateMassal from './ModalGenerateMassal';
+import { ModalKelolaPolaRotasi } from './ModalKelolaPolaRotasi';
+import { ModalAssignPolaPegawai } from './ModalAssignPolaPegawai';
 import { useMatrixJadwal } from '../hooks/useMatrixJadwal';
 import Notif from '../../../components/common/Notif';
+import { useState } from 'react';
+import { useAuthStore } from '../../../store/useAuthStore';
 
 export default function TabelMatrixJadwal() {
     const hookParams = useMatrixJadwal();
+    const [isModalPolaOpen, setIsModalPolaOpen] = useState(false);
+    const [isModalAssignOpen, setIsModalAssignOpen] = useState(false);
+    const token = useAuthStore((state) => state.token);
 
-    // Helper untuk generate array Date
+    // Helper untuk generate array Date (menggunakan UTC untuk mencegah pergeseran zona waktu)
     const getDatesInRange = (startStr: string, endStr: string) => {
-        const dateArray = [];
-        const currentDate = new Date(startStr);
-        const stopDate = new Date(endStr);
+        const dateArray: Date[] = [];
+        if (!startStr || !endStr) return dateArray;
+        const [sY, sM, sD] = startStr.split('-').map(Number);
+        const [eY, eM, eD] = endStr.split('-').map(Number);
+
+        const currentDate = new Date(Date.UTC(sY, sM - 1, sD));
+        const stopDate = new Date(Date.UTC(eY, eM - 1, eD));
+
         while (currentDate <= stopDate) {
             dateArray.push(new Date(currentDate));
-            currentDate.setDate(currentDate.getDate() + 1);
+            currentDate.setUTCDate(currentDate.getUTCDate() + 1);
         }
         return dateArray;
     };
@@ -102,9 +114,11 @@ export default function TabelMatrixJadwal() {
                         </select>
                     </div>
 
-                    {/* Tombol Load & Generate */}
+                    {/* Tombol Load, Pola Rotasi & Generate */}
                     <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto mt-1 md:mt-0">
                         <Button label="Load Data" variant='warning' onClick={hookParams.handleFilter} className="w-full sm:w-auto" />
+                        <Button variant="secondary" label="Pola Rolling Shift" onClick={() => setIsModalPolaOpen(true)} className="w-full sm:w-auto" />
+                        <Button variant="outline" label="Assign Pola Pegawai" onClick={() => setIsModalAssignOpen(true)} className="w-full sm:w-auto" />
                         <Button variant="primary" label="Generate Jadwal Massal" onClick={() => hookParams.setIsModalMassalOpen(true)} className="w-full sm:w-auto" />
                     </div>
                 </div>
@@ -129,12 +143,12 @@ export default function TabelMatrixJadwal() {
                                     Nama Pegawai
                                 </th>
                                 {daysArray.map((dateObj, idx) => {
-                                    const isWeekend = dateObj.getDay() === 0;
+                                    const isWeekend = dateObj.getUTCDay() === 0;
                                     return (
                                         <th key={idx} scope="col" className={`px-2 py-3 border-r border-gray-200 text-center min-w-[60px] leading-tight ${isWeekend ? 'bg-red-50/50' : ''}`}>
-                                            <div className={`text-lg ${isWeekend ? 'text-red-600 font-bold' : ''}`}>{dateObj.getDate()}</div>
+                                            <div className={`text-lg ${isWeekend ? 'text-red-600 font-bold' : ''}`}>{dateObj.getUTCDate()}</div>
                                             <div className={`text-[9px] ${isWeekend ? 'text-red-400 font-medium' : 'text-gray-400'}`}>
-                                                {dateObj.toLocaleDateString('id-ID', { month: 'short' })}
+                                                {dateObj.toLocaleDateString('id-ID', { month: 'short', timeZone: 'UTC' })}
                                             </div>
                                         </th>
                                     );
@@ -159,8 +173,11 @@ export default function TabelMatrixJadwal() {
                                         </td>
 
                                         {daysArray.map((dateObj, idx) => {
-                                            const isWeekend = dateObj.getDay() === 0;
-                                            const tglKey = dateObj.toLocaleDateString('en-CA');
+                                            const isWeekend = dateObj.getUTCDay() === 0;
+                                            const y = dateObj.getUTCFullYear();
+                                            const m = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+                                            const d = String(dateObj.getUTCDate()).padStart(2, '0');
+                                            const tglKey = `${y}-${m}-${d}`;
                                             const shiftDetail = pegawai.jadwal[tglKey];
 
                                             const isAsal = hookParams.selectedCell?.pegawaiId === pegawai.id && hookParams.selectedCell?.tanggal === tglKey;
@@ -262,6 +279,22 @@ export default function TabelMatrixJadwal() {
                 setMassalShiftId={hookParams.setMassalShiftId}
                 isSaving={hookParams.isSaving}
                 handleProsesGenerateMassal={hookParams.handleProsesGenerateMassal}
+            />
+
+            <ModalKelolaPolaRotasi
+                isOpen={isModalPolaOpen}
+                onClose={() => setIsModalPolaOpen(false)}
+                shifts={hookParams.listMasterShifts}
+                token={token}
+                onSuccess={hookParams.handleFilter}
+            />
+
+            <ModalAssignPolaPegawai
+                isOpen={isModalAssignOpen}
+                onClose={() => setIsModalAssignOpen(false)}
+                listPegawai={hookParams.listPegawai}
+                shifts={hookParams.listMasterShifts}
+                onSuccess={hookParams.handleFilter}
             />
 
             <Notif
