@@ -316,8 +316,15 @@ export function useRekapGaji() {
     };
 
     const handleCetakSemuaSlip = () => {
-        if (rekapGajiData.length === 0) {
-            alert("Tidak ada data gaji yang bisa dicetak!");
+        const dataLunas = rekapGajiData.filter(
+            (item: any) => item.status === 'Lunas' || item.status?.toLowerCase() === 'lunas'
+        );
+        if (dataLunas.length === 0) {
+            setNotif({
+                show: true,
+                message: "Tidak ada data gaji berstatus Lunas yang dapat dicetak!",
+                type: "error"
+            });
             return;
         }
         window.print();
