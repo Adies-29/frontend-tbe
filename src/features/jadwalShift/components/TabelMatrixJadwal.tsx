@@ -2,7 +2,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-import { Loader2, MousePointerClick, X, Search } from 'lucide-react';
+import { Loader2, MousePointerClick, X, Search, RefreshCw, Users, PlayCircle } from 'lucide-react';
 import Button from '../../../components/common/Button';
 
 import ModalKelolaShift from './ModalKelolaShift';
@@ -18,7 +18,7 @@ export default function TabelMatrixJadwal() {
     const hookParams = useMatrixJadwal();
     const [isModalPolaOpen, setIsModalPolaOpen] = useState(false);
     const [isModalAssignOpen, setIsModalAssignOpen] = useState(false);
-    const token = useAuthStore((state) => state.token);
+    const token = useAuthStore((state) => state.token) || "";
 
     // Helper untuk generate array Date (menggunakan UTC untuk mencegah pergeseran zona waktu)
     const getDatesInRange = (startStr: string, endStr: string) => {
@@ -45,22 +45,48 @@ export default function TabelMatrixJadwal() {
 
             {/* TOOLBAR TIMELINE FLEKSIBEL */}
             <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col gap-4">
-                {/* Bagian Atas: Pencarian */}
-                <div className="w-full relative md:w-72">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                    <input
-                        type="text"
-                        placeholder="Cari nama Pegawai..."
-                        value={hookParams.searchQuery}
-                        onChange={(e) => hookParams.setSearchQuery(e.target.value)}
-                        className="border border-gray-300 rounded-lg pl-9 pr-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm w-full"
-                    />
+                
+                {/* Baris 1: Search & Tombol Aksi Pengelolaan */}
+                <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3">
+                    {/* Pencarian Pegawai */}
+                    <div className="relative w-full md:w-72">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Cari nama Pegawai..."
+                            value={hookParams.searchQuery}
+                            onChange={(e) => hookParams.setSearchQuery(e.target.value)}
+                            className="border border-gray-300 rounded-lg pl-9 pr-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm w-full bg-white"
+                        />
+                    </div>
+
+                    {/* Group Tombol Aksi Pengelolaan */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button 
+                            variant="secondary" 
+                            label="Pola Rolling Shift" 
+                            icon={<RefreshCw size={15} className="text-blue-600" />}
+                            onClick={() => setIsModalPolaOpen(true)} 
+                        />
+                        <Button 
+                            variant="info" 
+                            label="Assign Pola Pegawai" 
+                            icon={<Users size={15} />}
+                            onClick={() => setIsModalAssignOpen(true)} 
+                        />
+                        <Button 
+                            variant="primary" 
+                            label="Generate Jadwal Massal" 
+                            icon={<PlayCircle size={15} />}
+                            onClick={() => hookParams.setIsModalMassalOpen(true)} 
+                        />
+                    </div>
                 </div>
 
-                {/* Bagian Bawah: Filter Dropdown & Tombol */}
-                <div className="flex flex-col md:flex-row flex-wrap gap-3 items-start md:items-center w-full">
+                {/* Baris 2: Filter Periode & Departemen/Jabatan */}
+                <div className="flex flex-col md:flex-row flex-wrap gap-3 items-start md:items-center pt-2 border-t border-gray-200/80">
                     {/* Grup Periode */}
-                    <div className="flex gap-2 w-full md:w-auto">
+                    <div className="flex gap-2 w-full md:w-auto items-center">
                         <select
                             value={hookParams.periode}
                             onChange={hookParams.handlePeriodeChange}
@@ -71,8 +97,8 @@ export default function TabelMatrixJadwal() {
                             <option value="tahun">Tahunan</option>
                         </select>
 
-                        {hookParams.periode === "minggu" && <input type="week" value={hookParams.filterValue} onChange={(e) => hookParams.setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none" />}
-                        {hookParams.periode === "bulan" && <input type="month" value={hookParams.filterValue} onChange={(e) => hookParams.setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none" />}
+                        {hookParams.periode === "minggu" && <input type="week" value={hookParams.filterValue} onChange={(e) => hookParams.setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none bg-white" />}
+                        {hookParams.periode === "bulan" && <input type="month" value={hookParams.filterValue} onChange={(e) => hookParams.setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none bg-white" />}
                         {hookParams.periode === "tahun" && (
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker
@@ -88,7 +114,7 @@ export default function TabelMatrixJadwal() {
                     <div className="hidden md:block h-6 w-px bg-gray-300 mx-1"></div>
 
                     {/* Grup Departemen & Jabatan */}
-                    <div className="flex gap-2 w-full md:w-auto">
+                    <div className="flex gap-2 w-full md:w-auto items-center">
                         <select
                             value={hookParams.filterDepartemen}
                             onChange={(e) => hookParams.setFilterDepartemen(e.target.value)}
@@ -112,14 +138,8 @@ export default function TabelMatrixJadwal() {
                                 <option key={idx} value={jab}>{jab}</option>
                             ))}
                         </select>
-                    </div>
 
-                    {/* Tombol Load, Pola Rotasi & Generate */}
-                    <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto mt-1 md:mt-0">
-                        <Button label="Load Data" variant='warning' onClick={hookParams.handleFilter} className="w-full sm:w-auto" />
-                        <Button variant="secondary" label="Pola Rolling Shift" onClick={() => setIsModalPolaOpen(true)} className="w-full sm:w-auto" />
-                        <Button variant="outline" label="Assign Pola Pegawai" onClick={() => setIsModalAssignOpen(true)} className="w-full sm:w-auto" />
-                        <Button variant="primary" label="Generate Jadwal Massal" onClick={() => hookParams.setIsModalMassalOpen(true)} className="w-full sm:w-auto" />
+                        <Button label="Load Data" variant='warning' onClick={hookParams.handleFilter} className="ml-auto md:ml-2" />
                     </div>
                 </div>
             </div>

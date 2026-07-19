@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, Calendar, RefreshCw, CheckCircle, AlertCircle, Users, Sparkles } from 'lucide-react';
+import { X, Search, Users, Sparkles, CheckCircle, AlertCircle } from 'lucide-react';
+import Button from '../../../components/common/Button';
 import { apiFetch } from '../../../utils/apiFetch';
 import { useAuthStore } from '../../../store/useAuthStore';
 
@@ -211,60 +212,60 @@ export const ModalAssignPolaPegawai: React.FC<ModalAssignPolaPegawaiProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden border border-slate-200 dark:border-slate-800 my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden border border-gray-200 animate-in zoom-in-95 my-6">
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
-          <div className="flex items-center space-x-2">
-            <RefreshCw className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+        <div className="bg-gray-50 p-4 border-b border-gray-200 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Users size={20} className="text-blue-600" />
             <div>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                Penugasan Pola Rolling Shift Pegawai
+              <h3 className="font-bold text-gray-800 text-lg">
+                Assign Pola Rolling Shift Pegawai
               </h3>
-              <p className="text-xs text-slate-500 font-medium">
-                Atur siklus rotasi shift dan tanggal patokan (Anchor Date) pegawai
+              <p className="text-xs text-gray-500 font-semibold mt-0.5">
+                Terapkan siklus rotasi shift & tanggal patokan (Anchor Date) ke pegawai
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+            className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X size={20} />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
 
           {errorMsg && (
-            <div className="flex items-center space-x-2 p-3 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-sm">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs font-semibold">
+              <AlertCircle size={16} className="flex-shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="flex items-center space-x-2 p-3 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-600 dark:text-emerald-400 text-sm">
-              <CheckCircle className="w-5 h-5 flex-shrink-0" />
+            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-xs font-semibold">
+              <CheckCircle size={16} className="flex-shrink-0" />
               <span>{successMsg}</span>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             {/* KOLOM KIRI: PILIH POLA & DATES */}
-            <div className="space-y-4">
+            <div className="flex flex-col gap-3">
               
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-1.5">
-                  1. Pilih Pola Rotasi Shift Target *
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                  1. Pilih Pola Rotasi Shift *
                 </label>
                 <select
                   value={selectedPolaId}
                   onChange={e => setSelectedPolaId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none font-medium shadow-sm"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 shadow-sm bg-white outline-none w-full font-medium"
                   required
                 >
                   <option value="">-- Pilih Pola Rotasi --</option>
@@ -273,32 +274,32 @@ export const ModalAssignPolaPegawai: React.FC<ModalAssignPolaPegawaiProps> = ({
                       {p.nama_pola} (Siklus {p.jumlah_hari_siklus} Hari)
                     </option>
                   ))}
-                  <option value="NONE">-- Nonaktifkan Pola Rotasi (Pakai Shift Tetap) --</option>
+                  <option value="NONE">-- Nonaktifkan Pola (Pakai Shift Default) --</option>
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-1.5">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
                   2. Tanggal Mulai Hari ke-1 (Anchor Date) *
                 </label>
                 <input
                   type="date"
                   value={tanggalMulaiPola}
                   onChange={e => setTanggalMulaiPola(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm font-medium"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 shadow-sm outline-none w-full bg-white font-medium"
                   required
                 />
-                <p className="text-[11px] text-slate-500 mt-1">
-                  💡 Pada tanggal ini, pegawai secara resmi memulai <strong>Hari ke-1</strong> dari pola rotasi pilihan.
+                <p className="text-[11px] text-gray-500">
+                  💡 Pada tanggal ini, pegawai mulai <strong>Hari ke-1</strong> siklus.
                 </p>
               </div>
 
               {/* SIMULASI SEQUENTIAL PREVIEW */}
               {selectedPolaObj && (
-                <div className="p-3.5 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-xl border border-indigo-200 dark:border-indigo-800/60 space-y-2">
-                  <div className="flex items-center space-x-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300">
-                    <Sparkles className="w-4 h-4" />
-                    <span>Preview Rangkaian Siklus ({selectedPolaObj.jumlah_hari_siklus} Hari)</span>
+                <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200 flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-blue-800">
+                    <Sparkles size={14} />
+                    <span>Preview Siklus ({selectedPolaObj.jumlah_hari_siklus} Hari)</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {selectedPolaObj.detail_pola_rotasi?.map(d => {
@@ -307,10 +308,10 @@ export const ModalAssignPolaPegawai: React.FC<ModalAssignPolaPegawaiProps> = ({
                       return (
                         <span
                           key={d.urutan_hari}
-                          className={`text-[11px] px-2 py-1 rounded-md font-semibold ${
+                          className={`text-[11px] px-2 py-0.5 rounded font-bold border ${
                             isOff
-                              ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                              : 'bg-indigo-600 text-white shadow-xs'
+                              ? 'bg-gray-100 text-gray-600 border-gray-200'
+                              : 'bg-blue-600 text-white border-blue-600'
                           }`}
                         >
                           H{d.urutan_hari}: {isOff ? 'OFF' : shiftObj?.kode_shift || 'Shift'}
@@ -322,27 +323,27 @@ export const ModalAssignPolaPegawai: React.FC<ModalAssignPolaPegawaiProps> = ({
               )}
 
               {/* OPSIONAL: AUTO GENERATE INSTANT */}
-              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-                <label className="flex items-center space-x-2 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+              <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 flex flex-col gap-2">
+                <label className="flex items-center gap-2 text-xs font-bold text-gray-800 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={autoGenerateJadwal}
                     onChange={e => setAutoGenerateJadwal(e.target.checked)}
-                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                   />
-                  <span>Langsung Generate Slot Jadwal ke Kalender</span>
+                  <span>Langsung Generate Slot Jadwal Ke Kalender</span>
                 </label>
 
                 {autoGenerateJadwal && (
-                  <div className="pt-1">
-                    <label className="block text-[11px] font-medium text-slate-500 mb-1">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-medium text-gray-600">
                       Generate Langsung Sampai Tanggal:
                     </label>
                     <input
                       type="date"
                       value={generateSampai}
                       onChange={e => setGenerateSampai(e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white outline-none"
+                      className="border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs bg-white outline-none focus:border-blue-500"
                     />
                   </div>
                 )}
@@ -351,10 +352,10 @@ export const ModalAssignPolaPegawai: React.FC<ModalAssignPolaPegawaiProps> = ({
             </div>
 
             {/* KOLOM KANAN: PEGAWAI TARGET SELECTOR */}
-            <div className="space-y-3 flex flex-col">
+            <div className="flex flex-col gap-2">
               
               <div className="flex justify-between items-center">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
                   3. Pilih Pegawai Target ({selectedPegawaiIds.length} Terpilih)
                 </label>
               </div>
@@ -364,7 +365,7 @@ export const ModalAssignPolaPegawai: React.FC<ModalAssignPolaPegawaiProps> = ({
                 <select
                   value={filterDept}
                   onChange={e => setFilterDept(e.target.value)}
-                  className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                  className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-300 bg-white text-gray-800 outline-none focus:border-blue-500"
                 >
                   <option value="">Semua Dept</option>
                   {uniqueDepartemen.map(d => (
@@ -375,35 +376,35 @@ export const ModalAssignPolaPegawai: React.FC<ModalAssignPolaPegawaiProps> = ({
                 </select>
 
                 <div className="relative">
-                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Cari nama..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white outline-none"
+                    className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-gray-300 bg-white text-gray-800 outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
 
               {/* List Box Pegawai */}
-              <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden flex-1 bg-white dark:bg-slate-800 flex flex-col min-h-[220px]">
+              <div className="border border-gray-300 bg-white rounded-lg flex flex-col shadow-sm flex-1 min-h-[220px]">
                 
                 {/* Select All Bar */}
-                <label className="flex items-center space-x-2 px-3 py-2 bg-slate-100 dark:bg-slate-700/60 border-b border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+                <label className="flex items-center gap-2 p-2.5 border-b border-gray-200 bg-blue-50/50 hover:bg-blue-50 cursor-pointer text-xs font-bold text-gray-800 rounded-t-lg transition-colors">
                   <input
                     type="checkbox"
                     checked={isAllSelected}
                     onChange={handleToggleSelectAll}
-                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                    className="w-4 h-4 text-blue-600 rounded border-gray-300"
                   />
-                  <span>Pilih Semua ({filteredPegawai.length} Pegawai)</span>
+                  Pilih Semua ({filteredPegawai.length} Pegawai)
                 </label>
 
                 {/* Items Container */}
-                <div className="p-2 space-y-1 overflow-y-auto max-h-56 flex-1">
+                <div className="p-2 space-y-1 overflow-y-auto max-h-52 flex-1">
                   {filteredPegawai.length === 0 ? (
-                    <div className="text-center py-8 text-xs text-slate-400">
+                    <div className="text-center py-8 text-xs text-gray-400">
                       Pegawai tidak ditemukan.
                     </div>
                   ) : (
@@ -412,22 +413,22 @@ export const ModalAssignPolaPegawai: React.FC<ModalAssignPolaPegawaiProps> = ({
                       return (
                         <label
                           key={p.id}
-                          className={`flex items-center justify-between p-2 rounded-lg text-xs cursor-pointer transition ${
+                          className={`flex items-center justify-between p-1.5 rounded text-xs cursor-pointer transition-colors border border-transparent ${
                             isChecked
-                              ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 font-semibold'
-                              : 'hover:bg-slate-50 dark:hover:bg-slate-700/40 text-slate-700 dark:text-slate-300'
+                              ? 'bg-blue-50 text-blue-900 font-semibold border-blue-100'
+                              : 'hover:bg-gray-50 text-gray-800'
                           }`}
                         >
-                          <div className="flex items-center space-x-2.5 truncate">
+                          <div className="flex items-center gap-2 truncate">
                             <input
                               type="checkbox"
                               checked={isChecked}
                               onChange={() => handleTogglePegawai(p.id)}
-                              className="w-3.5 h-3.5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                              className="w-3.5 h-3.5 text-blue-600 rounded border-gray-300"
                             />
                             <span className="truncate">{p.nama}</span>
                           </div>
-                          <span className="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded ml-2">
+                          <span className="text-[10px] text-gray-500 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded ml-2 whitespace-nowrap">
                             {p.jabatan?.nama_jabatan || getDeptName(p)}
                           </span>
                         </label>
@@ -442,28 +443,18 @@ export const ModalAssignPolaPegawai: React.FC<ModalAssignPolaPegawaiProps> = ({
           </div>
 
           {/* Submit Action Bar */}
-          <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-            <button
-              type="button"
+          <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
+            <Button
+              label="Batal"
+              variant="secondary"
               onClick={onClose}
-              className="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-semibold transition"
-            >
-              Batal
-            </button>
-            <button
+            />
+            <Button
+              label={isSaving ? "Memproses Penugasan..." : "Terapkan Pola Rotasi"}
+              variant="success"
               type="submit"
-              disabled={isSaving}
-              className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-md transition disabled:opacity-50 flex items-center space-x-2"
-            >
-              {isSaving ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Memproses Penugasan...</span>
-                </>
-              ) : (
-                <span>Terapkan Pola Rotasi</span>
-              )}
-            </button>
+              isLoading={isSaving}
+            />
           </div>
 
         </form>
