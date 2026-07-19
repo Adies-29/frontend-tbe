@@ -49,7 +49,11 @@ const formatAngka = (angka?: number | null) => {
 };
 
 export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplateProps) {
-    if (!data || data.length === 0) return null;
+    const dataLunas = data?.filter(
+        (pegawai) => pegawai.status === 'Lunas' || pegawai.status?.toLowerCase() === 'lunas'
+    ) || [];
+
+    if (!dataLunas || dataLunas.length === 0) return null;
 
     return (
         // Gunakan absolute dan z-index tinggi agar menimpa seluruh aplikasi saat print
@@ -76,7 +80,7 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                 `}
             </style>
 
-            {data.map((pegawai, index) => {
+            {dataLunas.map((pegawai, index) => {
                 const isTarget = pegawai.tipe_penggajian === 'Target';
                 const rb = pegawai.rincian_bonus || {};
                 const rt = pegawai.informasi_tabungan || {};
