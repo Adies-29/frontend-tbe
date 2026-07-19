@@ -34,7 +34,7 @@ export default function TabelMatrixJadwal() {
             {/* TOOLBAR TIMELINE FLEKSIBEL */}
             <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col gap-4">
                 {/* Bagian Atas: Pencarian */}
-                <div className="w-full relative md:w-72">
+                <div data-tour="matrix-search" className="w-full relative md:w-72">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <input
                         type="text"
@@ -46,7 +46,7 @@ export default function TabelMatrixJadwal() {
                 </div>
 
                 {/* Bagian Bawah: Filter Dropdown & Tombol */}
-                <div className="flex flex-col md:flex-row flex-wrap gap-3 items-start md:items-center w-full">
+                <div data-tour="matrix-filters" className="flex flex-col md:flex-row flex-wrap gap-3 items-start md:items-center w-full">
                     {/* Grup Periode */}
                     <div className="flex gap-2 w-full md:w-auto">
                         <select
@@ -105,7 +105,7 @@ export default function TabelMatrixJadwal() {
                     {/* Tombol Load & Generate */}
                     <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto mt-1 md:mt-0">
                         <Button label="Load Data" variant='warning' onClick={hookParams.handleFilter} className="w-full sm:w-auto" />
-                        <Button variant="primary" label="Generate Jadwal Massal" onClick={() => hookParams.setIsModalMassalOpen(true)} className="w-full sm:w-auto" />
+                        <Button variant="primary" label="Generate Jadwal Massal" onClick={() => hookParams.setIsModalMassalOpen(true)} className="w-full sm:w-auto" data-tour="btn-generate-jadwal" />
                     </div>
                 </div>
             </div>
@@ -121,7 +121,7 @@ export default function TabelMatrixJadwal() {
                     {hookParams.errorMsg}
                 </div>
             ) : (
-                <div className="overflow-x-auto w-full relative">
+                <div data-tour="matrix-table" className="overflow-x-auto w-full relative">
                     <table className="w-full text-sm text-left border-collapse min-w-max">
                         <thead className="text-xs text-gray-600 uppercase bg-gray-100 sticky top-0 z-20 shadow-sm">
                             <tr>

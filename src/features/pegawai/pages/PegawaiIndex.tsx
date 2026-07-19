@@ -57,7 +57,7 @@ export default function PegawaiIndex() {
         <div className="flex flex-col gap-4 md:gap-6 w-full">
             
             {/* 1. BAGIAN STATISTIK */}
-            <div className="flex gap-4 w-full">
+            <div data-tour="pegawai-stats" className="flex gap-4 w-full">
                 <div className="bg-white border border-gray-300 rounded-xl p-4 w-full md:w-48 shadow-sm flex flex-col items-center justify-center">
                     <span className="text-gray-800 text-sm md:text-base font-medium">Total Pegawai</span>
                     <span className="text-4xl font-bold mt-2 text-black">{totalPegawai}</span>
@@ -77,13 +77,14 @@ export default function PegawaiIndex() {
                         <Button 
                             label="Tambah Pegawai" 
                             onClick={() => navigate("/dashboard/data-pegawai/tambah-pegawai")} 
+                            data-tour="btn-add-pegawai"
                         />
                     </div>
                 </div>
                 
                 {/* 3. PEMANGGILAN KOMPONEN TABEL */}
         
-                <div className="w-full">
+                <div data-tour="pegawai-table" className="w-full">
                     {errorMsg ? (
                         <div className="bg-red-50 text-red-600 p-4 rounded-lg text-center font-medium text-sm md:text-base">
                             {errorMsg}

@@ -28,6 +28,7 @@ export default function TargetPackingIndex() {
                 {/* TAB NAVIGATION */}
                 <div className="flex gap-6 mt-6 border-b border-gray-300">
                     <button
+                        data-tour="target-tab-pencapaian"
                         onClick={() => handleTabChange('pencapaian')}
                         className={`pb-3 px-2 text-[15px] md:text-sm font-semibold transition-colors duration-200 ${
                             activeTab === 'pencapaian'
@@ -38,6 +39,7 @@ export default function TargetPackingIndex() {
                         Pencapaian Harian
                     </button>
                     <button
+                        data-tour="target-tab-master"
                         onClick={() => handleTabChange('master')}
                         className={`pb-3 px-2 text-[15px] md:text-sm font-semibold transition-colors duration-200 ${
                             activeTab === 'master'

@@ -60,7 +60,7 @@ export default function BonusCustomIndex() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* KIRI: FORM INPUT BONUS BARU */}
-                <div className="lg:col-span-1 bg-white border border-gray-200 rounded-xl shadow-sm p-5 h-fit">
+                <div data-tour="bonus-form" className="lg:col-span-1 bg-white border border-gray-200 rounded-xl shadow-sm p-5 h-fit">
                     <h2 className="text-lg font-bold text-gray-700 mb-4 border-b pb-2">Buat Bonus Baru</h2>
                     
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -129,7 +129,7 @@ export default function BonusCustomIndex() {
                 </div>
 
                 {/* KANAN: TABEL RIWAYAT BONUS */}
-                <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+                <div data-tour="bonus-table" className="lg:col-span-2 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
                     <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
                         <h2 className="text-lg font-bold text-gray-700">Riwayat Pemberian Bonus</h2>
                     </div>

@@ -55,6 +55,49 @@ export const guidancePages: GuidancePageConfig[] = [
                     side: 'bottom',
                     align: 'center',
                 },
+                onHighlightStarted: () => {
+                    const btn = document.querySelector('[data-tour="shift-tab-jadwal"]') as HTMLElement;
+                    if (btn) btn.click();
+                }
+            },
+            {
+                element: '[data-tour="matrix-filters"]',
+                popover: {
+                    title: '🔍 Filter Jadwal',
+                    description: 'Gunakan filter ini untuk memilih periode waktu (Mingguan/Bulanan/Tahunan) dan menyaring tampilan jadwal berdasarkan Departemen serta Jabatan pegawai.',
+                    side: 'bottom',
+                    align: 'center',
+                },
+                onHighlightStarted: () => {
+                    const btn = document.querySelector('[data-tour="shift-tab-jadwal"]') as HTMLElement;
+                    if (btn) btn.click();
+                }
+            },
+            {
+                element: '[data-tour="btn-generate-jadwal"]',
+                popover: {
+                    title: '⚡ Generate Jadwal Massal',
+                    description: 'Klik tombol ini untuk membuat jadwal kerja bulanan untuk seluruh pegawai secara otomatis dan cepat tanpa perlu input satu per satu.',
+                    side: 'left',
+                    align: 'start',
+                },
+                onHighlightStarted: () => {
+                    const btn = document.querySelector('[data-tour="shift-tab-jadwal"]') as HTMLElement;
+                    if (btn) btn.click();
+                }
+            },
+            {
+                element: '[data-tour="matrix-table"]',
+                popover: {
+                    title: '📊 Tabel Matriks Jadwal',
+                    description: 'Menampilkan penugasan shift kerja harian setiap pegawai. Anda dapat melihat shift apa yang berjalan untuk masing-masing tanggal.',
+                    side: 'top',
+                    align: 'center',
+                },
+                onHighlightStarted: () => {
+                    const btn = document.querySelector('[data-tour="shift-tab-jadwal"]') as HTMLElement;
+                    if (btn) btn.click();
+                }
             },
             {
                 element: '[data-tour="shift-tab-master"]',
@@ -64,6 +107,10 @@ export const guidancePages: GuidancePageConfig[] = [
                     side: 'bottom',
                     align: 'center',
                 },
+                onHighlightStarted: () => {
+                    const btn = document.querySelector('[data-tour="shift-tab-master"]') as HTMLElement;
+                    if (btn) btn.click();
+                }
             },
             {
                 element: '[data-tour="btn-add-shift"]',
@@ -73,6 +120,10 @@ export const guidancePages: GuidancePageConfig[] = [
                     side: 'left',
                     align: 'start',
                 },
+                onHighlightStarted: () => {
+                    const btn = document.querySelector('[data-tour="shift-tab-master"]') as HTMLElement;
+                    if (btn) btn.click();
+                }
             },
             {
                 element: '[data-tour="shift-info-banner"]',
@@ -82,15 +133,36 @@ export const guidancePages: GuidancePageConfig[] = [
                     side: 'bottom',
                     align: 'start',
                 },
+                onHighlightStarted: () => {
+                    const btn = document.querySelector('[data-tour="shift-tab-master"]') as HTMLElement;
+                    if (btn) btn.click();
+                }
             },
             {
                 element: '[data-tour="shift-table"]',
                 popover: {
                     title: '📊 Tabel Daftar Shift',
-                    description: 'Semua shift yang telah dibuat akan muncul di tabel ini. Anda bisa <b>mengedit</b> (ikon pensil) atau <b>menghapus</b> (ikon tempat sampah) setiap shift dari kolom Aksi.',
+                    description: 'Semua shift yang telah dibuat akan muncul di tabel ini. Anda bisa melihat kode shift, jam masuk, jam pulang, dan aturan denda.',
                     side: 'top',
                     align: 'center',
                 },
+                onHighlightStarted: () => {
+                    const btn = document.querySelector('[data-tour="shift-tab-master"]') as HTMLElement;
+                    if (btn) btn.click();
+                }
+            },
+            {
+                element: '.MuiDataGrid-columnHeader[data-field="actions"]',
+                popover: {
+                    title: '⚙️ Kolom Aksi',
+                    description: 'Gunakan ikon <b>pensil</b> (✏️) untuk mengedit rincian shift (jam masuk/pulang, toleransi, denda) atau ikon <b>tempat sampah</b> (🗑️) untuk menghapus shift.',
+                    side: 'left',
+                    align: 'center',
+                },
+                onHighlightStarted: () => {
+                    const btn = document.querySelector('[data-tour="shift-tab-master"]') as HTMLElement;
+                    if (btn) btn.click();
+                }
             },
         ],
         faqs: [
@@ -135,6 +207,10 @@ export const guidancePages: GuidancePageConfig[] = [
                     side: 'bottom',
                     align: 'center',
                 },
+                onHighlightStarted: () => {
+                    const btn = document.querySelector('[data-tour="gaji-tab-rekap"]') as HTMLElement;
+                    if (btn) btn.click();
+                }
             },
             {
                 element: '[data-tour="gaji-tab-master"]',
@@ -144,6 +220,10 @@ export const guidancePages: GuidancePageConfig[] = [
                     side: 'bottom',
                     align: 'center',
                 },
+                onHighlightStarted: () => {
+                    const btn = document.querySelector('[data-tour="gaji-tab-master"]') as HTMLElement;
+                    if (btn) btn.click();
+                }
             },
         ],
         faqs: [
@@ -154,6 +234,14 @@ export const guidancePages: GuidancePageConfig[] = [
             {
                 question: 'Apakah potongan kasbon otomatis masuk ke rekap gaji?',
                 answer: 'Ya, jika pengajuan kasbon sudah disetujui dan memiliki cicilan berjalan, potongannya akan otomatis muncul di slip gaji bulanan.',
+            },
+            {
+                question: 'Apa bedanya Gaji Bulanan, Harian, dan Target?',
+                answer: 'Bulanan: gaji pokok tetap per bulan. Harian: upah dihitung per hari kehadiran (cocok untuk pegawai harian lepas). Target: upah dihitung berdasarkan pencapaian target packing.',
+            },
+            {
+                question: 'Apakah lembur otomatis masuk ke rekap gaji?',
+                answer: 'Ya, lembur yang sudah disetujui otomatis dihitung dalam komponen "Uang Lembur" di slip gaji bulanan.',
             },
         ],
     },
@@ -171,20 +259,46 @@ export const guidancePages: GuidancePageConfig[] = [
                 element: '[data-tour="lembur-header"]',
                 popover: {
                     title: '⏰ Manajemen Lembur',
-                    description: 'Di halaman ini Anda bisa melihat seluruh data lembur pegawai, menambah pengajuan lembur baru, serta mengelola status persetujuannya.',
+                    description: 'Halaman ini menampilkan seluruh data Surat Perintah Lembur (SPL). Lembur yang sudah disetujui akan <b>otomatis masuk ke komponen gaji</b> bulanan pegawai.',
                     side: 'bottom',
                     align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="btn-add-lembur"]',
+                popover: {
+                    title: '➕ Tambah Perintah Lembur',
+                    description: 'Klik tombol ini untuk membuat <b>SPL (Surat Perintah Lembur)</b> baru. Isi nama pegawai, tanggal, durasi lembur, dan alasan.',
+                    side: 'left',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="lembur-table"]',
+                popover: {
+                    title: '📋 Tabel Data Lembur',
+                    description: 'Tabel ini menampilkan daftar lembur pegawai. Anda bisa melihat <b>nama</b>, <b>tanggal</b>, <b>durasi</b>, dan <b>status</b> setiap pengajuan lembur. Gunakan ikon pensil untuk mengedit atau ikon hapus untuk menghapus data.',
+                    side: 'top',
+                    align: 'center',
                 },
             },
         ],
         faqs: [
             {
                 question: 'Bagaimana cara mengajukan lembur baru?',
-                answer: 'Klik tombol "Tambah Lembur", isi form pengajuan (tanggal, jam mulai, jam selesai, alasan), lalu submit.',
+                answer: 'Klik tombol "Tambah Lembur", isi form pengajuan (nama pegawai, tanggal, durasi dalam menit, dan alasan), lalu klik Simpan.',
             },
             {
                 question: 'Apakah lembur otomatis masuk ke rekap gaji?',
-                answer: 'Ya, lembur yang sudah disetujui (approved) akan otomatis dihitung dalam komponen "Uang Lembur" di slip gaji bulanan.',
+                answer: 'Ya, lembur yang sudah disetujui akan otomatis dihitung dalam komponen "Uang Lembur" di slip gaji bulanan.',
+            },
+            {
+                question: 'Apakah upah lembur bisa berbeda dari pengaturan jabatan?',
+                answer: 'Ya, saat membuat SPL baru, aktifkan toggle "Atur Upah Lembur" untuk memasukkan nominal upah custom per jam. Jika tidak diaktifkan, sistem menggunakan upah lembur sesuai jabatan.',
+            },
+            {
+                question: 'Bisa tidak menambahkan lembur langsung dari dashboard?',
+                answer: 'Bisa. Pada tabel dashboard, klik tombol "+ Lembur" di kolom Status Lembur pada baris pegawai yang bersangkutan.',
             },
         ],
     },
@@ -202,16 +316,59 @@ export const guidancePages: GuidancePageConfig[] = [
                 element: '[data-tour="kasbon-header"]',
                 popover: {
                     title: '💸 Manajemen Kasbon',
-                    description: 'Halaman ini digunakan untuk mengelola pengajuan pinjaman (kasbon) pegawai. Anda bisa melihat riwayat kasbon, status cicilan, dan menambah pengajuan baru.',
+                    description: 'Halaman ini digunakan untuk mengelola <b>pinjaman (kasbon) pegawai</b>. Anda bisa melihat status kasbon aktif, mencatat pembayaran cicilan, dan menambah pengajuan baru.',
                     side: 'bottom',
                     align: 'start',
                 },
+            },
+            {
+                element: '[data-tour="btn-add-kasbon"]',
+                popover: {
+                    title: '➕ Ajukan Kasbon Baru',
+                    description: 'Klik tombol ini untuk membuat pengajuan kasbon/pinjaman baru. Isi nama pegawai, nominal, persentase cicilan, dan keterangan.',
+                    side: 'left',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="kasbon-tab-daftar"]',
+                popover: {
+                    title: '📋 Tab Daftar Kasbon Aktif',
+                    description: 'Tab ini menampilkan semua kasbon yang <b>masih aktif</b> (belum lunas). Anda bisa mengubah status (Setujui/Tolak), mencatat pembayaran, atau menghapus kasbon dari sini.',
+                    side: 'bottom',
+                    align: 'center',
+                },
+                onHighlightStarted: () => {
+                    const btn = document.querySelector('[data-tour="kasbon-tab-daftar"]') as HTMLElement;
+                    if (btn) btn.click();
+                }
+            },
+            {
+                element: '[data-tour="kasbon-tab-riwayat"]',
+                popover: {
+                    title: '📜 Tab Riwayat Pembayaran',
+                    description: 'Tab ini menampilkan <b>riwayat semua pembayaran cicilan</b> kasbon yang pernah dilakukan, termasuk tanggal, nominal, dan metode pembayaran.',
+                    side: 'bottom',
+                    align: 'center',
+                },
+                onHighlightStarted: () => {
+                    const btn = document.querySelector('[data-tour="kasbon-tab-riwayat"]') as HTMLElement;
+                    if (btn) btn.click();
+                }
             },
         ],
         faqs: [
             {
                 question: 'Bagaimana sistem cicilan kasbon bekerja?',
-                answer: 'Setelah kasbon disetujui, sistem akan otomatis memotong gaji pegawai setiap bulan sesuai jumlah cicilan yang ditentukan hingga lunas.',
+                answer: 'Setelah kasbon disetujui, sistem akan otomatis memotong gaji pegawai setiap minggu sesuai persentase cicilan yang ditentukan hingga lunas.',
+            },
+            {
+                question: 'Bagaimana cara kerja persentase cicilan?',
+                answer: 'Persentase cicilan menentukan berapa persen dari total pinjaman yang dipotong per minggu. Contoh: pinjaman Rp1.000.000 dengan cicilan 10% = potong Rp100.000/minggu selama 10 minggu.',
+            },
+            {
+                question: 'Apakah potongan kasbon otomatis masuk ke slip gaji?',
+                answer: 'Ya, jika kasbon sudah disetujui dan memiliki cicilan berjalan, potongannya akan otomatis muncul di slip gaji.',
             },
         ],
     },
@@ -229,16 +386,46 @@ export const guidancePages: GuidancePageConfig[] = [
                 element: '[data-tour="target-header"]',
                 popover: {
                     title: '📦 Target Packing',
-                    description: 'Di halaman ini Anda bisa mengatur target produksi harian, mencatat hasil packing, dan melihat perhitungan insentif berdasarkan pencapaian target.',
+                    description: 'Halaman ini digunakan untuk mengelola <b>target produksi harian</b> dan menghitung <b>insentif</b> berdasarkan pencapaian packing pegawai. Terdiri dari 2 tab utama.',
                     side: 'bottom',
                     align: 'start',
                 },
+            },
+            {
+                element: '[data-tour="target-tab-pencapaian"]',
+                popover: {
+                    title: '📊 Tab Pencapaian Harian',
+                    description: 'Di tab ini Anda bisa melihat dan menginput <b>hasil packing harian</b> per pegawai. Data ini digunakan untuk menghitung insentif yang masuk ke komponen gaji.',
+                    side: 'bottom',
+                    align: 'center',
+                },
+                onHighlightStarted: () => {
+                    const btn = document.querySelector('[data-tour="target-tab-pencapaian"]') as HTMLElement;
+                    if (btn) btn.click();
+                }
+            },
+            {
+                element: '[data-tour="target-tab-master"]',
+                popover: {
+                    title: '⚙️ Tab Master Target',
+                    description: 'Tab ini berisi <b>template target packing</b>: jumlah target per unit dan nominal insentif per unit. Atur master target terlebih dahulu sebelum menginput pencapaian.',
+                    side: 'bottom',
+                    align: 'center',
+                },
+                onHighlightStarted: () => {
+                    const btn = document.querySelector('[data-tour="target-tab-master"]') as HTMLElement;
+                    if (btn) btn.click();
+                }
             },
         ],
         faqs: [
             {
                 question: 'Bagaimana insentif target packing dihitung?',
-                answer: 'Insentif dihitung berdasarkan jumlah unit yang berhasil di-packing dibandingkan dengan target harian. Jika melebihi target, pegawai mendapat bonus tambahan.',
+                answer: 'Insentif dihitung berdasarkan jumlah unit yang berhasil di-packing dikalikan harga per unit yang telah diatur di Master Target. Jika melebihi target, pegawai mendapat bonus tambahan.',
+            },
+            {
+                question: 'Kapan insentif packing masuk ke gaji?',
+                answer: 'Insentif packing yang sudah tercatat otomatis masuk sebagai komponen tambahan di slip gaji bulanan pegawai.',
             },
         ],
     },
@@ -249,15 +436,33 @@ export const guidancePages: GuidancePageConfig[] = [
         title: 'Bonus Custom',
         description: 'Kelola bonus khusus di luar komponen gaji standar.',
         icon: '🎁',
-        tier: 2,
+        tier: 1,
         pathPattern: '/dashboard/bonus-custom',
         tourSteps: [
             {
                 element: '[data-tour="bonus-header"]',
                 popover: {
                     title: '🎁 Bonus Custom',
-                    description: 'Halaman ini digunakan untuk memberikan bonus tambahan di luar gaji pokok dan tunjangan standar, seperti bonus Lebaran, bonus tahunan, atau reward khusus.',
+                    description: 'Halaman ini digunakan untuk memberikan <b>bonus tambahan</b> di luar gaji pokok dan tunjangan standar, seperti bonus Lebaran, THR, reward teladan, atau ganti bensin.',
                     side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="bonus-form"]',
+                popover: {
+                    title: '📝 Form Buat Bonus Baru',
+                    description: 'Isi formulir ini untuk memberikan bonus: pilih <b>Pegawai</b>, tentukan <b>Tanggal Diberikan</b> (menentukan periode gaji), isi <b>Keterangan/Nama Bonus</b> dan <b>Nominal</b>. Klik <b>Simpan Bonus</b> untuk menyimpan.',
+                    side: 'right',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="bonus-table"]',
+                popover: {
+                    title: '📊 Riwayat Pemberian Bonus',
+                    description: 'Tabel ini menampilkan <b>semua bonus</b> yang pernah diberikan. Anda bisa melihat detail nama pegawai, keterangan, nominal, tanggal, dan menghapus bonus jika diperlukan.',
+                    side: 'left',
                     align: 'start',
                 },
             },
@@ -265,38 +470,78 @@ export const guidancePages: GuidancePageConfig[] = [
         faqs: [
             {
                 question: 'Apakah bonus custom masuk ke slip gaji?',
-                answer: 'Ya, bonus custom yang sudah diinput akan otomatis muncul sebagai komponen tambahan di slip gaji bulan bersangkutan.',
+                answer: 'Ya, bonus custom yang sudah diinput akan otomatis muncul sebagai komponen tambahan di slip gaji periode bersangkutan (berdasarkan tanggal diberikan).',
+            },
+            {
+                question: 'Apa contoh penggunaan bonus custom?',
+                answer: 'Contoh: THR Lebaran, Bonus Tahunan, Reward Pegawai Teladan, Ganti Bensin, Uang Makan Lembur, atau bonus lainnya yang tidak termasuk dalam komponen gaji tetap.',
+            },
+            {
+                question: 'Bagaimana cara menentukan tanggal bonus yang benar?',
+                answer: 'Tanggal Diberikan menentukan bonus masuk ke periode gaji minggu/bulan ke berapa. Jika Anda ingin bonus masuk di gaji bulan Juli, pilih tanggal di bulan Juli.',
             },
         ],
     },
 
     // -------------------------------------------------------
-    // 📝 TIER 3: DESKRIPSI SINGKAT & HELP CENTER
-    // -------------------------------------------------------
-
     // 🏢 DEPARTEMEN
     {
         id: 'departemen',
         title: 'Data Departemen',
         description: 'Kelola daftar departemen / divisi di perusahaan.',
         icon: '🏢',
-        tier: 3,
+        tier: 1,
         pathPattern: '/dashboard/departemen',
         tourSteps: [
+            {
+                element: '[data-tour="dept-stats"]',
+                popover: {
+                    title: '📊 Kartu Statistik',
+                    description: 'Menampilkan <b>total departemen</b> yang terdaftar di perusahaan saat ini.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
             {
                 element: '[data-tour="departemen-header"]',
                 popover: {
                     title: '🏢 Data Departemen',
-                    description: 'Halaman ini digunakan untuk mengelola daftar departemen perusahaan. Anda bisa menambah, mengubah, atau menghapus departemen.',
+                    description: 'Halaman ini menampilkan daftar seluruh <b>departemen / divisi</b> di perusahaan (contoh: HRD, Produksi, Keuangan). Anda bisa menambah, mengedit, atau menghapus departemen.',
                     side: 'bottom',
                     align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="btn-add-dept"]',
+                popover: {
+                    title: '➕ Tambah Departemen',
+                    description: 'Klik tombol ini untuk membuat departemen/divisi baru di perusahaan.',
+                    side: 'left',
+                    align: 'start',
+                },
+            },
+            {
+                element: '.MuiDataGrid-columnHeader[data-field="actions"]',
+                popover: {
+                    title: '⚙️ Kolom Aksi',
+                    description: 'Di kolom ini, Anda bisa mengubah nama departemen langsung pada tabel dengan mengklik ikon <b>pensil</b> (✏️) untuk masuk ke mode edit baris, atau menghapusnya dengan ikon <b>tempat sampah</b> (🗑️).',
+                    side: 'left',
+                    align: 'center',
                 },
             },
         ],
         faqs: [
             {
                 question: 'Apakah menghapus departemen akan menghapus data pegawai di dalamnya?',
-                answer: 'Tidak, menghapus departemen hanya menghapus data departemennya. Namun, pegawai yang terkait perlu dipindahkan ke departemen lain terlebih dahulu.',
+                answer: 'Tidak, menghapus departemen hanya menghapus data departemennya. Namun, pegawai yang terkait perlu dipindahkan ke departemen lain terlebih dahulu sebelum departemen bisa dihapus.',
+            },
+            {
+                question: 'Apakah departemen bisa diedit namanya nanti?',
+                answer: 'Ya, Anda bisa mengedit nama departemen kapan saja dengan mengklik ikon pensil (✏️) pada baris departemen di tabel.',
+            },
+            {
+                question: 'Berapa batas maksimal departemen yang bisa dibuat?',
+                answer: 'Tidak ada batasan. Anda bisa membuat departemen sesuai kebutuhan struktur organisasi perusahaan.',
             },
         ],
     },
@@ -307,23 +552,58 @@ export const guidancePages: GuidancePageConfig[] = [
         title: 'Data Jabatan',
         description: 'Kelola daftar jabatan dan struktur organisasi.',
         icon: '📋',
-        tier: 3,
+        tier: 1,
         pathPattern: '/dashboard/jabatan',
         tourSteps: [
+            {
+                element: '[data-tour="jabatan-stats"]',
+                popover: {
+                    title: '📊 Statistik Jabatan & Pegawai',
+                    description: 'Menampilkan <b>Total Jabatan</b> yang terdaftar serta total <b>Pegawai Terisi</b> yang telah memiliki jabatan di sistem.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
             {
                 element: '[data-tour="jabatan-header"]',
                 popover: {
                     title: '📋 Data Jabatan',
-                    description: 'Halaman ini digunakan untuk mengelola daftar jabatan di perusahaan. Setiap jabatan bisa dikaitkan dengan komponen gaji & tunjangan di menu "Gaji & Tunjangan".',
+                    description: 'Halaman ini menampilkan daftar <b>semua jabatan</b> di perusahaan (contoh: Manager, Staff, Supervisor, Operator). Setiap jabatan terkait dengan departemen dan bisa memiliki komponen gaji tersendiri.',
                     side: 'bottom',
                     align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="btn-add-jabatan"]',
+                popover: {
+                    title: '➕ Tambah Jabatan Baru',
+                    description: 'Klik tombol ini untuk mendaftarkan jabatan baru ke dalam sistem dan menghubungkannya ke departemen terkait.',
+                    side: 'left',
+                    align: 'start',
+                },
+            },
+            {
+                element: '.MuiDataGrid-columnHeader[data-field="actions"]',
+                popover: {
+                    title: '⚙️ Kolom Aksi',
+                    description: 'Di kolom ini, Anda bisa mengubah informasi jabatan (nama jabatan & departemen) secara langsung pada tabel menggunakan ikon <b>pensil</b> (✏️), atau menghapus jabatan dengan ikon <b>tempat sampah</b> (🗑️).',
+                    side: 'left',
+                    align: 'center',
                 },
             },
         ],
         faqs: [
             {
                 question: 'Apa hubungan jabatan dengan gaji?',
-                answer: 'Setiap jabatan bisa memiliki komponen gaji tersendiri (gaji pokok, tunjangan, dll). Atur komponen gaji per jabatan di menu "Gaji & Tunjangan > Master Jabatan".',
+                answer: 'Setiap jabatan bisa memiliki komponen gaji tersendiri (gaji pokok, tunjangan, bonus, dll). Atur komponen gaji per jabatan di menu "Gaji & Tunjangan > Tab Master Jabatan".',
+            },
+            {
+                question: 'Satu departemen bisa punya berapa jabatan?',
+                answer: 'Tidak terbatas. Satu departemen bisa memiliki banyak jabatan sesuai struktur organisasi perusahaan Anda.',
+            },
+            {
+                question: 'Apakah menghapus jabatan akan mempengaruhi pegawai yang menjabat?',
+                answer: 'Ya, pastikan tidak ada pegawai yang masih menggunakan jabatan tersebut sebelum menghapusnya. Pindahkan pegawai ke jabatan lain terlebih dahulu.',
             },
         ],
     },
@@ -332,25 +612,69 @@ export const guidancePages: GuidancePageConfig[] = [
     {
         id: 'pegawai',
         title: 'Data Pegawai',
-        description: 'Kelola data lengkap seluruh pegawai.',
+        description: 'Kelola data lengkap seluruh pegawai perusahaan.',
         icon: '👥',
-        tier: 3,
+        tier: 1,
         pathPattern: '/dashboard/data-pegawai',
         tourSteps: [
             {
-                element: '[data-tour="pegawai-header"]',
+                element: '[data-tour="pegawai-stats"]',
                 popover: {
-                    title: '👥 Data Pegawai',
-                    description: 'Halaman ini berisi data seluruh pegawai perusahaan. Anda bisa menambah pegawai baru, mengedit data, melihat detail profil, atau menghapus data pegawai.',
+                    title: '📊 Kartu Statistik',
+                    description: 'Menampilkan <b>total pegawai aktif</b> yang terdaftar di sistem saat ini.',
                     side: 'bottom',
                     align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="pegawai-header"]',
+                popover: {
+                    title: '👥 Data Pegawai Aktif',
+                    description: 'Halaman ini menampilkan <b>daftar seluruh pegawai</b> perusahaan. Anda bisa menambah pegawai baru, mengedit data, melihat detail profil, atau menghapus data pegawai.',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="btn-add-pegawai"]',
+                popover: {
+                    title: '➕ Tambah Pegawai Baru',
+                    description: 'Klik tombol ini untuk mendaftarkan pegawai baru ke dalam sistem. Anda akan diarahkan ke formulir pendaftaran yang terdiri dari 3 bagian: Informasi Pribadi, Kontak, dan Data Pekerjaan.',
+                    side: 'left',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="pegawai-table"]',
+                popover: {
+                    title: '📋 Tabel Data Pegawai',
+                    description: 'Tabel ini menampilkan semua pegawai aktif. Anda bisa mencari pegawai dengan filter pencarian di kanan atas tabel, serta mengurutkan kolom dengan mengeklik header kolom.',
+                    side: 'top',
+                    align: 'center',
+                },
+            },
+            {
+                element: '.MuiDataGrid-columnHeader[data-field="actions"]',
+                popover: {
+                    title: '⚙️ Kolom Aksi',
+                    description: 'Di kolom ini, Anda bisa: Klik ikon <b>pensil</b> (✏️) untuk mengedit data pegawai, atau klik ikon <b>tempat sampah</b> (🗑️) untuk menghapus data pegawai dari sistem.',
+                    side: 'left',
+                    align: 'center',
                 },
             },
         ],
         faqs: [
             {
                 question: 'Bagaimana cara melihat detail lengkap pegawai?',
-                answer: 'Klik pada baris pegawai di tabel atau klik ikon "Detail" untuk melihat profil lengkap, riwayat absensi, dan data gaji.',
+                answer: 'Klik ikon mata (👁️) pada kolom Aksi di baris pegawai untuk melihat profil lengkap termasuk identitas, departemen, jabatan, dan shift default.',
+            },
+            {
+                question: 'Mengapa jabatan tidak bisa dipilih saat menambah pegawai?',
+                answer: 'Jabatan baru bisa dipilih setelah Anda memilih Departemen terlebih dahulu. Daftar jabatan otomatis terfilter berdasarkan departemen yang dipilih.',
+            },
+            {
+                question: 'Apa itu PIN Mesin Absensi?',
+                answer: 'PIN Mesin adalah kode unik yang digunakan pegawai untuk absensi di mesin fingerprint. Setiap pegawai harus memiliki PIN yang berbeda.',
             },
         ],
     },
@@ -361,23 +685,66 @@ export const guidancePages: GuidancePageConfig[] = [
         title: 'Dashboard Monitoring',
         description: 'Pantau ringkasan statistik absensi, kehadiran, dan produktivitas.',
         icon: '📊',
-        tier: 3,
+        tier: 1,
         pathPattern: '/dashboard$',
         tourSteps: [
+            {
+                element: '[data-tour="dashboard-stats"]',
+                popover: {
+                    title: '📈 Kartu Statistik Kehadiran',
+                    description: 'Menampilkan ringkasan kehadiran hari ini: <b>Total Hadir</b>, jumlah pegawai yang <b>Tepat Waktu</b>, <b>Terlambat</b>, dan yang <b>Belum Hadir</b>. Kartu ini diperbarui secara otomatis.',
+                    side: 'bottom',
+                    align: 'center',
+                },
+            },
             {
                 element: '[data-tour="dashboard-header"]',
                 popover: {
                     title: '📊 Dashboard Monitoring',
-                    description: 'Dashboard ini menampilkan ringkasan statistik kehadiran, keterlambatan, dan produktivitas pegawai secara real-time.',
+                    description: 'Halaman utama untuk memantau aktivitas absensi karyawan secara real-time. Di sini Anda dapat melihat status kehadiran hari ini.',
                     side: 'bottom',
                     align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="btn-input-manual"]',
+                popover: {
+                    title: '➕ Input Absen Manual',
+                    description: 'Jika ada pegawai yang lupa melakukan scan atau mesin absensi bermasalah, Anda dapat menambahkan kehadiran/pulang secara manual melalui tombol ini.',
+                    side: 'bottom',
+                    align: 'center',
+                },
+            },
+            {
+                element: '[data-tour="dashboard-table"]',
+                popover: {
+                    title: '📋 Tabel Absensi Real-time',
+                    description: 'Berisi daftar pegawai beserta waktu masuk/pulang mereka. Anda bisa menilai <b>Kerapihan</b>, memasukkan data <b>Lembur</b>, atau membatalkan absensi (<b>Void</b>) langsung dari tabel ini.',
+                    side: 'top',
+                    align: 'center',
                 },
             },
         ],
         faqs: [
             {
                 question: 'Seberapa sering data dashboard diperbarui?',
-                answer: 'Data dashboard diperbarui secara real-time setiap kali halaman dimuat ulang atau saat ada perubahan data absensi.',
+                answer: 'Data diperbarui otomatis secara real-time setiap 30 detik. Pembaruan otomatis hanya berjalan jika tab aplikasi dalam keadaan aktif/terbuka untuk menghemat resource server.',
+            },
+            {
+                question: 'Bagaimana cara melakukan Input Absen Manual?',
+                answer: 'Klik tombol "Input Manual", pilih nama pegawai, tentukan jenis absensi (Masuk atau Pulang), isi jam serta tanggal, lalu klik Simpan. Data pada tabel akan otomatis terupdate.',
+            },
+            {
+                question: 'Bagaimana cara menilai kerapihan pegawai?',
+                answer: 'Pada kolom "Cek Kerapihan", beri tanda centang (checkbox) jika penampilan pegawai rapi. Status akan langsung berubah menjadi "Rapi" (hijau) atau "Tidak Rapi" (merah) dan tersimpan ke database.',
+            },
+            {
+                question: 'Apa fungsi tombol "Hapus" pada kolom Hapus Absensi?',
+                answer: 'Tombol Hapus berfungsi untuk membatalkan absensi pegawai di hari berjalan (Void). Ini digunakan jika terjadi kesalahan input atau absensi tidak sah. Status masuk pegawai akan berubah menjadi "Absensi di Batalkan" (merah).',
+            },
+            {
+                question: 'Bagaimana cara memasukkan lembur pegawai langsung dari tabel?',
+                answer: 'Jika pegawai belum memiliki data lembur di hari tersebut, Anda dapat mengeklik tombol "+ Lembur" pada kolom Status Lembur untuk langsung diarahkan ke form pengajuan lembur bagi pegawai bersangkutan.',
             },
         ],
     },

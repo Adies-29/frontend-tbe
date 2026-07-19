@@ -129,7 +129,7 @@ export default function DashboardIndex() {
         <div className="flex flex-col gap-4 md:gap-6 w-full">
 
             {/* KOTAK STATISTIK */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <div data-tour="dashboard-stats" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
 
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 border-b-4 border-b-blue-500 p-4 flex flex-col items-center justify-center relative hover:-translate-y-1 transition-transform">
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Hadir</h3>
@@ -159,6 +159,7 @@ export default function DashboardIndex() {
                     </h1>
                     <div className="w-full md:w-auto">
                         <button 
+                            data-tour="btn-input-manual"
                             onClick={() => setIsModalAbsenOpen(true)}
                             className="w-full md:w-auto active:scale-95 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 md:py-2.5 rounded-xl font-semibold text-[15px] md:text-sm flex items-center justify-center gap-2 transition-all duration-200 shadow-sm"
                         >
@@ -167,7 +168,7 @@ export default function DashboardIndex() {
                     </div>
                 </div>
 
-                <div className="w-full">
+                <div data-tour="dashboard-table" className="w-full">
                     {isLoading ? (
                         <div className="flex items-center justify-center gap-2 text-sm text-blue-600 font-semibold my-8">
                             <Loader2 className="animate-spin" size={16} /> Menyinkronkan...

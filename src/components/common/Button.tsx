@@ -1,14 +1,11 @@
 
 
-interface ButtonProps {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     label?: string;
     variant?: "primary" | "success" | "secondary" | "danger" | "warning" | "info" | "back";
-    type?: "button" | "submit" | "reset";
-    onClick?: () => void;
     isLoading?: boolean;
     className? : string;
     icon? : React.ReactNode;
-    disabled?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -19,7 +16,8 @@ export const Button: React.FC<ButtonProps> = ({
     isLoading = false,
     className = "",
     icon,
-
+    disabled,
+    ...rest
 }) => {
 
     const baseStyle = "inline-flex items-center justify-center gap-2 font-semibold text-[15px] md:text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95";
@@ -45,10 +43,11 @@ export const Button: React.FC<ButtonProps> = ({
     return (
         <button
             type={type}
-            disabled={isLoading}
+            disabled={disabled || isLoading}
             onClick={onClick}
             className={`${baseStyle} ${varianStyle[variant]} ${className}`}
             title={label} // Menampilkan teks tooltip saat mouse hover (berguna untuk tombol back)
+            {...rest}
         >
             {isLoading ? "Loading..." : (
                 <>

@@ -77,7 +77,7 @@ export default function DepartemenIndex() {
                 </div>
             )}
 
-            <div className="flex gap-4 w-full">
+            <div data-tour="dept-stats" className="flex gap-4 w-full">
                 <div className="bg-white border border-gray-300 rounded-xl p-4 w-full md:w-48 shadow-sm flex flex-col items-center justify-center">
                     <span className="text-gray-800 text-sm md:text-base font-medium">Total Departemen</span>
                     <span className="text-4xl font-bold mt-2 text-black">{totalDepartemen}</span>
@@ -97,6 +97,7 @@ export default function DepartemenIndex() {
                             label="Tambah Departemen"
                             onClick={() => navigate("/dashboard/departemen/tambah-departemen")}
                             className="w-full md:w-auto"
+                            data-tour="btn-add-dept"
                         />
                     </div>
                 </div>
