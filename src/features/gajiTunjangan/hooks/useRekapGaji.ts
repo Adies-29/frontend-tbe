@@ -283,7 +283,7 @@ export function useRekapGaji() {
     });
 
     const handlePelunasanGaji = (id_gaji: string) => {
-        const confirmLunas = window.confirm("Apakah Anda yakin ingin menandai gaji ini sebagai Lunas? (Tindakan ini akan mengunci slip gaji dan memotong saldo kasbon karyawan secara permanen jika ada).");
+        const confirmLunas = window.confirm("Apakah Anda yakin ingin menandai gaji ini sebagai Lunas? (Tindakan ini akan mengunci slip gaji dan memotong saldo kasbon pegawai secara permanen jika ada).");
         if (!confirmLunas) return;
 
         pelunasanGajiMutation.mutate(id_gaji);
@@ -370,8 +370,8 @@ export function useRekapGaji() {
         refetch();
     };
 
-    const handlePeriodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const val = e.target.value;
+    const handlePeriodeChange = (e: React.ChangeEvent<HTMLSelectElement> | string) => {
+        const val = typeof e === 'string' ? e : e.target.value;
         setPeriode(val);
         if (val === "minggu") setFilterValue(getCurrentWeek());
         else if (val === "bulan") setFilterValue(getCurrentMonth());

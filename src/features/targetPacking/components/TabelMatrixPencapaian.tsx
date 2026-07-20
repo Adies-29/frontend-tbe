@@ -2,7 +2,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, RotateCcw } from 'lucide-react';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { apiFetch } from '../../../utils/apiFetch';
 import Button from '../../../components/common/Button';
@@ -74,82 +74,145 @@ export default function TabelMatrixPencapaian() {
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col w-full overflow-hidden relative">
 
             {/* TOOLBAR TIMELINE FLEKSIBEL */}
-            <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col gap-4">
-                {/* Bagian Atas: Pencarian */}
-                <div className="w-full relative md:w-72">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                    <input
-                        type="text"
-                        placeholder="Cari nama Pegawai..."
-                        value={hookParams.searchQuery}
-                        onChange={(e) => hookParams.setSearchQuery(e.target.value)}
-                        className="border border-gray-300 rounded-lg pl-9 pr-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm w-full"
-                    />
-                </div>
-
-                {/* Bagian Bawah: Filter Dropdown & Tombol */}
-                <div className="flex flex-col md:flex-row flex-wrap gap-3 items-start md:items-center w-full">
-                    {/* Grup Periode */}
-                    <div className="flex gap-2 w-full md:w-auto">
-                        <select
-                            value={hookParams.periode}
-                            onChange={hookParams.handlePeriodeChange}
-                            className="border border-gray-300 rounded-lg px-3 py-2 bg-white outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none"
-                        >
-                            <option value="minggu">Mingguan</option>
-                            <option value="bulan">Bulanan</option>
-                            <option value="tahun">Tahunan</option>
-                        </select>
-
-                        {hookParams.periode === "minggu" && <input type="week" value={hookParams.filterValue} onChange={(e) => hookParams.setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none" />}
-                        {hookParams.periode === "bulan" && <input type="month" value={hookParams.filterValue} onChange={(e) => hookParams.setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none" />}
-                        {hookParams.periode === "tahun" && (
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker
-                                    views={['year']}
-                                    value={hookParams.filterValue ? dayjs().year(parseInt(hookParams.filterValue)) : null}
-                                    onChange={(newValue: Dayjs | null) => newValue && hookParams.setFilterValue(newValue.year().toString())}
-                                    slotProps={{ textField: { size: 'small', className: "bg-white flex-1 md:w-32", sx: { '& .MuiOutlinedInput-root': { borderRadius: '8px' } } } }}
-                                />
-                            </LocalizationProvider>
+            <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/70 flex flex-col gap-4">
+                {/* Baris Atas: Search & Period Switcher */}
+                <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
+                    {/* Search Input */}
+                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Cari nama pegawai di matriks..."
+                            value={hookParams.searchQuery}
+                            onChange={(e) => hookParams.setSearchQuery(e.target.value)}
+                            className="w-full border border-slate-300 rounded-xl pl-10 pr-9 py-2 bg-white text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all"
+                        />
+                        {hookParams.searchQuery && (
+                            <button
+                                onClick={() => hookParams.setSearchQuery('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                            >
+                                &times;
+                            </button>
                         )}
                     </div>
 
-                    <div className="hidden md:block h-6 w-px bg-gray-300 mx-1"></div>
+                    {/* Period Switcher & Date Controls */}
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                        {/* Segmented Control */}
+                        <div className="bg-slate-200/80 p-1 rounded-xl flex items-center gap-1 shadow-inner">
+                            <Button
+                                label="Mingguan"
+                                onClick={() => hookParams.handlePeriodeChange('minggu')}
+                                className={`px-3! py-1.5! text-xs! font-semibold! shadow-none ${
+                                    hookParams.periode === 'minggu'
+                                        ? 'bg-white! text-slate-800! shadow-xs'
+                                        : 'bg-transparent! text-slate-600! hover:text-slate-900!'
+                                }`}
+                            />
+                            <Button
+                                label="Bulanan"
+                                onClick={() => hookParams.handlePeriodeChange('bulan')}
+                                className={`px-3! py-1.5! text-xs! font-semibold! shadow-none ${
+                                    hookParams.periode === 'bulan'
+                                        ? 'bg-white! text-slate-800! shadow-xs'
+                                        : 'bg-transparent! text-slate-600! hover:text-slate-900!'
+                                }`}
+                            />
+                            <Button
+                                label="Tahunan"
+                                onClick={() => hookParams.handlePeriodeChange('tahun')}
+                                className={`px-3! py-1.5! text-xs! font-semibold shadow-none ${
+                                    hookParams.periode === 'tahun'
+                                        ? 'bg-white! text-slate-800! shadow-xs'
+                                        : 'bg-transparent! text-slate-600! hover:text-slate-900!'
+                                }`}
+                            />
+                        </div>
 
-                    {/* Grup Departemen & Jabatan */}
-                    <div className="flex gap-2 w-full md:w-auto">
-                        <select
-                            value={hookParams.filterDepartemen}
-                            onChange={(e) => {
-                                hookParams.setFilterDepartemen(e.target.value);
-                                hookParams.setFilterJabatan("");
-                            }}
-                            className="border border-gray-300 rounded-lg px-3 py-2 bg-white outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none md:max-w-[150px] truncate"
-                        >
-                            <option value="">Semua Dept</option>
-                            {hookParams.uniqueDepartemenList.map((dept: string, idx: number) => (
-                                <option key={idx} value={dept}>{dept}</option>
-                            ))}
-                        </select>
+                        {/* Date Picker Input */}
+                        <div className="relative">
+                            {hookParams.periode === 'minggu' && (
+                                <input
+                                    type="week"
+                                    value={hookParams.filterValue}
+                                    onChange={(e) => hookParams.setFilterValue(e.target.value)}
+                                    className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
+                                />
+                            )}
+                            {hookParams.periode === 'bulan' && (
+                                <input
+                                    type="month"
+                                    value={hookParams.filterValue}
+                                    onChange={(e) => hookParams.setFilterValue(e.target.value)}
+                                    className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
+                                />
+                            )}
+                            {hookParams.periode === 'tahun' && (
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        views={['year']}
+                                        value={hookParams.filterValue ? dayjs().year(parseInt(hookParams.filterValue)) : null}
+                                        onChange={(newValue: Dayjs | null) => newValue && hookParams.setFilterValue(newValue.year().toString())}
+                                        slotProps={{ textField: { size: 'small', className: "bg-white flex-1 md:w-32", sx: { '& .MuiOutlinedInput-root': { borderRadius: '12px', fontSize: '12px' } } } }}
+                                    />
+                                </LocalizationProvider>
+                            )}
+                        </div>
 
-                        <select
-                            value={hookParams.filterJabatan}
-                            onChange={(e) => hookParams.setFilterJabatan(e.target.value)}
-                            disabled={!hookParams.filterDepartemen}
-                            className={`border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none md:max-w-[150px] truncate ${!hookParams.filterDepartemen ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
-                            title={!hookParams.filterDepartemen ? "Pilih Departemen terlebih dahulu" : "Filter berdasarkan Jabatan"}
-                        >
-                            <option value="">{hookParams.filterDepartemen ? "Semua Jabatan" : "Pilih Departemen Dulu"}</option>
-                            {hookParams.uniqueJabatanList?.map((jab: string, idx: number) => (
-                                <option key={idx} value={jab}>{jab}</option>
-                            ))}
-                        </select>
+                        {(hookParams.searchQuery || hookParams.filterDepartemen || hookParams.filterJabatan) && (
+                            <button
+                                type="button"
+                                onClick={hookParams.handleResetFilters}
+                                className="flex items-center gap-1 text-xs text-slate-500 hover:text-red-600 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                                title="Reset semua filter"
+                            >
+                                <RotateCcw size={13} />
+                                <span className="hidden sm:inline">Reset</span>
+                            </button>
+                        )}
                     </div>
+                </div>
 
-                    {/* Tombol Load */}
-                    <div className="w-full md:w-auto mt-1 md:mt-0">
-                        <Button label="Load Data" variant='warning' onClick={hookParams.handleFilter} className="w-full md:w-auto" />
+                {/* Baris Bawah: Filter Departemen & Jabatan */}
+                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between pt-1">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                        {/* Select Dept */}
+                        <div className="relative flex-1 sm:flex-none">
+                            <select
+                                value={hookParams.filterDepartemen}
+                                onChange={(e) => {
+                                    hookParams.setFilterDepartemen(e.target.value);
+                                    hookParams.setFilterJabatan('');
+                                }}
+                                className="w-full sm:min-w-[160px] border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all cursor-pointer"
+                            >
+                                <option value="">Semua Departemen</option>
+                                {hookParams.uniqueDepartemenList.map((dept: string, idx: number) => (
+                                    <option key={idx} value={dept}>{dept}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Select Jabatan */}
+                        <div className="relative flex-1 sm:flex-none">
+                            <select
+                                value={hookParams.filterJabatan}
+                                onChange={(e) => hookParams.setFilterJabatan(e.target.value)}
+                                disabled={!hookParams.filterDepartemen}
+                                className={`w-full sm:min-w-[160px] border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all ${
+                                    !hookParams.filterDepartemen
+                                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
+                                        : 'bg-white text-slate-700 cursor-pointer'
+                                }`}
+                                title={!hookParams.filterDepartemen ? "Pilih Departemen terlebih dahulu" : "Filter Jabatan"}
+                            >
+                                <option value="">{hookParams.filterDepartemen ? "Semua Jabatan" : "Pilih Departemen Dulu"}</option>
+                                {hookParams.uniqueJabatanList?.map((jab: string, idx: number) => (
+                                    <option key={idx} value={jab}>{jab}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>

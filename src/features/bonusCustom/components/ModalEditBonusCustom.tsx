@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Pencil, Loader2 } from 'lucide-react';
+import { X, User, Lock } from 'lucide-react';
 import Button from '../../../components/common/Button';
+import Input from '../../../components/common/InputText';
 import type { BonusCustomData } from './TabelBonusCustom';
 
 interface ModalEditBonusCustomProps {
@@ -45,6 +46,11 @@ export default function ModalEditBonusCustom({
 
     if (!isOpen || !bonusData) return null;
 
+    // Find employee detail from listPegawai
+    const selectedPegawai = listPegawai.find(p => String(p.id) === String(bonusData.pegawai_id));
+    const deptNama = selectedPegawai?.jabatan?.departemen?.nama_departemen || 'Umum';
+    const jabNama = selectedPegawai?.jabatan?.nama_jabatan || 'Pegawai';
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!pegawaiId || !tanggal || !keterangan || !nominal) return;
@@ -72,13 +78,10 @@ export default function ModalEditBonusCustom({
                 {/* MODAL HEADER */}
                 <div className="bg-gray-50 p-4 border-b border-gray-200 flex justify-between items-center shrink-0">
                     <div className="flex items-center gap-2.5">
-                        <div className="p-2 bg-blue-100 text-blue-700 rounded-xl">
-                            <Pencil size={18} />
-                        </div>
                         <div>
                             <h3 className="font-extrabold text-gray-800 text-base">Edit Bonus Custom</h3>
                             <p className="text-xs text-gray-500 font-semibold mt-0.5">
-                                Ubah rincian pemberian bonus untuk {bonusData.nama_pegawai}
+                                Perbarui rincian pemberian bonus Pegawai
                             </p>
                         </div>
                     </div>
@@ -94,73 +97,68 @@ export default function ModalEditBonusCustom({
 
                 {/* FORM BODY */}
                 <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
+                    
+                    {/* KARYAWAN PENERIMA (READ-ONLY CARD - CRITICAL FIX) */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">
-                            Karyawan Penerima
+                        <label className="block text-xs font-bold text-gray-700 mb-1 items-center justify-between">
+                            <span>Pegawai Penerima</span>
+                            <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
+                                <Lock size={10} /> Tidak dapat diubah saat edit
+                            </span>
                         </label>
-                        <select
-                            value={pegawaiId}
-                            onChange={(e) => setPegawaiId(e.target.value)}
-                            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs bg-white font-semibold"
-                            required
-                        >
-                            <option value="">-- Pilih Karyawan --</option>
-                            {listPegawai.map((p: any) => (
-                                <option key={p.id} value={String(p.id)}>
-                                    {p.nama} ({p.jabatan?.departemen?.nama_departemen || '-'} &middot; {p.jabatan?.nama_jabatan || '-'})
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">
-                            Tanggal Diberikan
-                        </label>
-                        <input 
-                            type="date" 
-                            value={tanggal} 
-                            onChange={(e) => setTanggal(e.target.value)} 
-                            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs bg-white font-semibold"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">
-                            Keterangan / Nama Bonus
-                        </label>
-                        <input 
-                            type="text" 
-                            placeholder="Cth: Reward Teladan, Ganti Bensin"
-                            value={keterangan} 
-                            onChange={(e) => setKeterangan(e.target.value)} 
-                            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs bg-white"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <div className="flex justify-between items-center mb-1">
-                            <label className="block text-xs font-bold text-gray-700">
-                                Nominal (Rp)
-                            </label>
-                            {nominal && (
-                                <span className="text-xs font-extrabold text-green-600 animate-in fade-in duration-200">
-                                    {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(nominal))}
-                                </span>
-                            )}
+                        <div className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-xl">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-50 text-blue-600 rounded-lg border border-blue-100">
+                                    <User size={16} />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-xs font-bold text-gray-800">
+                                        {bonusData.nama_pegawai}
+                                    </span>
+                                    <span className="text-[10px] text-gray-500 font-medium">
+                                        {deptNama} &middot; {jabNama}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <input 
-                            type="number" 
-                            placeholder="Cth: 50000"
-                            value={nominal} 
-                            onChange={(e) => setNominal(e.target.value)} 
-                            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs bg-white font-bold"
-                            min="1"
-                            required
-                        />
                     </div>
+
+                    {/* TANGGAL DIBERIKAN */}
+                    <Input
+                        label="Tanggal Diberikan"
+                        type="date"
+                        value={tanggal}
+                        onChange={(e) => setTanggal(e.target.value)}
+                        required
+                    />
+
+                    {/* KETERANGAN */}
+                    <Input
+                        label="Keterangan / Nama Bonus"
+                        type="text"
+                        placeholder="Cth: Reward Teladan, Ganti Bensin"
+                        value={keterangan}
+                        onChange={(e) => setKeterangan(e.target.value)}
+                        required
+                    />
+
+                    {/* NOMINAL */}
+                    <Input
+                        label="Nominal Bonus (Rp)"
+                        type="number"
+                        placeholder="Cth: 50000"
+                        value={nominal}
+                        onChange={(e) => setNominal(e.target.value)}
+                        min="1"
+                        required
+                        helperText={
+                            nominal && Number(nominal) > 0 ? (
+                                <span className="text-xs font-extrabold text-emerald-600 animate-in fade-in duration-200">
+                                    Preview: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(nominal))}
+                                </span>
+                            ) : undefined
+                        }
+                    />
 
                     {/* MODAL FOOTER */}
                     <div className="pt-3 border-t border-gray-200 flex justify-end items-center gap-3 mt-2">
@@ -169,15 +167,15 @@ export default function ModalEditBonusCustom({
                             variant="secondary"
                             label="Batal"
                             onClick={onClose}
-                            className="px-4 py-2 text-xs"
+                            className="px-4 py-2 text-xs font-semibold"
                         />
                         <Button 
                             type="submit" 
                             label={isUpdating ? "Menyimpan..." : "Simpan Perubahan"} 
-                            variant="primary" 
-                            icon={isUpdating ? <Loader2 className="animate-spin" size={16} /> : <Pencil size={16} />} 
+                            variant="success" 
+                            isLoading={isUpdating} 
                             disabled={isUpdating || !pegawaiId || !tanggal || !keterangan || !nominal}
-                            className="px-5 py-2 text-xs font-bold shadow-md"
+                            className="px-5 py-2 text-xs font-bold shadow-md cursor-pointer"
                         />
                     </div>
                 </form>

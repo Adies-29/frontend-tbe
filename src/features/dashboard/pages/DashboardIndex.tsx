@@ -61,8 +61,9 @@ export default function DashboardIndex() {
                     }
 
                     return {
-                        // PERBAIKAN UTAMA: Jika karyawan.id kosong, cari id_pegawai. Jika kosong juga, pakai index + 1
-                        id: karyawan.id || karyawan.id_pegawai || index + 1,
+                        // PERBAIKAN UTAMA: Jika karyawan.id kosong, cari pegawai_id. Jika kosong juga, pakai index + 1
+                        id: karyawan.id || karyawan.pegawai_id || index + 1,
+                        pegawai_id: karyawan.pegawai_id,
                         nama: karyawan.nama || "Tanpa Nama",
                         jabatan: karyawan.jabatan || "-",
                         info_shift: karyawan.info_shift || "-",
@@ -155,7 +156,7 @@ export default function DashboardIndex() {
             <section data-tour="dashboard-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-[400px]">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4">
                     <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                        Aktivitas Absensi Karyawan Hari Ini
+                        Aktivitas Absensi Pegawai Hari Ini
                     </h1>
                     <div className="w-full md:w-auto">
                         <button 

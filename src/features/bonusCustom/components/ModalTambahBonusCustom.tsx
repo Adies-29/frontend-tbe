@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, PlusCircle, Loader2, Search, Gift, Calendar } from 'lucide-react';
+import { X, PlusCircle, Search, Gift, Calendar } from 'lucide-react';
 import Button from '../../../components/common/Button';
+import Input from '../../../components/common/InputText';
 import CustomDateRangePickerModal from '../../jadwalShift/components/CustomDateRangePickerModal';
 
 interface ModalTambahBonusCustomProps {
@@ -115,6 +116,25 @@ export default function ModalTambahBonusCustom({
         });
     }, [listPegawai, formSearchQuery, formFilterDept, formFilterJabatan]);
 
+    const isAllFilteredSelected = useMemo(() => {
+        return formFilteredPegawai.length > 0 && formFilteredPegawai.every((p: any) => selectedPegawaiIds.includes(String(p.id)));
+    }, [formFilteredPegawai, selectedPegawaiIds]);
+
+    const handleToggleSelectAllFiltered = () => {
+        const filteredIds = formFilteredPegawai.map((p: any) => String(p.id));
+        if (isAllFilteredSelected) {
+            setSelectedPegawaiIds(prev => prev.filter(id => !filteredIds.includes(id)));
+        } else {
+            setSelectedPegawaiIds(prev => {
+                const next = [...prev];
+                filteredIds.forEach((id: string) => {
+                    if (!next.includes(id)) next.push(id);
+                });
+                return next;
+            });
+        }
+    };
+
     if (!isOpen) return null;
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -152,7 +172,7 @@ export default function ModalTambahBonusCustom({
                         <div>
                             <h3 className="font-extrabold text-gray-800 text-lg">Buat Bonus Baru</h3>
                             <p className="text-xs text-gray-500 font-semibold mt-0.5">
-                                Tambahkan bonus/reward custom ke satu atau beberapa karyawan sekaligus
+                                Tambahkan bonus/reward custom ke satu atau beberapa pegawai sekaligus
                             </p>
                         </div>
                     </div>
@@ -203,41 +223,31 @@ export default function ModalTambahBonusCustom({
                                 </button>
                             </div>
 
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1">
-                                    Keterangan / Nama Bonus
-                                </label>
-                                <input 
-                                    type="text" 
-                                    placeholder="Cth: Reward Teladan, Ganti Bensin"
-                                    value={keterangan} 
-                                    onChange={(e) => setKeterangan(e.target.value)} 
-                                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs bg-white shadow-2xs"
-                                    required
-                                />
-                            </div>
+                            <Input
+                                label="Keterangan / Nama Bonus"
+                                type="text"
+                                placeholder="Cth: Reward Teladan, Ganti Bensin"
+                                value={keterangan}
+                                onChange={(e) => setKeterangan(e.target.value)}
+                                required
+                            />
 
-                            <div>
-                                <div className="flex justify-between items-center mb-1">
-                                    <label className="block text-xs font-bold text-gray-700">
-                                        Nominal (Rp)
-                                    </label>
-                                    {nominal && (
-                                        <span className="text-xs font-extrabold text-green-600 animate-in fade-in duration-200">
-                                            {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(nominal))}
+                            <Input
+                                label="Nominal Bonus (Rp)"
+                                type="number"
+                                placeholder="Cth: 50000"
+                                value={nominal}
+                                onChange={(e) => setNominal(e.target.value)}
+                                min="1"
+                                required
+                                helperText={
+                                    nominal && Number(nominal) > 0 ? (
+                                        <span className="text-xs font-extrabold text-emerald-600 animate-in fade-in duration-200">
+                                            Preview: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(nominal))}
                                         </span>
-                                    )}
-                                </div>
-                                <input 
-                                    type="number" 
-                                    placeholder="Cth: 50000"
-                                    value={nominal} 
-                                    onChange={(e) => setNominal(e.target.value)} 
-                                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs bg-white shadow-2xs font-bold"
-                                    min="1"
-                                    required
-                                />
-                            </div>
+                                    ) : undefined
+                                }
+                            />
 
                             <p className="text-[11px] text-gray-400 font-medium mt-auto border-t border-gray-200 pt-3">
                                 * Penentu bonus masuk ke periode rekapitulasi gaji pegawai pada rentang tanggal yang dipilih.
@@ -248,10 +258,10 @@ export default function ModalTambahBonusCustom({
                         <div className="md:col-span-7 flex flex-col gap-3 h-full min-h-0 bg-gray-50/70 p-4 rounded-xl border border-gray-200">
                             <div className="flex items-center justify-between pb-1 border-b border-gray-200 shrink-0">
                                 <h4 className="text-xs font-extrabold text-gray-800 uppercase tracking-wide">
-                                    2. Pilih Karyawan Penerima
+                                    2. Pilih Pegawai Penerima
                                 </h4>
                                 <span className="text-xs font-extrabold text-green-700 bg-green-50 px-2.5 py-0.5 rounded-md border border-green-200">
-                                    Terpilih: {selectedPegawaiIds.length} Karyawan
+                                    Terpilih: {selectedPegawaiIds.length} Pegawai
                                 </span>
                             </div>
 
@@ -287,7 +297,7 @@ export default function ModalTambahBonusCustom({
                                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                                     <input
                                         type="text"
-                                        placeholder="Cari karyawan..."
+                                        placeholder="Cari Pegawai..."
                                         value={formSearchQuery}
                                         onChange={(e) => setFormSearchQuery(e.target.value)}
                                         className="w-full border border-gray-300 rounded-lg pl-8 pr-2.5 py-1.5 focus:outline-none text-xs bg-white shadow-2xs"
@@ -316,47 +326,27 @@ export default function ModalTambahBonusCustom({
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-gray-800">{p.nama}</span>
                                                 <span className="text-[10px] text-gray-400 mt-0.5 font-medium">
-                                                    {p.jabatan?.departemen?.nama_departemen || "-"} &middot; {p.jabatan?.nama_jabatan || "Karyawan"}
+                                                    {p.jabatan?.departemen?.nama_departemen || "-"} &middot; {p.jabatan?.nama_jabatan || "Pegawai"}
                                                 </span>
                                             </div>
                                         </label>
                                     );
                                 })}
                                 {formFilteredPegawai.length === 0 && (
-                                    <span className="text-xs text-gray-400 italic text-center my-auto py-8">Karyawan tidak ditemukan.</span>
+                                    <span className="text-xs text-gray-400 italic text-center my-auto py-8">Pegawai tidak ditemukan.</span>
                                 )}
                             </div>
 
-                            {/* QUICK SELECT BUTTONS */}
+                            {/* QUICK SELECT BUTTON */}
                             <div className="flex flex-wrap gap-2 justify-between items-center w-full shrink-0 pt-1">
-                                <div className="flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const filteredIds = formFilteredPegawai.map((p: any) => String(p.id));
-                                            setSelectedPegawaiIds(prev => {
-                                                const next = [...prev];
-                                                filteredIds.forEach((id: string) => {
-                                                    if (!next.includes(id)) next.push(id);
-                                                });
-                                                return next;
-                                            });
-                                        }}
-                                        className="text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1 transition-colors cursor-pointer"
-                                    >
-                                        Pilih Semua Terfilter
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const filteredIds = formFilteredPegawai.map((p: any) => String(p.id));
-                                            setSelectedPegawaiIds(prev => prev.filter(id => !filteredIds.includes(id)));
-                                        }}
-                                        className="text-[11px] font-bold text-red-600 hover:text-red-800 hover:bg-red-50 border border-red-200 rounded-lg px-2.5 py-1 transition-colors cursor-pointer"
-                                    >
-                                        Batal Pilih Terfilter
-                                    </button>
-                                </div>
+                                <Button
+                                    type="button"
+                                    onClick={handleToggleSelectAllFiltered}
+                                    disabled={formFilteredPegawai.length === 0}
+                                    label={isAllFilteredSelected ? "Batal Pilih Terfilter" : "Pilih Semua Terfilter"}
+                                    variant={isAllFilteredSelected ? "danger" : "info"}
+                                    className="px-2 py-1 text-[8px] font-bold rounded-lg shadow-2xs cursor-pointer"
+                                />
                             </div>
                         </div>
 
@@ -369,15 +359,16 @@ export default function ModalTambahBonusCustom({
                             variant="secondary"
                             label="Batal"
                             onClick={onClose}
-                            className="px-4 py-2 text-xs"
+                            className="px-4 py-2 text-xs font-semibold"
                         />
                         <Button 
                             type="submit" 
                             label={isCreating ? "Menyimpan..." : "Simpan Bonus"} 
-                            variant="primary" 
-                            icon={isCreating ? <Loader2 className="animate-spin" size={16} /> : <PlusCircle size={16} />} 
+                            variant="success" 
+                            isLoading={isCreating}
+                            icon={<PlusCircle size={16} />} 
                             disabled={isCreating || selectedPegawaiIds.length === 0}
-                            className="px-5 py-2 text-xs font-bold shadow-md"
+                            className="px-5 py-2 text-xs font-bold shadow-md cursor-pointer"
                         />
                     </div>
                 </form>

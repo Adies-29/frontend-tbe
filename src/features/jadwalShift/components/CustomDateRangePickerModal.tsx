@@ -150,7 +150,7 @@ export default function CustomDateRangePickerModal({
                 {/* MODAL HEADER */}
                 <div className="bg-gray-50 p-4 border-b border-gray-200 flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                        <Calendar size={20} className="text-blue-600" />
+                        <Calendar size={20} className="text-black" />
                         <div>
                             <h3 className="font-bold text-gray-800 text-base">{title}</h3>
                             <p className="text-xs text-gray-500 font-semibold mt-0.5">
@@ -190,11 +190,11 @@ export default function CustomDateRangePickerModal({
                         onClick={() => setActiveTarget('end')}
                         className={`flex flex-col p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
                             activeTarget === 'end'
-                                ? 'bg-white border-blue-600 ring-2 ring-blue-500/20 shadow-md'
+                                ? 'bg-white border-green-600 ring-2 ring-green-500/20 shadow-md'
                                 : 'bg-gray-50 border-gray-300 hover:bg-white text-gray-600'
                         }`}
                     >
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-green-600">
                             Tanggal Selesai
                         </span>
                         <span className="text-sm font-extrabold text-gray-800 mt-0.5 truncate">
@@ -272,7 +272,7 @@ export default function CustomDateRangePickerModal({
                                 cellStyle = "bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-l-lg shadow-sm";
                                 containerStyle = "bg-blue-100/60 rounded-l-lg";
                             } else if (isEnd) {
-                                cellStyle = "bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-r-lg shadow-sm";
+                                cellStyle = "bg-gradient-to-r from-green-600 to-green-600 text-white font-bold rounded-r-lg shadow-sm";
                                 containerStyle = "bg-blue-100/60 rounded-r-lg";
                             } else if (isInRange) {
                                 cellStyle = "bg-blue-100 text-blue-900 font-semibold rounded-none";
