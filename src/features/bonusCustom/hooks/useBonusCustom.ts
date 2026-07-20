@@ -43,10 +43,11 @@ export function useBonusCustom() {
             const result = await response.json();
             if (!response.ok) throw new Error("Gagal mengambil data bonus custom");
             
-            // Flatten data untuk DataGrid
+            // Flatten data
             return (result.data || []).map((item: any) => ({
                 id: String(item.id),
                 nama_pegawai: item.pegawai?.nama || "Tanpa Nama",
+                pegawai_id: String(item.pegawai_id),
                 tanggal_diberikan: item.tanggal_diberikan,
                 keterangan: item.keterangan,
                 nominal: item.nominal
@@ -56,24 +57,32 @@ export function useBonusCustom() {
     });
 
     // ==========================================
-    // 3. MUTASI: TAMBAH BONUS
+    // 3. MUTASI: TAMBAH BONUS BATCH
     // ==========================================
     const createBonusMutation = useMutation({
-        mutationFn: async (payload: { pegawai_id: string, tanggal_diberikan: string, keterangan: string, nominal: number }) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/bonus-custom`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
+        mutationFn: async (payload: { pegawai_ids: string[], tanggal_diberikan: string, keterangan: string, nominal: number }) => {
+            const promises = payload.pegawai_ids.map(async (id) => {
+                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/bonus-custom`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        pegawai_id: id,
+                        tanggal_diberikan: payload.tanggal_diberikan,
+                        keterangan: payload.keterangan,
+                        nominal: payload.nominal
+                    })
+                });
+                const result = await response.json();
+                if (!response.ok || !result.success) throw new Error(result.message || "Gagal menambah bonus.");
+                return result;
             });
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error(result.message || "Gagal menambah bonus.");
-            return result;
+            return await Promise.all(promises);
         },
-        onSuccess: (result) => {
-            setNotif({ show: true, message: `Sukses! ${result.message}`, type: "success" });
+        onSuccess: (results) => {
+            setNotif({ show: true, message: `Sukses menambahkan bonus ke ${results.length} pegawai!`, type: "success" });
             queryClient.invalidateQueries({ queryKey: ['bonusCustomList'] });
         },
         onError: (error: any) => {

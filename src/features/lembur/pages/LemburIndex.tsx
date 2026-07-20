@@ -56,15 +56,18 @@ export default function LemburIndex() {
                             icon={<Plus size={18} />}
                             onClick={() => navigate('/dashboard/lembur/tambah-lembur')}
                             className="w-full md:w-auto"
+                            data-tour="btn-add-lembur"
                         />
                     </div>
                 </div>
 
+                <div data-tour="lembur-table">
                 <TabelLembur 
                     data={lemburQuery.data || []} 
                     isLoading={lemburQuery.isLoading} 
                     onRefresh={() => lemburQuery.refetch()} 
                 />
+                </div>
             </section>
         </div>
     );

@@ -145,6 +145,9 @@ export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: Sidebar
                     <p className="text-[10px] md:text-[11px] font-light text-white/70 leading-tight">
                         &copy; {currentYear} T-Be (tiga berlian)<br/>All Right Reserved
                     </p>
+                    <p className="text-[10px] md:text-[11px] font-medium text-white/40 mt-1.5">
+                        v{import.meta.env.PACKAGE_VERSION || "0.0.0"}
+                    </p>
                 </div>
             </div>
             

@@ -151,6 +151,7 @@ export default function KasbonIndex() {
                             variant="primary"
                             onClick={() => navigate('/dashboard/kasbon/tambah')}
                             className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl"
+                            data-tour="btn-add-kasbon"
                         />
                     </div>
                 </div>
@@ -158,6 +159,7 @@ export default function KasbonIndex() {
                 {/* TAB NAVIGATION */}
                 <div className="flex gap-6 mt-6 border-b border-gray-300">
                     <button
+                        data-tour="kasbon-tab-daftar"
                         className={`pb-3 px-2 text-[15px] md:text-sm font-semibold transition-colors duration-200 ${
                             activeTab === 'daftar' 
                             ? 'border-b-2 border-emerald-600 text-emerald-600' 
@@ -168,6 +170,7 @@ export default function KasbonIndex() {
                         Daftar Kasbon Aktif
                     </button>
                     <button
+                        data-tour="kasbon-tab-riwayat"
                         className={`pb-3 px-2 text-[15px] md:text-sm font-semibold transition-colors duration-200 ${
                             activeTab === 'riwayat' 
                             ? 'border-b-2 border-emerald-600 text-emerald-600' 

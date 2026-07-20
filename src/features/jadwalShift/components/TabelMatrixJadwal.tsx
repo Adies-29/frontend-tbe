@@ -155,7 +155,7 @@ export default function TabelMatrixJadwal() {
                     {hookParams.errorMsg}
                 </div>
             ) : (
-                <div className="overflow-x-auto w-full relative">
+                <div data-tour="matrix-table" className="overflow-x-auto w-full relative">
                     <table className="w-full text-sm text-left border-collapse min-w-max">
                         <thead className="text-xs text-gray-600 uppercase bg-gray-100 sticky top-0 z-20 shadow-sm">
                             <tr>
