@@ -5,15 +5,15 @@ import { apiFetch } from '../../../utils/apiFetch';
 import { useAuthStore } from '../../../store/useAuthStore';
 
 interface Shift {
-  id: string;
+  id: string | number;
   kode_shift: string;
-  jam_masuk: string;
-  jam_pulang: string;
+  jam_masuk?: string;
+  jam_pulang?: string;
 }
 
 interface DetailPola {
   urutan_hari: number;
-  shift_id: string | null;
+  shift_id: string | number | null;
 }
 
 interface PolaRotasi {

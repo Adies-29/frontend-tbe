@@ -31,71 +31,121 @@ export interface SelectedCell {
     warna?: string;
 }
 
+const getCurrentWeek = () => {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+};
+
+const getCurrentMonth = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
+
+const getCurrentYear = () => {
+    return new Date().getFullYear().toString();
+};
+
+const parseWeekValue = (weekStr: string) => {
+    if (!weekStr || !weekStr.includes('-W')) return null;
+    const [tahunStr, mingguStr] = weekStr.split('-W');
+    const year = parseInt(tahunStr, 10);
+    const week = parseInt(mingguStr, 10);
+    if (isNaN(year) || isNaN(week)) return null;
+
+    const jan4 = new Date(Date.UTC(year, 0, 4));
+    const dayOfJan4 = jan4.getUTCDay() || 7;
+    const week1Start = new Date(Date.UTC(year, 0, 4 - dayOfJan4 + 1));
+    const startDate = new Date(week1Start.getTime() + (week - 1) * 7 * 86400000);
+    const endDate = new Date(startDate.getTime() + 6 * 86400000);
+
+    const formatISO = (d: Date) => {
+        const y = d.getUTCFullYear();
+        const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(d.getUTCDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    };
+
+    return {
+        startDate: formatISO(startDate),
+        endDate: formatISO(endDate),
+        year,
+        week
+    };
+};
+
 export function useMatrixJadwal() {
     const token = useAuthStore((state) => state.token);
 
     const now = new Date();
+    const defaultWeekStr = getCurrentWeek();
+    const initialParsedWeek = parseWeekValue(defaultWeekStr);
 
-    const getWeekNumber = (d: Date) => {
-        const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
-        const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-        const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-        return { year: date.getUTCFullYear(), week: weekNo };
-    };
-    const weekData = getWeekNumber(now);
-    const defaultWeekStr = `${weekData.year}-W${weekData.week.toString().padStart(2, '0')}`;
-
-    const currentDay = now.getDay();
-    const diff = now.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
-    const monday = new Date(now);
-    monday.setDate(diff);
-
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-
-    const firstDay = monday.toLocaleDateString('en-CA');
-    const lastDay = sunday.toLocaleDateString('en-CA');
-
-    const [filterStartDate, setFilterStartDate] = useState(firstDay);
-    const [filterEndDate, setFilterEndDate] = useState(lastDay);
+    const [filterStartDate, setFilterStartDate] = useState(initialParsedWeek?.startDate || "");
+    const [filterEndDate, setFilterEndDate] = useState(initialParsedWeek?.endDate || "");
 
     const [periode, setPeriode] = useState("minggu");
     const [filterValue, setFilterValue] = useState(defaultWeekStr);
 
-    const handleFilter = () => {
-        if (!filterValue) return;
-
-        let start = "", end = "";
-        const year = parseInt(filterValue.substring(0, 4));
-
-        if (periode === "minggu") {
-            const week = parseInt(filterValue.substring(6, 8));
-            const firstDayOfYear = new Date(year, 0, 1);
-            const daysToFirstMonday = (8 - firstDayOfYear.getDay()) % 7;
-            const firstMonday = new Date(year, 0, 1 + daysToFirstMonday);
-            const startDate = new Date(firstMonday.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
-            const endDate = new Date(startDate.getTime() + 6 * 24 * 60 * 60 * 1000);
-
-            start = startDate.toLocaleDateString('en-CA');
-            end = endDate.toLocaleDateString('en-CA');
-        } else if (periode === "bulan") {
-            const month = parseInt(filterValue.substring(5, 7));
-            start = new Date(year, month - 1, 1).toLocaleDateString('en-CA');
-            end = new Date(year, month, 0).toLocaleDateString('en-CA');
-        } else if (periode === "tahun") {
-            start = new Date(year, 0, 1).toLocaleDateString('en-CA');
-            end = new Date(year, 11, 31).toLocaleDateString('en-CA');
+    const calculateDateRange = (p: string, val: string) => {
+        if (!val) return null;
+        if (p === "minggu") {
+            const parsed = parseWeekValue(val);
+            if (parsed) return { start: parsed.startDate, end: parsed.endDate };
+        } else if (p === "bulan") {
+            const [tahunStr, bulanStr] = val.split('-');
+            const year = parseInt(tahunStr, 10);
+            const month = parseInt(bulanStr, 10);
+            if (!isNaN(year) && !isNaN(month)) {
+                const monthPad = String(month).padStart(2, '0');
+                const totalDays = new Date(Date.UTC(year, month, 0)).getUTCDate();
+                const daysPad = String(totalDays).padStart(2, '0');
+                return { start: `${year}-${monthPad}-01`, end: `${year}-${monthPad}-${daysPad}` };
+            }
+        } else if (p === "tahun") {
+            const year = parseInt(val, 10);
+            if (!isNaN(year)) {
+                return { start: `${year}-01-01`, end: `${year}-12-31` };
+            }
         }
+        return null;
+    };
 
-        setFilterStartDate(start);
-        setFilterEndDate(end);
+    const handleFilter = () => {
+        const range = calculateDateRange(periode, filterValue);
+        if (range) {
+            setFilterStartDate(range.start);
+            setFilterEndDate(range.end);
+        }
+    };
+
+    const handleFilterValueChange = (val: string) => {
+        setFilterValue(val);
+        const range = calculateDateRange(periode, val);
+        if (range) {
+            setFilterStartDate(range.start);
+            setFilterEndDate(range.end);
+        }
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handlePeriodeChange = (e: any) => {
-        setPeriode(e.target.value);
-        setFilterValue("");
+        const val = e.target.value;
+        setPeriode(val);
+
+        let defaultVal = "";
+        if (val === "minggu") defaultVal = getCurrentWeek();
+        else if (val === "bulan") defaultVal = getCurrentMonth();
+        else if (val === "tahun") defaultVal = getCurrentYear();
+
+        setFilterValue(defaultVal);
+        const range = calculateDateRange(val, defaultVal);
+        if (range) {
+            setFilterStartDate(range.start);
+            setFilterEndDate(range.end);
+        }
     };
 
     const [searchQuery, setSearchQuery] = useState("");
@@ -419,7 +469,7 @@ export function useMatrixJadwal() {
     return {
         // State Tanggal & Filter
         today: now, filterStartDate, setFilterStartDate, filterEndDate, setFilterEndDate,
-        periode, setPeriode, filterValue, setFilterValue, handleFilter, handlePeriodeChange,
+        periode, setPeriode, filterValue, setFilterValue, handleFilter, handlePeriodeChange, handleFilterValueChange,
         // State Data
         matrixKaryawan, filteredMatrixKaryawan, searchQuery, setSearchQuery, isLoading, errorMsg, listPegawai, listMasterShifts,
         filterJabatan, setFilterJabatan, filterDepartemen, setFilterDepartemen, uniqueJabatanList, uniqueDepartemenList,

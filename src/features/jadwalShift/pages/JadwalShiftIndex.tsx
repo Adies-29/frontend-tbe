@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { CalendarDays, Clock } from "lucide-react";
+import { CalendarDays, Clock, RefreshCw } from "lucide-react";
 import Button from '../../../components/common/Button';
 import TabJadwal from "./tabs/TabJadwal";
 import TabShift from "./tabs/TabShift";
+import { ModalKelolaPolaRotasi } from "../components/ModalKelolaPolaRotasi";
+import { useMasterShift } from "../hooks/useMasterShift";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 export default function JadwalShiftIndex() {
     const navigate = useNavigate();
@@ -11,6 +14,9 @@ export default function JadwalShiftIndex() {
     const [activeTab, setActiveTab] = useState<'jadwal' | 'shift'>(
         (location.state as any)?.activeTab || 'jadwal'
     );
+    const [isModalPolaOpen, setIsModalPolaOpen] = useState(false);
+    const token = useAuthStore((state) => state.token) || "";
+    const { dataJadwalShift, fetchJadwalShift } = useMasterShift();
 
     return (
         <div className="flex flex-col gap-4 md:gap-6 w-full">
@@ -23,12 +29,19 @@ export default function JadwalShiftIndex() {
                     </div>
                     {/* Tombol aksi dinamis berdasarkan Tab yang aktif */}
                     {activeTab === 'shift' && (
-                        <div className="w-full md:w-auto">
+                        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+                            <Button 
+                                variant="secondary" 
+                                label="Pola Rolling Shift" 
+                                icon={<RefreshCw size={15} className="text-blue-600" />}
+                                onClick={() => setIsModalPolaOpen(true)} 
+                                className="w-full sm:w-auto rounded-xl active:scale-95 py-3 md:py-2 text-[15px] md:text-sm"
+                            />
                             <Button  
                                 data-tour="btn-add-shift"
                                 label="Tambah Master Shift" 
                                 onClick={() => navigate('/dashboard/jadwal-shift/tambah')}
-                                className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl"
+                                className="w-full sm:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl"
                             />
                         </div>
                     )}
@@ -67,6 +80,14 @@ export default function JadwalShiftIndex() {
             <div className="w-full min-h-[400px]">
                 {activeTab === 'jadwal' ? <TabJadwal /> : <TabShift />}
             </div>
+
+            <ModalKelolaPolaRotasi
+                isOpen={isModalPolaOpen}
+                onClose={() => setIsModalPolaOpen(false)}
+                shifts={dataJadwalShift}
+                token={token}
+                onSuccess={fetchJadwalShift}
+            />
         </div>
     );
 }
