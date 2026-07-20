@@ -23,18 +23,55 @@ const getCurrentYear = () => {
     return new Date().getFullYear().toString();
 };
 
-// Format tanggal "YYYY-MM-DD" menjadi "05-09 Mei 2026"
+const parseWeekValue = (weekStr: string) => {
+    if (!weekStr || !weekStr.includes('-W')) return null;
+    const [tahunStr, mingguStr] = weekStr.split('-W');
+    const year = parseInt(tahunStr, 10);
+    const week = parseInt(mingguStr, 10);
+    if (isNaN(year) || isNaN(week)) return null;
+
+    const jan4 = new Date(Date.UTC(year, 0, 4));
+    const dayOfJan4 = jan4.getUTCDay() || 7;
+    const week1Start = new Date(Date.UTC(year, 0, 4 - dayOfJan4 + 1));
+    const startDate = new Date(week1Start.getTime() + (week - 1) * 7 * 86400000);
+    const endDate = new Date(startDate.getTime() + 6 * 86400000);
+
+    const formatISO = (d: Date) => {
+        const y = d.getUTCFullYear();
+        const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(d.getUTCDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    };
+
+    return {
+        tanggalMulai: formatISO(startDate),
+        tanggalSelesai: formatISO(endDate),
+        targetBulan: startDate.getUTCMonth() + 1,
+        targetTahun: startDate.getUTCFullYear()
+    };
+};
+
+// Format tanggal "YYYY-MM-DD" menjadi "05-09 Mei 2026" tanpa offset timezone
 const formatPeriodeGaji = (startStr?: string, endStr?: string, fallback?: string) => {
     if (!startStr || !endStr) return fallback || "-";
-    const startDate = new Date(startStr);
-    const endDate = new Date(endStr);
-    
-    const startDay = String(startDate.getDate()).padStart(2, '0');
-    const endDay = String(endDate.getDate()).padStart(2, '0');
-    const monthName = new Intl.DateTimeFormat('id-ID', { month: 'long' }).format(startDate);
-    const year = startDate.getFullYear();
+    const [sY, sM, sD] = startStr.split('-').map(Number);
+    const [eY, eM, eD] = endStr.split('-').map(Number);
+    if (!sY || !sM || !sD || !eY || !eM || !eD) return fallback || "-";
 
-    return `${startDay}-${endDay} ${monthName} ${year}`;
+    const months = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+
+    const startDay = String(sD).padStart(2, '0');
+    const endDay = String(eD).padStart(2, '0');
+    const monthName = months[sM - 1] || "";
+
+    if (sM === eM && sY === eY) {
+        return `${startDay}-${endDay} ${monthName} ${sY}`;
+    }
+    const endMonthName = months[eM - 1] || "";
+    return `${startDay} ${monthName} - ${endDay} ${endMonthName} ${eY}`;
 };
 
 export function useRekapGaji() {
@@ -56,33 +93,33 @@ export function useRekapGaji() {
         try {
             let targetBulan = 0;
             let targetTahun = new Date().getFullYear();
+            let tanggalMulai = "";
+            let tanggalSelesai = "";
 
             // 1. Ekstrak nilai filter
             if (filterValue) {
                 if (periode === 'bulan') {
                     const [tahun, bulan] = filterValue.split('-');
-                    targetTahun = parseInt(tahun);
-                    targetBulan = parseInt(bulan);
+                    targetTahun = parseInt(tahun, 10);
+                    targetBulan = parseInt(bulan, 10);
                 } else if (periode === 'minggu') {
-                    const [tahunStr, mingguStr] = filterValue.split('-W');
-                    const year = parseInt(tahunStr);
-                    const week = parseInt(mingguStr);
-
-                    const jan4 = new Date(year, 0, 4);
-                    const dayOfJan4 = jan4.getDay() || 7;
-                    const week1Start = new Date(year, 0, 4 - dayOfJan4 + 1);
-                    const startDate = new Date(week1Start.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
-
-                    targetBulan = startDate.getMonth() + 1;
-                    targetTahun = startDate.getFullYear();
+                    const parsed = parseWeekValue(filterValue);
+                    if (parsed) {
+                        tanggalMulai = parsed.tanggalMulai;
+                        tanggalSelesai = parsed.tanggalSelesai;
+                        targetBulan = parsed.targetBulan;
+                        targetTahun = parsed.targetTahun;
+                    }
                 } else if (periode === 'tahun') {
-                    targetTahun = parseInt(filterValue);
+                    targetTahun = parseInt(filterValue, 10);
                 }
             }
 
             // 2. Fetch API
             let url = `${import.meta.env.VITE_API_BASE_URL}/api/v1/gaji?tahun=${targetTahun}`;
-            if (targetBulan > 0) {
+            if (periode === 'minggu' && tanggalMulai && tanggalSelesai) {
+                url += `&tanggal_mulai=${tanggalMulai}&tanggal_selesai=${tanggalSelesai}`;
+            } else if (targetBulan > 0) {
                 url += `&bulan=${targetBulan}`;
             }
 
@@ -101,7 +138,17 @@ export function useRekapGaji() {
             }
             
             if (response.ok && result.success) {
-                const data = result.data || [];
+                let data = result.data || [];
+                
+                // Filter tambahan di client-side untuk rentang minggu spesifik
+                if (periode === 'minggu' && tanggalMulai && tanggalSelesai) {
+                    data = data.filter((item: any) => {
+                        if (item.tanggal_awal_periode && item.tanggal_akhir_periode) {
+                            return item.tanggal_awal_periode >= tanggalMulai && item.tanggal_akhir_periode <= tanggalSelesai;
+                        }
+                        return true;
+                    });
+                }
                 
                 // 3. MAPPING KE FORMAT SLIP GAJI LENGKAP & TABEL REKAP
                 const formattedData = data.map((item: any) => {
@@ -275,31 +322,16 @@ export function useRekapGaji() {
             labelPeriode = `Bulan ${bulanPad} Tahun ${tahun}`;
 
         } else if (periode === 'minggu') {
-            const [tahunStr, mingguStr] = filterValue.split('-W');
-            const year = parseInt(tahunStr);
-            const week = parseInt(mingguStr);
+            const parsed = parseWeekValue(filterValue);
+            if (!parsed) {
+                setNotif({ show: true, message: "Format minggu tidak valid.", type: "error" });
+                return;
+            }
 
-            const jan4 = new Date(year, 0, 4);
-            const dayOfJan4 = jan4.getDay() || 7;
-            const week1Start = new Date(year, 0, 4 - dayOfJan4 + 1);
-
-            const startDate = new Date(week1Start.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
-            const endDate = new Date(startDate.getTime() + 6 * 24 * 60 * 60 * 1000);
-
-            // FORMAT TANGGAL MANUAL KE YYYY-MM-DD UNTUK MENCEGAH ERROR POSTGRES
-            const startYear = startDate.getFullYear();
-            const startMonth = String(startDate.getMonth() + 1).padStart(2, '0');
-            const startDay = String(startDate.getDate()).padStart(2, '0');
-
-            const endYear = endDate.getFullYear();
-            const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
-            const endDay = String(endDate.getDate()).padStart(2, '0');
-
-            tanggalMulai = `${startYear}-${startMonth}-${startDay}`;
-            tanggalSelesai = `${endYear}-${endMonth}-${endDay}`;
-
-            targetBulan = startDate.getMonth() + 1;
-            targetTahun = startDate.getFullYear();
+            tanggalMulai = parsed.tanggalMulai;
+            tanggalSelesai = parsed.tanggalSelesai;
+            targetBulan = parsed.targetBulan;
+            targetTahun = parsed.targetTahun;
 
             labelPeriode = `Mingguan (${tanggalMulai} s/d ${tanggalSelesai})`;
         }

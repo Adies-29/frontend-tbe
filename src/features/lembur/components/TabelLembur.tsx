@@ -126,21 +126,26 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
         },
         {
             field: "nominal_upah_custom",
-            headerName: "Upah/Jam",
+            headerName: "Upah Lembur",
             flex: 1,
-            minWidth: 140,
+            minWidth: 160,
             align: "center",
             headerAlign: "center",
             renderCell: (params) => {
                 const isCustom = params.row.is_custom_upah;
                 const customValue = params.row.nominal_upah_custom;
+                const tipeHitung = params.row.tipe_hitung_lembur || 'per_jam';
+                const isFlat = tipeHitung === 'flat';
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const upahLemburDefault = (params.row.pegawai as any)?.jabatan?.upah_lembur_per_jam;
+                const upahLemburDefault = isFlat
+                    ? ((params.row.pegawai as any)?.jabatan?.upah_lembur_flat || (params.row.pegawai as any)?.jabatan?.upah_lembur_per_jam)
+                    : (params.row.pegawai as any)?.jabatan?.upah_lembur_per_jam;
+                const suffix = isFlat ? " (Flat)" : "/jam";
 
                 if (isCustom && customValue > 0) {
                     return (
                         <span className="bg-amber-100 text-amber-700 font-bold px-2 py-1 rounded text-xs">
-                            Rp {Number(customValue).toLocaleString('id-ID')} (Custom)
+                            Rp {Number(customValue).toLocaleString('id-ID')} {suffix}
                         </span>
                     );
                 }
@@ -148,14 +153,14 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
                 if (upahLemburDefault) {
                     return (
                         <span className="bg-gray-100 text-gray-700 font-medium px-2 py-1 rounded text-xs">
-                            Rp {Number(upahLemburDefault).toLocaleString('id-ID')} (Default)
+                            Rp {Number(upahLemburDefault).toLocaleString('id-ID')} {suffix}
                         </span>
                     );
                 }
 
                 return (
                     <span className="bg-gray-100 text-gray-500 font-medium px-2 py-1 rounded text-xs">
-                        Belum Diatur
+                        {isFlat ? "Flat (Belum Diatur)" : "Belum Diatur"}
                     </span>
                 );
             }

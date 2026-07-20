@@ -2,25 +2,30 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-import { Loader2, MousePointerClick, X, Search } from 'lucide-react';
+import { Loader2, MousePointerClick, X, Search, Users } from 'lucide-react';
 import Button from '../../../components/common/Button';
 
 import ModalKelolaShift from './ModalKelolaShift';
-import ModalGenerateMassal from './ModalGenerateMassal';
+import ModalKelolaJadwalMassal from './ModalKelolaJadwalMassal';
 import { useMatrixJadwal } from '../hooks/useMatrixJadwal';
 import Notif from '../../../components/common/Notif';
 
 export default function TabelMatrixJadwal() {
     const hookParams = useMatrixJadwal();
 
-    // Helper untuk generate array Date
+    // Helper untuk generate array Date (menggunakan UTC untuk mencegah pergeseran zona waktu)
     const getDatesInRange = (startStr: string, endStr: string) => {
-        const dateArray = [];
-        const currentDate = new Date(startStr);
-        const stopDate = new Date(endStr);
+        const dateArray: Date[] = [];
+        if (!startStr || !endStr) return dateArray;
+        const [sY, sM, sD] = startStr.split('-').map(Number);
+        const [eY, eM, eD] = endStr.split('-').map(Number);
+
+        const currentDate = new Date(Date.UTC(sY, sM - 1, sD));
+        const stopDate = new Date(Date.UTC(eY, eM - 1, eD));
+
         while (currentDate <= stopDate) {
             dateArray.push(new Date(currentDate));
-            currentDate.setDate(currentDate.getDate() + 1);
+            currentDate.setUTCDate(currentDate.getUTCDate() + 1);
         }
         return dateArray;
     };
@@ -33,22 +38,36 @@ export default function TabelMatrixJadwal() {
 
             {/* TOOLBAR TIMELINE FLEKSIBEL */}
             <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col gap-4">
-                {/* Bagian Atas: Pencarian */}
-                <div data-tour="matrix-search" className="w-full relative md:w-72">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                    <input
-                        type="text"
-                        placeholder="Cari nama Pegawai..."
-                        value={hookParams.searchQuery}
-                        onChange={(e) => hookParams.setSearchQuery(e.target.value)}
-                        className="border border-gray-300 rounded-lg pl-9 pr-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm w-full"
-                    />
+                
+                {/* Baris 1: Search & Tombol Aksi Pengelolaan */}
+                <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3">
+                    {/* Pencarian Pegawai */}
+                    <div className="relative w-full md:w-72">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Cari nama Pegawai..."
+                            value={hookParams.searchQuery}
+                            onChange={(e) => hookParams.setSearchQuery(e.target.value)}
+                            className="border border-gray-300 rounded-lg pl-9 pr-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm w-full bg-white"
+                        />
+                    </div>
+
+                    {/* Group Tombol Aksi Pengelolaan */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button 
+                            variant="primary" 
+                            label="Kelola Shift & Pola Massal" 
+                            icon={<Users size={15} />}
+                            onClick={() => hookParams.setIsModalMassalOpen(true)} 
+                        />
+                    </div>
                 </div>
 
-                {/* Bagian Bawah: Filter Dropdown & Tombol */}
-                <div data-tour="matrix-filters" className="flex flex-col md:flex-row flex-wrap gap-3 items-start md:items-center w-full">
+                {/* Baris 2: Filter Periode & Departemen/Jabatan */}
+                <div className="flex flex-col md:flex-row flex-wrap gap-3 items-start md:items-center pt-2 border-t border-gray-200/80">
                     {/* Grup Periode */}
-                    <div className="flex gap-2 w-full md:w-auto">
+                    <div className="flex gap-2 w-full md:w-auto items-center">
                         <select
                             value={hookParams.periode}
                             onChange={hookParams.handlePeriodeChange}
@@ -59,14 +78,14 @@ export default function TabelMatrixJadwal() {
                             <option value="tahun">Tahunan</option>
                         </select>
 
-                        {hookParams.periode === "minggu" && <input type="week" value={hookParams.filterValue} onChange={(e) => hookParams.setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none" />}
-                        {hookParams.periode === "bulan" && <input type="month" value={hookParams.filterValue} onChange={(e) => hookParams.setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none" />}
+                        {hookParams.periode === "minggu" && <input type="week" value={hookParams.filterValue} onChange={(e) => hookParams.handleFilterValueChange(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none bg-white" />}
+                        {hookParams.periode === "bulan" && <input type="month" value={hookParams.filterValue} onChange={(e) => hookParams.handleFilterValueChange(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none bg-white" />}
                         {hookParams.periode === "tahun" && (
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker
                                     views={['year']}
                                     value={hookParams.filterValue ? dayjs().year(parseInt(hookParams.filterValue)) : null}
-                                    onChange={(newValue: Dayjs | null) => newValue && hookParams.setFilterValue(newValue.year().toString())}
+                                    onChange={(newValue: Dayjs | null) => newValue && hookParams.handleFilterValueChange(newValue.year().toString())}
                                     slotProps={{ textField: { size: 'small', className: "bg-white flex-1 md:w-32", sx: { '& .MuiOutlinedInput-root': { borderRadius: '8px' } } } }}
                                 />
                             </LocalizationProvider>
@@ -76,7 +95,7 @@ export default function TabelMatrixJadwal() {
                     <div className="hidden md:block h-6 w-px bg-gray-300 mx-1"></div>
 
                     {/* Grup Departemen & Jabatan */}
-                    <div className="flex gap-2 w-full md:w-auto">
+                    <div className="flex gap-2 w-full md:w-auto items-center">
                         <select
                             value={hookParams.filterDepartemen}
                             onChange={(e) => hookParams.setFilterDepartemen(e.target.value)}
@@ -100,12 +119,8 @@ export default function TabelMatrixJadwal() {
                                 <option key={idx} value={jab}>{jab}</option>
                             ))}
                         </select>
-                    </div>
 
-                    {/* Tombol Load & Generate */}
-                    <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto mt-1 md:mt-0">
-                        <Button label="Load Data" variant='warning' onClick={hookParams.handleFilter} className="w-full sm:w-auto" />
-                        <Button variant="primary" label="Generate Jadwal Massal" onClick={() => hookParams.setIsModalMassalOpen(true)} className="w-full sm:w-auto" data-tour="btn-generate-jadwal" />
+                        <Button label="Load Data" variant='warning' onClick={hookParams.handleFilter} className="ml-auto md:ml-2" />
                     </div>
                 </div>
             </div>
@@ -129,12 +144,12 @@ export default function TabelMatrixJadwal() {
                                     Nama Pegawai
                                 </th>
                                 {daysArray.map((dateObj, idx) => {
-                                    const isWeekend = dateObj.getDay() === 0;
+                                    const isWeekend = dateObj.getUTCDay() === 0;
                                     return (
                                         <th key={idx} scope="col" className={`px-2 py-3 border-r border-gray-200 text-center min-w-[60px] leading-tight ${isWeekend ? 'bg-red-50/50' : ''}`}>
-                                            <div className={`text-lg ${isWeekend ? 'text-red-600 font-bold' : ''}`}>{dateObj.getDate()}</div>
+                                            <div className={`text-lg ${isWeekend ? 'text-red-600 font-bold' : ''}`}>{dateObj.getUTCDate()}</div>
                                             <div className={`text-[9px] ${isWeekend ? 'text-red-400 font-medium' : 'text-gray-400'}`}>
-                                                {dateObj.toLocaleDateString('id-ID', { month: 'short' })}
+                                                {dateObj.toLocaleDateString('id-ID', { month: 'short', timeZone: 'UTC' })}
                                             </div>
                                         </th>
                                     );
@@ -159,8 +174,11 @@ export default function TabelMatrixJadwal() {
                                         </td>
 
                                         {daysArray.map((dateObj, idx) => {
-                                            const isWeekend = dateObj.getDay() === 0;
-                                            const tglKey = dateObj.toLocaleDateString('en-CA');
+                                            const isWeekend = dateObj.getUTCDay() === 0;
+                                            const y = dateObj.getUTCFullYear();
+                                            const m = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+                                            const d = String(dateObj.getUTCDate()).padStart(2, '0');
+                                            const tglKey = `${y}-${m}-${d}`;
                                             const shiftDetail = pegawai.jadwal[tglKey];
 
                                             const isAsal = hookParams.selectedCell?.pegawaiId === pegawai.id && hookParams.selectedCell?.tanggal === tglKey;
@@ -241,9 +259,9 @@ export default function TabelMatrixJadwal() {
                 handleProsesTukarShift={hookParams.handleProsesTukarShift}
             />
 
-            <ModalGenerateMassal
-                isModalMassalOpen={hookParams.isModalMassalOpen}
-                setIsModalMassalOpen={hookParams.setIsModalMassalOpen}
+            <ModalKelolaJadwalMassal
+                isOpen={hookParams.isModalMassalOpen}
+                onClose={() => hookParams.setIsModalMassalOpen(false)}
                 listPegawai={hookParams.listPegawai}
                 listMasterShifts={hookParams.listMasterShifts}
                 filterLevel1={hookParams.filterLevel1}
@@ -262,6 +280,7 @@ export default function TabelMatrixJadwal() {
                 setMassalShiftId={hookParams.setMassalShiftId}
                 isSaving={hookParams.isSaving}
                 handleProsesGenerateMassal={hookParams.handleProsesGenerateMassal}
+                onSuccess={hookParams.handleFilter}
             />
 
             <Notif

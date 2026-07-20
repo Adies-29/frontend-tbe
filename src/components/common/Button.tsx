@@ -16,7 +16,7 @@ export const Button: React.FC<ButtonProps> = ({
     isLoading = false,
     className = "",
     icon,
-    disabled,
+    disabled = false,
     ...rest
 }) => {
 
