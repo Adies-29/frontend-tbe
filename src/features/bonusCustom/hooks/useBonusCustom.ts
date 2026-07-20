@@ -95,6 +95,7 @@ export function useBonusCustom() {
         onSuccess: (results) => {
             setNotif({ show: true, message: `Sukses menambahkan ${results.length} data bonus!`, type: "success" });
             queryClient.invalidateQueries({ queryKey: ['bonusCustomList'] });
+            queryClient.invalidateQueries({ queryKey: ['rekapGaji'] });
         },
         onError: (error: any) => {
             setNotif({ show: true, message: error.message || "Terjadi kesalahan.", type: "error" });
@@ -126,6 +127,7 @@ export function useBonusCustom() {
         onSuccess: () => {
             setNotif({ show: true, message: "Sukses memperbarui data bonus!", type: "success" });
             queryClient.invalidateQueries({ queryKey: ['bonusCustomList'] });
+            queryClient.invalidateQueries({ queryKey: ['rekapGaji'] });
         },
         onError: (error: any) => {
             setNotif({ show: true, message: error.message || "Gagal memperbarui.", type: "error" });
@@ -148,7 +150,7 @@ export function useBonusCustom() {
         onSuccess: (result) => {
             setNotif({ show: true, message: `Sukses! ${result.message}`, type: "success" });
             queryClient.invalidateQueries({ queryKey: ['bonusCustomList'] });
-            
+            queryClient.invalidateQueries({ queryKey: ['rekapGaji'] });
         },
         onError: (error: any) => {
             setNotif({ show: true, message: error.message || "Gagal menghapus.", type: "error" });
@@ -156,42 +158,8 @@ export function useBonusCustom() {
     });
 
     const handleDeleteBonus = (id: string) => {
-        if (window.confirm("Yakin ingin menghapus riwayat bonus ini? (Pastikan gaji bulan tersebut belum di-generate ulang)")) {
-            deleteBonusMutation.mutate(id);
-        }
+        deleteBonusMutation.mutate(id);
     };
-
-    // ==========================================
-    // 5. MUTASI: UPDATE BONUS
-    // ==========================================
-    const updateBonusMutation = useMutation({
-        mutationFn: async (payload: { id: string; pegawai_id: string; tanggal_diberikan: string; keterangan: string; nominal: number }) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/bonus-custom/${payload.id}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    pegawai_id: payload.pegawai_id,
-                    tanggal_diberikan: payload.tanggal_diberikan,
-                    keterangan: payload.keterangan,
-                    nominal: payload.nominal
-                })
-            });
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error(result.message || "Gagal memperbarui bonus.");
-            return result;
-        },
-        onSuccess: () => {
-            setNotif({ show: true, message: "Sukses memperbarui bonus!", type: "success" });
-            queryClient.invalidateQueries({ queryKey: ['bonusCustomList'] });
-        },
-        onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Gagal memperbarui bonus.", type: "error" });
-        }
-    });
-
     return {
         listPegawai,
         listBonus,

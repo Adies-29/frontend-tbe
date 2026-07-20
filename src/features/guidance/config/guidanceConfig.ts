@@ -701,7 +701,7 @@ export const guidancePages: GuidancePageConfig[] = [
                 element: '[data-tour="dashboard-header"]',
                 popover: {
                     title: '📊 Dashboard Monitoring',
-                    description: 'Halaman utama untuk memantau aktivitas absensi karyawan secara real-time. Di sini Anda dapat melihat status kehadiran hari ini.',
+                    description: 'Halaman utama untuk memantau aktivitas absensi pegawai secara real-time. Di sini Anda dapat melihat status kehadiran hari ini.',
                     side: 'bottom',
                     align: 'start',
                 },

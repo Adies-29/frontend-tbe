@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { PlusCircle, Loader2 } from 'lucide-react';
 import Button from '../../../components/common/Button';
 import Notif from '../../../components/common/Notif';
+import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import { TabelBonusCustom, type BonusCustomData } from '../components/TabelBonusCustom';
 import { useBonusCustom } from '../hooks/useBonusCustom';
 import ModalTambahBonusCustom from '../components/ModalTambahBonusCustom';
@@ -23,6 +24,7 @@ export default function BonusCustomIndex() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingBonus, setEditingBonus] = useState<BonusCustomData | null>(null);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
     return (
         <div className="flex flex-col gap-6 w-full animate-in fade-in duration-300">
@@ -32,7 +34,7 @@ export default function BonusCustomIndex() {
                 <div>
                     <h1 className="text-2xl font-black text-gray-800">Bonus Custom</h1>
                     <p className="text-xs text-gray-500 font-medium mt-0.5">
-                        Kelola dan berikan bonus/reward khusus secara mandiri ke karyawan
+                        Kelola dan berikan bonus/reward khusus secara mandiri ke pegawai
                     </p>
                 </div>
 
@@ -62,7 +64,7 @@ export default function BonusCustomIndex() {
                     <TabelBonusCustom 
                         data={listBonus} 
                         listPegawai={listPegawai} 
-                        onDelete={handleDeleteBonus} 
+                        onDelete={(id) => setDeleteConfirmId(id)} 
                         onEdit={(bonus) => setEditingBonus(bonus)}
                     />
                 )}
@@ -87,6 +89,24 @@ export default function BonusCustomIndex() {
                 onSubmit={updateBonus}
             />
 
+            {/* MODAL KONFIRMASI HAPUS (CUSTOM CONFIRM POPUP) */}
+            <ConfirmPopUp
+                isOpen={!!deleteConfirmId}
+                onClose={() => setDeleteConfirmId(null)}
+                onConfirm={() => {
+                    if (deleteConfirmId) {
+                        handleDeleteBonus(deleteConfirmId);
+                        setDeleteConfirmId(null);
+                    }
+                }}
+                title="Hapus Riwayat Bonus"
+                message="Apakah Anda yakin ingin menghapus riwayat bonus ini? (Pastikan gaji bulan tersebut belum di-generate ulang)"
+                confirmText="Ya, Hapus"
+                cancelText="Batal"
+                variant="danger"
+            />
+
+            {/* NOTIFIKASI TOAST SUCCESS/ERROR */}
             <Notif show={notif.show} message={notif.message} type={notif.type} onClose={closeNotif} />
         </div>
     );

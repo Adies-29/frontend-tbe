@@ -372,7 +372,7 @@ export default function ModalKelolaJadwalMassal({
                         onChange={handleSelectAllVisibleTarget}
                         className="w-4 h-4 text-blue-600 rounded border-gray-300"
                     />
-                    Pilih Semua ({visiblePegawaiIdsTarget.length} Karyawan)
+                    Pilih Semua ({visiblePegawaiIdsTarget.length} Pegawai)
                 </label>
 
                 <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1 custom-scrollbar min-h-0">

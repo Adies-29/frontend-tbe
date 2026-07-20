@@ -1,5 +1,9 @@
 import { Trash2, Search, Pencil,  Users, RotateCcw } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs, { Dayjs } from 'dayjs';
 
 export interface BonusCustomData {
     id: string;
@@ -250,14 +254,44 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete, onEdit
                                 />
                             )}
                             {periode === 'tahun' && (
-                                <input
-                                    type="number"
-                                    min="2000"
-                                    max="2099"
-                                    value={filterValue}
-                                    onChange={(e) => setFilterValue(e.target.value)}
-                                    className="w-24 border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
-                                />
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        views={['year']}
+                                        value={filterValue ? dayjs().year(parseInt(filterValue)) : null}
+                                        onChange={(newValue: Dayjs | null) => newValue && setFilterValue(newValue.year().toString())}
+                                        slotProps={{
+                                            textField: {
+                                                size: 'small',
+                                                className: "bg-white flex-1 md:w-32",
+                                                sx: {
+                                                    '& .MuiOutlinedInput-root': {
+                                                        borderRadius: '12px',
+                                                        fontSize: '12px',
+                                                        fontWeight: 600,
+                                                        height: '35px',
+                                                        color: '#334155',
+                                                        '& fieldset': {
+                                                            borderColor: '#cbd5e1',
+                                                        },
+                                                        '&:hover fieldset': {
+                                                            borderColor: '#94a3b8',
+                                                        },
+                                                        '&.Mui-focused fieldset': {
+                                                            borderColor: '#ef4444',
+                                                        },
+                                                    },
+                                                    '& .MuiOutlinedInput-input': {
+                                                        padding: '6px 12px',
+                                                    },
+                                                    '& .MuiIconButton-root': {
+                                                        padding: '4px',
+                                                        color: '#64748b'
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </LocalizationProvider>
                             )}
                         </div>
 
@@ -334,9 +368,8 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete, onEdit
                                     <th
                                         key={idx}
                                         scope="col"
-                                        className={`px-3 py-2.5 border-r border-b border-slate-200 text-center min-w-[105px] transition-colors ${
-                                            isSunday ? 'bg-rose-50/70 text-rose-700' : isSaturday ? 'bg-amber-50/40 text-slate-700' : 'bg-slate-100 text-slate-700'
-                                        }`}
+                                        className={`px-3 py-2.5 border-r border-b border-slate-200 text-center min-w-[105px] transition-colors ${isSunday ? 'bg-rose-50/70 text-rose-700' : isSaturday ? 'text-slate-700' : 'bg-slate-100 text-slate-700'
+                                            }`}
                                     >
                                         <div className="flex flex-col items-center justify-center">
                                             <span className={`text-[10px] font-bold tracking-wider ${isSunday ? 'text-rose-500' : 'text-slate-400'}`}>
