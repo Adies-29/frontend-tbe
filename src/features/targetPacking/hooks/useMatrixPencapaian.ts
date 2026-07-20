@@ -50,6 +50,9 @@ export function useMatrixPencapaian() {
     const weekData = getWeekNumber(now);
     const defaultWeekStr = `${weekData.year}-W${weekData.week.toString().padStart(2, '0')}`;
 
+    const [periode, setPeriode] = useState<string>('minggu');
+    const [filterValue, setFilterValue] = useState<string>(defaultWeekStr);
+
     const currentDay = now.getDay();
     const diff = now.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
     const monday = new Date(now);
@@ -61,49 +64,63 @@ export function useMatrixPencapaian() {
     const firstDay = monday.toLocaleDateString('en-CA');
     const lastDay = sunday.toLocaleDateString('en-CA');
 
-    const [filterStartDate, setFilterStartDate] = useState(firstDay);
-    const [filterEndDate, setFilterEndDate] = useState(lastDay);
-
-    const [periode, setPeriode] = useState("minggu");
-    const [filterValue, setFilterValue] = useState(defaultWeekStr);
-
-    const handleFilter = () => {
-        if (!filterValue) return;
-
-        let start = "", end = "";
-        const year = parseInt(filterValue.substring(0, 4));
-
-        if (periode === "minggu") {
-            const week = parseInt(filterValue.substring(6, 8));
-            const firstDayOfYear = new Date(year, 0, 1);
-            const daysToFirstMonday = (8 - firstDayOfYear.getDay()) % 7;
-            const firstMonday = new Date(year, 0, 1 + daysToFirstMonday);
-            const startDate = new Date(firstMonday.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
-            const endDate = new Date(startDate.getTime() + 6 * 24 * 60 * 60 * 1000);
-
-            start = startDate.toLocaleDateString('en-CA');
-            end = endDate.toLocaleDateString('en-CA');
-        } else if (periode === "bulan") {
-            const month = parseInt(filterValue.substring(5, 7));
-            start = new Date(year, month - 1, 1).toLocaleDateString('en-CA');
-            end = new Date(year, month, 0).toLocaleDateString('en-CA');
-        } else if (periode === "tahun") {
-            start = new Date(year, 0, 1).toLocaleDateString('en-CA');
-            end = new Date(year, 11, 31).toLocaleDateString('en-CA');
+    const { filterStartDate, filterEndDate } = useMemo(() => {
+        if (!filterValue) {
+            return { filterStartDate: firstDay, filterEndDate: lastDay };
         }
 
-        setFilterStartDate(start);
-        setFilterEndDate(end);
-    };
+        const year = parseInt(filterValue.substring(0, 4));
 
-    const handlePeriodeChange = (e: any) => {
-        setPeriode(e.target.value);
-        setFilterValue("");
+        if (periode === 'minggu') {
+            const week = parseInt(filterValue.substring(6, 8));
+            const jan4 = new Date(year, 0, 4);
+            const jan4Day = jan4.getDay() || 7;
+            const startDate = new Date(year, 0, 4 - jan4Day + 1 + (week - 1) * 7);
+            const endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+
+            return {
+                filterStartDate: startDate.toLocaleDateString('en-CA'),
+                filterEndDate: endDate.toLocaleDateString('en-CA')
+            };
+        } else if (periode === 'bulan') {
+            const month = parseInt(filterValue.substring(5, 7));
+            const startDate = new Date(year, month - 1, 1);
+            const endDate = new Date(year, month, 0);
+
+            return {
+                filterStartDate: startDate.toLocaleDateString('en-CA'),
+                filterEndDate: endDate.toLocaleDateString('en-CA')
+            };
+        } else if (periode === 'tahun') {
+            const startDate = new Date(year, 0, 1);
+            const endDate = new Date(year, 11, 31);
+            return {
+                filterStartDate: startDate.toLocaleDateString('en-CA'),
+                filterEndDate: endDate.toLocaleDateString('en-CA')
+            };
+        }
+
+        return { filterStartDate: firstDay, filterEndDate: lastDay };
+    }, [periode, filterValue, firstDay, lastDay]);
+
+    const handleFilter = () => {};
+
+    const handlePeriodeChange = (newPeriode: string) => {
+        setPeriode(newPeriode);
+        if (newPeriode === 'minggu') {
+            setFilterValue(defaultWeekStr);
+        } else if (newPeriode === 'bulan') {
+            const monthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+            setFilterValue(monthStr);
+        } else {
+            setFilterValue(String(now.getFullYear()));
+        }
     };
 
     const [searchQuery, setSearchQuery] = useState("");
-    const [filterDepartemen, setFilterDepartemen] = useState("Bag. Produksi");
-    const [filterJabatan, setFilterJabatan] = useState("Packing");
+    const [filterDepartemen, setFilterDepartemen] = useState("");
+    const [filterJabatan, setFilterJabatan] = useState("");
 
     const [isSaving, setIsSaving] = useState(false);
 
@@ -282,10 +299,18 @@ export function useMatrixPencapaian() {
         setIsModalOpen(true);
     };
 
+    const handleResetFilters = () => {
+        setSearchQuery("");
+        setFilterDepartemen("");
+        setFilterJabatan("");
+        setPeriode("minggu");
+        setFilterValue(defaultWeekStr);
+    };
+
     return {
         // State Tanggal & Filter
-        today: now, filterStartDate, setFilterStartDate, filterEndDate, setFilterEndDate,
-        periode, setPeriode, filterValue, setFilterValue, handleFilter, handlePeriodeChange,
+        today: now, filterStartDate, filterEndDate,
+        periode, setPeriode, filterValue, setFilterValue, handleFilter, handlePeriodeChange, handleResetFilters,
         // State Data
         matrixKaryawan, filteredMatrixKaryawan, searchQuery, setSearchQuery, isLoading, errorMsg, 
         listPegawai, listMasterTargets,

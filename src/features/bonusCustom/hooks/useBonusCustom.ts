@@ -119,15 +119,48 @@ export function useBonusCustom() {
         }
     };
 
+    // ==========================================
+    // 5. MUTASI: UPDATE BONUS
+    // ==========================================
+    const updateBonusMutation = useMutation({
+        mutationFn: async (payload: { id: string; pegawai_id: string; tanggal_diberikan: string; keterangan: string; nominal: number }) => {
+            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/bonus-custom/${payload.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    pegawai_id: payload.pegawai_id,
+                    tanggal_diberikan: payload.tanggal_diberikan,
+                    keterangan: payload.keterangan,
+                    nominal: payload.nominal
+                })
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success) throw new Error(result.message || "Gagal memperbarui bonus.");
+            return result;
+        },
+        onSuccess: () => {
+            setNotif({ show: true, message: "Sukses memperbarui bonus!", type: "success" });
+            queryClient.invalidateQueries({ queryKey: ['bonusCustomList'] });
+        },
+        onError: (error: any) => {
+            setNotif({ show: true, message: error.message || "Gagal memperbarui bonus.", type: "error" });
+        }
+    });
+
     return {
         listPegawai,
         listBonus,
         isLoadingPegawai,
         isLoadingBonus,
         isCreating: createBonusMutation.isPending,
+        isUpdating: updateBonusMutation.isPending,
         notif,
         closeNotif,
         createBonus: createBonusMutation.mutate,
+        updateBonus: updateBonusMutation.mutate,
         handleDeleteBonus
     };
 }

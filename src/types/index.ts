@@ -1,6 +1,7 @@
-
 export interface AbsensiData {
     id: number | string;
+    pegawai_id?: number | string;
+    is_kerapian?: boolean;
     nama: string;
     jabatan: string;
     info_shift?: string;
@@ -109,17 +110,20 @@ export interface DepartemenOption {
     id: number;
     nama_departemen: string;
 }
+
 export interface JabatanOption {
     id: number;
     nama_jabatan: string;
     departemen_id?: number;
     departemen?: { nama_departemen: string }; 
 }
+
 export interface ShiftOption {
     id: number;
     kode_shift: string;
     nama_shift?: string;
 }
+
 export interface DetailDepartemenRow {
     id: number | string;
     jabatan: string;
@@ -134,6 +138,7 @@ export interface KotaOption {
 export interface DashboardKaryawanResponse {
     id?: number | string;
     id_pegawai?: number | string;
+    pegawai_id?: number | string;
     nama?: string;
     jabatan?: string;
     info_shift?: string;

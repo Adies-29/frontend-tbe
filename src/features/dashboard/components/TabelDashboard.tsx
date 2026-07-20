@@ -63,7 +63,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             const hariIni = new Date().toISOString().split("T")[0];
 
             const payload = {
-                pegawai_id: row.id,
+                pegawai_id: row.pegawai_id || row.id,
                 tanggal: hariIni,
                 is_kerapian: newStatus
             };
@@ -249,13 +249,17 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                 }
 
                 return (
-                    <label className="flex items-center gap-2 md:gap-3 cursor-pointer h-full group p-1 md:p-0">
+                    <label 
+                        className="flex items-center gap-2 md:gap-3 cursor-pointer h-full group p-1 md:p-0"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <input
                             type="checkbox"
                             checked={status === true}
                             onChange={(e) => cekKerapihan(params.row, e.target.checked)}
+                            onClick={(e) => e.stopPropagation()}
                             className="w-6 h-6 md:w-5 md:h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2 cursor-pointer transition-all disabled:opacity-50"
-                           disabled={params.row.waktu_masuk === "-" || isNuklir}
+                            disabled={params.row.waktu_masuk === "-" || isNuklir}
                         />
 
                         {status === true ? (

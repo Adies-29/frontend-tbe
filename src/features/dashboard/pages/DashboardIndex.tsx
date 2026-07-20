@@ -61,8 +61,9 @@ export default function DashboardIndex() {
                     }
 
                     return {
-                        // PERBAIKAN UTAMA: Jika karyawan.id kosong, cari id_pegawai. Jika kosong juga, pakai index + 1
-                        id: karyawan.id || karyawan.id_pegawai || index + 1,
+                        // PERBAIKAN UTAMA: Jika karyawan.id kosong, cari pegawai_id. Jika kosong juga, pakai index + 1
+                        id: karyawan.id || karyawan.pegawai_id || index + 1,
+                        pegawai_id: karyawan.pegawai_id,
                         nama: karyawan.nama || "Tanpa Nama",
                         jabatan: karyawan.jabatan || "-",
                         info_shift: karyawan.info_shift || "-",

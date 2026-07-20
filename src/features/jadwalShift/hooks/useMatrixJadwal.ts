@@ -71,11 +71,11 @@ export function useMatrixJadwal() {
 
         if (periode === "minggu") {
             const week = parseInt(filterValue.substring(6, 8));
-            const firstDayOfYear = new Date(year, 0, 1);
-            const daysToFirstMonday = (8 - firstDayOfYear.getDay()) % 7;
-            const firstMonday = new Date(year, 0, 1 + daysToFirstMonday);
-            const startDate = new Date(firstMonday.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
-            const endDate = new Date(startDate.getTime() + 6 * 24 * 60 * 60 * 1000);
+            const jan4 = new Date(year, 0, 4);
+            const jan4Day = jan4.getDay() || 7;
+            const startDate = new Date(year, 0, 4 - jan4Day + 1 + (week - 1) * 7);
+            const endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
 
             start = startDate.toLocaleDateString('en-CA');
             end = endDate.toLocaleDateString('en-CA');
