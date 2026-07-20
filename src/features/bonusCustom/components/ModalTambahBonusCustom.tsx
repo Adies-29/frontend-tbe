@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, PlusCircle, Loader2, Search, Gift } from 'lucide-react';
+import { X, PlusCircle, Loader2, Search, Gift, Calendar } from 'lucide-react';
 import Button from '../../../components/common/Button';
+import CustomDateRangePickerModal from '../../jadwalShift/components/CustomDateRangePickerModal';
 
 interface ModalTambahBonusCustomProps {
     isOpen: boolean;
@@ -10,13 +11,46 @@ interface ModalTambahBonusCustomProps {
     onSubmit: (
         data: {
             pegawai_ids: string[];
-            tanggal_diberikan: string;
+            tanggal_diberikan?: string;
+            tanggals?: string[];
             keterangan: string;
             nominal: number;
         },
         callbacks: { onSuccess: () => void }
     ) => void;
 }
+
+const MONTH_SHORT_NAMES_ID = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+    'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+];
+
+const formatDateIndo = (dateStr: string) => {
+    if (!dateStr) return '';
+    const [y, m, d] = dateStr.split('-').map(Number);
+    if (!y || !m || !d) return dateStr;
+    return `${d} ${MONTH_SHORT_NAMES_ID[m - 1]} ${y}`;
+};
+
+const getDaysCount = (start: string, end: string) => {
+    if (!start || !end) return 1;
+    const d1 = new Date(start + 'T00:00:00Z');
+    const d2 = new Date(end + 'T00:00:00Z');
+    const diffTime = Math.abs(d2.getTime() - d1.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+};
+
+const generateDatesInRange = (start: string, end: string): string[] => {
+    if (!start || !end) return start ? [start] : [];
+    const result: string[] = [];
+    const current = new Date(start + 'T00:00:00Z');
+    const stop = new Date(end + 'T00:00:00Z');
+    while (current <= stop) {
+        result.push(current.toISOString().split('T')[0]);
+        current.setUTCDate(current.getUTCDate() + 1);
+    }
+    return result;
+};
 
 export default function ModalTambahBonusCustom({
     isOpen,
@@ -27,9 +61,13 @@ export default function ModalTambahBonusCustom({
 }: ModalTambahBonusCustomProps) {
     // Form State
     const [selectedPegawaiIds, setSelectedPegawaiIds] = useState<string[]>([]);
-    const [tanggal, setTanggal] = useState<string>('');
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
     const [keterangan, setKeterangan] = useState<string>('');
     const [nominal, setNominal] = useState<string>('');
+
+    // Modal Date Picker State
+    const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
 
     // Form Search & Filter States
     const [formFilterDept, setFormFilterDept] = useState<string>('');
@@ -39,13 +77,16 @@ export default function ModalTambahBonusCustom({
     // Reset state when modal opens
     useEffect(() => {
         if (isOpen) {
+            const todayStr = new Date().toLocaleDateString('en-CA');
             setSelectedPegawaiIds([]);
-            setTanggal(new Date().toLocaleDateString('en-CA'));
+            setStartDate(todayStr);
+            setEndDate(todayStr);
             setKeterangan('');
             setNominal('');
             setFormFilterDept('');
             setFormFilterJabatan('');
             setFormSearchQuery('');
+            setIsDatePickerOpen(false);
         }
     }, [isOpen]);
 
@@ -78,12 +119,15 @@ export default function ModalTambahBonusCustom({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (selectedPegawaiIds.length === 0 || !tanggal || !keterangan || !nominal) return;
+        if (selectedPegawaiIds.length === 0 || !startDate || !endDate || !keterangan || !nominal) return;
+
+        const allDates = generateDatesInRange(startDate, endDate);
 
         onSubmit(
             {
                 pegawai_ids: selectedPegawaiIds,
-                tanggal_diberikan: tanggal,
+                tanggals: allDates,
+                tanggal_diberikan: startDate,
                 keterangan: keterangan,
                 nominal: Number(nominal)
             },
@@ -134,15 +178,29 @@ export default function ModalTambahBonusCustom({
 
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                                    Tanggal Diberikan
+                                    Rentang Tanggal Diberikan
                                 </label>
-                                <input 
-                                    type="date" 
-                                    value={tanggal} 
-                                    onChange={(e) => setTanggal(e.target.value)} 
-                                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs bg-white shadow-2xs font-semibold"
-                                    required
-                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setIsDatePickerOpen(true)}
+                                    className="w-full flex items-center justify-between border border-gray-300 hover:border-blue-500 rounded-xl px-3 py-2.5 bg-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-2 text-gray-800 truncate">
+                                        <Calendar size={16} className="text-blue-600 shrink-0" />
+                                        <span className="truncate">
+                                            {startDate && endDate
+                                                ? startDate === endDate
+                                                    ? formatDateIndo(startDate)
+                                                    : `${formatDateIndo(startDate)} - ${formatDateIndo(endDate)}`
+                                                : 'Pilih Rentang Tanggal'}
+                                        </span>
+                                    </div>
+                                    {startDate && endDate && (
+                                        <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200 shrink-0 ml-1">
+                                            {getDaysCount(startDate, endDate)} Hari
+                                        </span>
+                                    )}
+                                </button>
                             </div>
 
                             <div>
@@ -182,7 +240,7 @@ export default function ModalTambahBonusCustom({
                             </div>
 
                             <p className="text-[11px] text-gray-400 font-medium mt-auto border-t border-gray-200 pt-3">
-                                * Penentu bonus masuk ke periode rekapitulasi gaji pegawai pada tanggal yang dipilih.
+                                * Penentu bonus masuk ke periode rekapitulasi gaji pegawai pada rentang tanggal yang dipilih.
                             </p>
                         </div>
 
@@ -325,6 +383,19 @@ export default function ModalTambahBonusCustom({
                 </form>
 
             </div>
+
+            {/* MODAL DATE RANGE PICKER (CALENDAR) */}
+            <CustomDateRangePickerModal
+                isOpen={isDatePickerOpen}
+                onClose={() => setIsDatePickerOpen(false)}
+                startDate={startDate}
+                endDate={endDate}
+                title="Pilih Rentang Tanggal Bonus"
+                onApply={(start, end) => {
+                    setStartDate(start);
+                    setEndDate(end);
+                }}
+            />
         </div>
     );
 }

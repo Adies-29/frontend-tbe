@@ -1,9 +1,5 @@
-import { Trash2, Search } from 'lucide-react';
+import { Trash2, Search, Pencil } from 'lucide-react';
 import { useState, useMemo } from 'react';
-
-// const formatRupiah = (angka: number) => {
-//     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
-// };
 
 export interface BonusCustomData {
     id: string;
@@ -18,21 +14,50 @@ interface TabelBonusCustomProps {
     data: BonusCustomData[];
     listPegawai: any[];
     onDelete: (id: string) => void;
+    onEdit?: (bonus: BonusCustomData) => void;
 }
 
-export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete }: TabelBonusCustomProps) => {
-    // Helper to calculate week number
-    const getWeekNumber = (d: Date) => {
-        const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
-        const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-        const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-        return { year: date.getUTCFullYear(), week: weekNo };
-    };
+// ISO-8601 UTC Week parser
+function parseWeekValue(weekStr: string): { startDate: string; endDate: string } {
+    if (!weekStr) return { startDate: '', endDate: '' };
+    const parts = weekStr.split('-W');
+    if (parts.length !== 2) return { startDate: '', endDate: '' };
+    const year = parseInt(parts[0], 10);
+    const week = parseInt(parts[1], 10);
+    if (isNaN(year) || isNaN(week)) return { startDate: '', endDate: '' };
 
+    const jan4 = new Date(Date.UTC(year, 0, 4));
+    const dayOfWeek = jan4.getUTCDay() || 7; // 1 (Mon) to 7 (Sun)
+    const week1Monday = new Date(jan4);
+    week1Monday.setUTCDate(jan4.getUTCDate() - dayOfWeek + 1);
+
+    const targetMonday = new Date(week1Monday);
+    targetMonday.setUTCDate(week1Monday.getUTCDate() + (week - 1) * 7);
+
+    const targetSunday = new Date(targetMonday);
+    targetSunday.setUTCDate(targetMonday.getUTCDate() + 6);
+
+    const formatUTC = (d: Date) => d.toISOString().split('T')[0];
+
+    return {
+        startDate: formatUTC(targetMonday),
+        endDate: formatUTC(targetSunday)
+    };
+}
+
+function getCurrentWeek(): string {
     const now = new Date();
-    const weekData = getWeekNumber(now);
-    const defaultWeekStr = `${weekData.year}-W${weekData.week.toString().padStart(2, '0')}`;
+    const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    return `${d.getUTCFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
+}
+
+export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete, onEdit }: TabelBonusCustomProps) => {
+    const defaultWeekStr = useMemo(() => getCurrentWeek(), []);
+    const now = new Date();
 
     // States for Filter & Search
     const [periode, setPeriode] = useState<'minggu' | 'bulan'>('minggu');
@@ -44,54 +69,43 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete }: Tabe
     // Calculate filterStartDate and filterEndDate reactively based on period & input selection
     const { filterStartDate, filterEndDate } = useMemo(() => {
         if (!filterValue) {
-            // Default to current week range
-            const currentDay = now.getDay();
-            const diff = now.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
-            const monday = new Date(now);
-            monday.setDate(diff);
-            const sunday = new Date(monday);
-            sunday.setDate(monday.getDate() + 6);
+            const parsed = parseWeekValue(defaultWeekStr);
             return {
-                filterStartDate: monday.toLocaleDateString('en-CA'),
-                filterEndDate: sunday.toLocaleDateString('en-CA')
+                filterStartDate: parsed.startDate,
+                filterEndDate: parsed.endDate
             };
         }
-
-        const year = parseInt(filterValue.substring(0, 4));
 
         if (periode === 'minggu') {
-            const week = parseInt(filterValue.substring(6, 8));
-            const firstDayOfYear = new Date(year, 0, 1);
-            const daysToFirstMonday = (8 - firstDayOfYear.getDay()) % 7;
-            const firstMonday = new Date(year, 0, 1 + daysToFirstMonday);
-            const startDate = new Date(firstMonday.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
-            const endDate = new Date(startDate.getTime() + 6 * 24 * 60 * 60 * 1000);
-
+            const parsed = parseWeekValue(filterValue);
             return {
-                filterStartDate: startDate.toLocaleDateString('en-CA'),
-                filterEndDate: endDate.toLocaleDateString('en-CA')
+                filterStartDate: parsed.startDate,
+                filterEndDate: parsed.endDate
             };
         } else {
-            const month = parseInt(filterValue.substring(5, 7));
-            const startDate = new Date(year, month - 1, 1);
-            const endDate = new Date(year, month, 0);
+            const year = parseInt(filterValue.substring(0, 4), 10);
+            const month = parseInt(filterValue.substring(5, 7), 10);
+            const startDate = new Date(Date.UTC(year, month - 1, 1));
+            const endDate = new Date(Date.UTC(year, month, 0));
+
+            const formatUTC = (d: Date) => d.toISOString().split('T')[0];
 
             return {
-                filterStartDate: startDate.toLocaleDateString('en-CA'),
-                filterEndDate: endDate.toLocaleDateString('en-CA')
+                filterStartDate: formatUTC(startDate),
+                filterEndDate: formatUTC(endDate)
             };
         }
-    }, [periode, filterValue]);
+    }, [periode, filterValue, defaultWeekStr]);
 
     // Calculate dates array
     const daysArray = useMemo(() => {
         if (!filterStartDate || !filterEndDate) return [];
         const dateArray = [];
-        const currentDate = new Date(filterStartDate);
-        const stopDate = new Date(filterEndDate);
+        const currentDate = new Date(filterStartDate + 'T00:00:00Z');
+        const stopDate = new Date(filterEndDate + 'T00:00:00Z');
         while (currentDate <= stopDate) {
             dateArray.push(new Date(currentDate));
-            currentDate.setDate(currentDate.getDate() + 1);
+            currentDate.setUTCDate(currentDate.getUTCDate() + 1);
         }
         return dateArray;
     }, [filterStartDate, filterEndDate]);
@@ -165,7 +179,7 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete }: Tabe
                             placeholder="Cari nama Pegawai..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="border border-gray-300 rounded-lg pl-9 pr-3 py-1.5 outline-none focus:border-red-500 shadow-sm text-xs w-full bg-white"
+                            className="border border-gray-300 rounded-lg pl-9 pr-3 py-1.5 outline-none focus:border-red-500 shadow-sm text-xs w-full bg-white font-medium"
                         />
                     </div>
 
@@ -174,7 +188,7 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete }: Tabe
                         <select
                             value={periode}
                             onChange={handlePeriodeChange}
-                            className="border border-gray-300 rounded-lg px-2 py-1.5 bg-white outline-none focus:border-red-500 shadow-sm text-xs"
+                            className="border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white outline-none focus:border-red-500 shadow-sm text-xs font-semibold"
                         >
                             <option value="minggu">Mingguan</option>
                             <option value="bulan">Bulanan</option>
@@ -185,14 +199,14 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete }: Tabe
                                 type="week"
                                 value={filterValue}
                                 onChange={(e) => setFilterValue(e.target.value)}
-                                className="border border-gray-300 rounded-lg px-2 py-1.5 outline-none focus:border-red-500 shadow-sm text-xs bg-white"
+                                className="border border-gray-300 rounded-lg px-2.5 py-1.5 outline-none focus:border-red-500 shadow-sm text-xs bg-white font-semibold"
                             />
                         ) : (
                             <input
                                 type="month"
                                 value={filterValue}
                                 onChange={(e) => setFilterValue(e.target.value)}
-                                className="border border-gray-300 rounded-lg px-2 py-1.5 outline-none focus:border-red-500 shadow-sm text-xs bg-white"
+                                className="border border-gray-300 rounded-lg px-2.5 py-1.5 outline-none focus:border-red-500 shadow-sm text-xs bg-white font-semibold"
                             />
                         )}
                     </div>
@@ -204,7 +218,7 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete }: Tabe
                         <select
                             value={filterDepartemen}
                             onChange={handleDepartemenChange}
-                            className="border border-gray-300 rounded-lg px-3 py-1.5 bg-white outline-none focus:border-red-500 shadow-sm text-xs flex-1 sm:flex-none sm:min-w-[150px] truncate"
+                            className="border border-gray-300 rounded-lg px-3 py-1.5 bg-white outline-none focus:border-red-500 shadow-sm text-xs flex-1 sm:flex-none sm:min-w-[150px] truncate font-medium"
                         >
                             <option value="">Semua Dept</option>
                             {uniqueDepartemenList.map((dept, idx) => (
@@ -216,7 +230,7 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete }: Tabe
                             value={filterJabatan}
                             onChange={(e) => setFilterJabatan(e.target.value)}
                             disabled={!filterDepartemen}
-                            className={`border border-gray-300 rounded-lg px-3 py-1.5 outline-none focus:border-red-500 shadow-sm text-xs flex-1 sm:flex-none sm:min-w-[150px] truncate ${!filterDepartemen ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
+                            className={`border border-gray-300 rounded-lg px-3 py-1.5 outline-none focus:border-red-500 shadow-sm text-xs flex-1 sm:flex-none sm:min-w-[150px] truncate font-medium ${!filterDepartemen ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
                             title={!filterDepartemen ? "Pilih Departemen terlebih dahulu" : "Filter berdasarkan Jabatan"}
                         >
                             <option value="">{filterDepartemen ? "Semua Jabatan" : "Pilih Departemen Dulu"}</option>
@@ -237,12 +251,14 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete }: Tabe
                                 Nama Pegawai
                             </th>
                             {daysArray.map((dateObj, idx) => {
-                                const isWeekend = dateObj.getDay() === 0;
+                                const isWeekend = dateObj.getUTCDay() === 0;
+                                const dayDate = dateObj.getUTCDate();
+                                const monthStr = dateObj.toLocaleDateString('id-ID', { month: 'short', timeZone: 'UTC' });
                                 return (
                                     <th key={idx} scope="col" className={`px-2 py-2 border-r border-gray-200 text-center min-w-[75px] leading-tight ${isWeekend ? 'bg-red-50/50' : ''}`}>
-                                        <div className={`text-sm ${isWeekend ? 'text-red-600 font-bold' : 'text-gray-700'}`}>{dateObj.getDate()}</div>
+                                        <div className={`text-sm ${isWeekend ? 'text-red-600 font-bold' : 'text-gray-700'}`}>{dayDate}</div>
                                         <div className={`text-[9px] ${isWeekend ? 'text-red-400 font-medium' : 'text-gray-400'}`}>
-                                            {dateObj.toLocaleDateString('id-ID', { month: 'short' })}
+                                            {monthStr}
                                         </div>
                                     </th>
                                 );
@@ -272,8 +288,8 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete }: Tabe
 
                                         {/* Date Cells */}
                                         {daysArray.map((dateObj, idx) => {
-                                            const isWeekend = dateObj.getDay() === 0;
-                                            const dateKey = dateObj.toLocaleDateString('en-CA');
+                                            const isWeekend = dateObj.getUTCDay() === 0;
+                                            const dateKey = dateObj.toISOString().split('T')[0];
                                             
                                             // Match by either pegawai_id or name
                                             const bonusesOnDay = bonusesMap[String(pegawai.id)]?.[dateKey] || 
@@ -291,21 +307,39 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete }: Tabe
                                                             bonusesOnDay.map((bonus) => (
                                                                 <div 
                                                                     key={bonus.id} 
-                                                                    className="relative group/bonus bg-emerald-50 hover:bg-emerald-100 text-emerald-850 border border-emerald-200 rounded px-1.5 py-0.5 text-[10px] font-bold shadow-sm flex items-center justify-between gap-1 select-none w-full max-w-[90px]"
+                                                                    onClick={() => onEdit && onEdit(bonus)}
+                                                                    className="relative group/bonus bg-emerald-50 hover:bg-emerald-100 text-emerald-850 border border-emerald-200 rounded px-1.5 py-0.5 text-[10px] font-bold shadow-sm flex items-center justify-between gap-1 select-none w-full max-w-[95px] cursor-pointer"
+                                                                    title="Klik untuk mengedit bonus ini"
                                                                 >
                                                                     <span className="truncate" title={bonus.keterangan}>
                                                                         Rp{bonus.nominal.toLocaleString('id-ID')}
                                                                     </span>
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            onDelete(bonus.id);
-                                                                        }}
-                                                                        className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-0.5 transition-colors cursor-pointer shrink-0"
-                                                                        title={`Hapus: ${bonus.keterangan || 'Tanpa keterangan'}`}
-                                                                    >
-                                                                        <Trash2 size={10} />
-                                                                    </button>
+                                                                    <div className="flex items-center gap-0.5 shrink-0">
+                                                                        {onEdit && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    onEdit(bonus);
+                                                                                }}
+                                                                                className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded p-0.5 transition-colors cursor-pointer"
+                                                                                title={`Edit: ${bonus.keterangan}`}
+                                                                            >
+                                                                                <Pencil size={10} />
+                                                                            </button>
+                                                                        )}
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                onDelete(bonus.id);
+                                                                            }}
+                                                                            className="text-red-500 hover:text-red-700 hover:bg-red-100 rounded p-0.5 transition-colors cursor-pointer"
+                                                                            title={`Hapus: ${bonus.keterangan || 'Tanpa keterangan'}`}
+                                                                        >
+                                                                            <Trash2 size={10} />
+                                                                        </button>
+                                                                    </div>
 
                                                                     {/* Custom Tooltip */}
                                                                     {bonus.keterangan && (
