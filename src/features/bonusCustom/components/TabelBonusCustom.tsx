@@ -422,73 +422,139 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete, onEdit
                                                     className={`p-2 border-r border-slate-100 relative group transition-colors hover:bg-slate-100/80 min-w-[110px] vertical-top ${cellBg}`}
                                                 >
                                                     <div className="w-full min-h-[44px] flex flex-col gap-1.5 items-center justify-center relative">
-                                                        {bonusesOnDay.length > 0 ? (
-                                                            bonusesOnDay.map((bonus) => (
-                                                                <div 
-                                                                    key={bonus.id} 
-                                                                    className="relative group/bonus bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg p-1.5 shadow-2xs transition-all w-full flex flex-col gap-1 select-none"
-                                                                >
-                                                                    {/* Main Nominal & Action Bar */}
-                                                                    <div className="flex items-center justify-between gap-1 w-full">
-                                                                        <span className="font-extrabold text-[11px] text-emerald-700 tracking-tight">
-                                                                            Rp{bonus.nominal.toLocaleString('id-ID')}
-                                                                        </span>
-                                                                        
-                                                                        <div className="flex items-center gap-1 opacity-90 group-hover/bonus:opacity-100 transition-opacity">
-                                                                            {onEdit && (
+                                                        {bonusesOnDay.length === 1 ? (
+                                                            (() => {
+                                                                const bonus = bonusesOnDay[0];
+                                                                return (
+                                                                    <div 
+                                                                        key={bonus.id} 
+                                                                        className="relative group/bonus bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg p-1.5 shadow-2xs transition-all w-full flex flex-col gap-1 select-none"
+                                                                    >
+                                                                        {/* Main Nominal & Action Bar */}
+                                                                        <div className="flex items-center justify-between gap-1 w-full">
+                                                                            <span className="font-extrabold text-[11px] text-emerald-700 tracking-tight">
+                                                                                Rp{bonus.nominal.toLocaleString('id-ID')}
+                                                                            </span>
+                                                                            
+                                                                            <div className="flex items-center gap-1 opacity-90 group-hover/bonus:opacity-100 transition-opacity">
+                                                                                {onEdit && (
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            onEdit(bonus);
+                                                                                        }}
+                                                                                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-200/50 p-1 rounded-md transition-colors cursor-pointer"
+                                                                                        title={`Edit: ${bonus.keterangan || 'Tanpa keterangan'}`}
+                                                                                    >
+                                                                                        <Pencil size={11} />
+                                                                                    </button>
+                                                                                )}
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={(e) => {
                                                                                         e.stopPropagation();
-                                                                                        onEdit(bonus);
+                                                                                        onDelete(bonus.id);
                                                                                     }}
-                                                                                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-200/50 p-1 rounded-md transition-colors cursor-pointer"
-                                                                                    title={`Edit: ${bonus.keterangan || 'Tanpa keterangan'}`}
+                                                                                    className="text-rose-600 hover:text-rose-800 hover:bg-rose-200/50 p-1 rounded-md transition-colors cursor-pointer"
+                                                                                    title={`Hapus: ${bonus.keterangan || 'Tanpa keterangan'}`}
                                                                                 >
-                                                                                    <Pencil size={11} />
+                                                                                    <Trash2 size={11} />
                                                                                 </button>
-                                                                            )}
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    onDelete(bonus.id);
-                                                                                }}
-                                                                                className="text-rose-600 hover:text-rose-800 hover:bg-rose-200/50 p-1 rounded-md transition-colors cursor-pointer"
-                                                                                title={`Hapus: ${bonus.keterangan || 'Tanpa keterangan'}`}
-                                                                            >
-                                                                                <Trash2 size={11} />
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    {/* Keterangan Tag */}
-                                                                    {bonus.keterangan && (
-                                                                        <div className="text-[9px] font-medium text-emerald-600/90 truncate border-t border-emerald-200/60 pt-0.5" title={bonus.keterangan}>
-                                                                            {bonus.keterangan}
-                                                                        </div>
-                                                                    )}
-
-                                                                    {/* Rich Tooltip Popover on Hover */}
-                                                                    {bonus.keterangan && (
-                                                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/bonus:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-48 z-40 pointer-events-none transition-all">
-                                                                            <div className="flex items-center justify-between text-[10px] text-black font-medium pb-1 border-b border-slate-200">
-                                                                                <span>Detail Bonus</span>
-                                                                                <span>{bonus.tanggal_diberikan}</span>
                                                                             </div>
-                                                                            <div className="mt-1 font-bold text-emerald-400 text-xs">
-                                                                                Rp{bonus.nominal.toLocaleString('id-ID')}
-                                                                            </div>
-                                                                            <div className="text-[10px] text-black font-normal mt-0.5 leading-snug">
+                                                                        </div>
+
+                                                                        {/* Keterangan Tag */}
+                                                                        {bonus.keterangan && (
+                                                                            <div className="text-[9px] font-medium text-emerald-600/90 truncate border-t border-emerald-200/60 pt-0.5" title={bonus.keterangan}>
                                                                                 {bonus.keterangan}
                                                                             </div>
-                                                                            <div className="text-[9px] text-black mt-1 italic">
-                                                                                Pegawai: {bonus.nama_pegawai}
+                                                                        )}
+
+                                                                        {/* Rich Tooltip Popover on Hover */}
+                                                                        {bonus.keterangan && (
+                                                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/bonus:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-48 z-40 pointer-events-none transition-all">
+                                                                                <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium pb-1 border-b border-slate-200">
+                                                                                    <span>Detail Bonus</span>
+                                                                                    <span>{bonus.tanggal_diberikan}</span>
+                                                                                </div>
+                                                                                <div className="mt-1 font-bold text-emerald-600 text-xs">
+                                                                                    Rp{bonus.nominal.toLocaleString('id-ID')}
+                                                                                </div>
+                                                                                <div className="text-[10px] text-slate-700 font-normal mt-0.5 leading-snug">
+                                                                                    {bonus.keterangan}
+                                                                                </div>
+                                                                                <div className="text-[9px] text-slate-400 mt-1 italic">
+                                                                                    Pegawai: {bonus.nama_pegawai}
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })()
+                                                        ) : bonusesOnDay.length > 1 ? (
+                                                            (() => {
+                                                                const totalNominal = bonusesOnDay.reduce((acc, b) => acc + (Number(b.nominal) || 0), 0);
+                                                                return (
+                                                                    <div className="relative group/cell bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg p-1.5 shadow-2xs transition-all w-full flex flex-col gap-0.5 select-none cursor-pointer">
+                                                                        <div className="flex items-center justify-between gap-1 w-full">
+                                                                            <span className="font-extrabold text-[11px] text-emerald-700 tracking-tight">
+                                                                                Rp{totalNominal.toLocaleString('id-ID')}
+                                                                            </span>
+                                                                            <span className="text-[9px] font-extrabold text-emerald-700 bg-emerald-200/80 px-1.5 py-0.2 rounded border border-emerald-300/60">
+                                                                                {bonusesOnDay.length} item
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="text-[9px] font-medium text-emerald-600/90 truncate border-t border-emerald-200/60 pt-0.5">
+                                                                            {bonusesOnDay.map(b => b.keterangan).filter(Boolean).join(', ')}
+                                                                        </div>
+
+                                                                        {/* Popover Breakdown on Hover */}
+                                                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/cell:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-56 z-50 transition-all pointer-events-auto">
+                                                                            <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold pb-1.5 border-b border-slate-200">
+                                                                                <span>{bonusesOnDay.length} Bonus ({dateKey})</span>
+                                                                                <span className="text-emerald-700 font-black">Total: Rp{totalNominal.toLocaleString('id-ID')}</span>
+                                                                            </div>
+                                                                            <div className="flex flex-col gap-1.5 mt-2 max-h-40 overflow-y-auto scrollbar-thin">
+                                                                                {bonusesOnDay.map((b) => (
+                                                                                    <div key={b.id} className="flex items-center justify-between gap-2 p-1.5 bg-slate-50 rounded-lg border border-slate-200 text-xs">
+                                                                                        <div className="flex flex-col min-w-0">
+                                                                                            <span className="font-bold text-emerald-700 text-[11px]">Rp{b.nominal.toLocaleString('id-ID')}</span>
+                                                                                            <span className="text-[10px] text-slate-600 truncate">{b.keterangan || "Tanpa keterangan"}</span>
+                                                                                        </div>
+                                                                                        <div className="flex items-center gap-1 shrink-0">
+                                                                                            {onEdit && (
+                                                                                                <button
+                                                                                                    type="button"
+                                                                                                    onClick={(e) => {
+                                                                                                        e.stopPropagation();
+                                                                                                        onEdit(b);
+                                                                                                    }}
+                                                                                                    className="text-blue-600 hover:bg-blue-100 p-1 rounded transition-colors cursor-pointer"
+                                                                                                    title="Edit bonus ini"
+                                                                                                >
+                                                                                                    <Pencil size={11} />
+                                                                                                </button>
+                                                                                            )}
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                onClick={(e) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    onDelete(b.id);
+                                                                                                }}
+                                                                                                className="text-rose-600 hover:bg-rose-100 p-1 rounded transition-colors cursor-pointer"
+                                                                                                title="Hapus bonus ini"
+                                                                                            >
+                                                                                                <Trash2 size={11} />
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ))}
                                                                             </div>
                                                                         </div>
-                                                                    )}
-                                                                </div>
-                                                            ))
+                                                                    </div>
+                                                                );
+                                                            })()
                                                         ) : (
                                                             <span className="text-slate-200 group-hover:text-slate-400 transition-colors select-none text-base font-bold">&middot;</span>
                                                         )}
