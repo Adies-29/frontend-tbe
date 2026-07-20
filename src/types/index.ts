@@ -19,6 +19,7 @@ export interface LemburData{
     disetujui_oleh: string;
     is_custom_upah?: boolean;
     nominal_upah_custom?: number | null;
+    tipe_hitung_lembur?: 'per_jam' | 'flat';
     nama?: string;
     pegawai?: { nama: string };
 }
@@ -56,6 +57,7 @@ export interface JabatanData {
     upah_per_kehadiran?: number | null;
     bonus_disiplin_harian?: number | null;
     upah_lembur_per_jam?: number | null;
+    upah_lembur_flat?: number | null;
     bonus_minggu_6_hari?: number | null;
     bonus_minggu_5_hari?: number | null;
     bonus_minggu_harian?: number | null;

@@ -19,6 +19,7 @@ const schema = z.object({
     gaji_pokok_bulanan: z.coerce.number().min(0, "Tidak boleh minus"),
     upah_per_kehadiran: z.coerce.number().min(0, "Tidak boleh minus"),
     upah_lembur_per_jam: z.coerce.number().min(0, "Tidak boleh minus"),
+    upah_lembur_flat: z.coerce.number().min(0, "Tidak boleh minus"),
     bonus_disiplin_harian: z.coerce.number().min(0, "Tidak boleh minus"),
     bonus_kerapian_harian: z.coerce.number().min(0, "Tidak boleh minus"),
     bonus_minggu_6_hari: z.coerce.number().min(0, "Tidak boleh minus"),
@@ -58,6 +59,7 @@ export default function AturGajiJabatan() {
             gaji_pokok_bulanan: 0,
             upah_per_kehadiran: 0,
             upah_lembur_per_jam: 0,
+            upah_lembur_flat: 0,
             bonus_disiplin_harian: 0,
             bonus_kerapian_harian: 0,
             bonus_minggu_6_hari: 0,
@@ -96,6 +98,7 @@ export default function AturGajiJabatan() {
                 gaji_pokok_bulanan: gaji.gaji_pokok_bulanan || 0,
                 upah_per_kehadiran: gaji.upah_per_kehadiran || 0,
                 upah_lembur_per_jam: gaji.upah_lembur_per_jam || 0,
+                upah_lembur_flat: gaji.upah_lembur_flat || 0,
                 bonus_disiplin_harian: gaji.bonus_disiplin_harian || 0,
                 bonus_kerapian_harian: gaji.bonus_kerapian_harian || 0,
                 bonus_minggu_6_hari: gaji.bonus_minggu_6_hari || 0,
@@ -151,6 +154,7 @@ export default function AturGajiJabatan() {
             gaji_pokok_bulanan: 0,
             upah_per_kehadiran: 0,
             upah_lembur_per_jam: 0,
+            upah_lembur_flat: 0,
             bonus_disiplin_harian: 0,
             bonus_kerapian_harian: 0,
             bonus_minggu_6_hari: 0,
@@ -243,9 +247,17 @@ export default function AturGajiJabatan() {
                                 label="Upah Lembur (Rp/Jam)"
                                 nama="upah_lembur_per_jam"
                                 type="number"
-                                placeholder="Masukkan upah lembur"
+                                placeholder="Masukkan upah lembur per jam"
                                 register={register}
                                 error={errors.upah_lembur_per_jam?.message}
+                            />
+                            <Input
+                                label="Upah Lembur Flat / Borongan (Rp)"
+                                nama="upah_lembur_flat"
+                                type="number"
+                                placeholder="Masukkan upah lembur flat"
+                                register={register}
+                                error={errors.upah_lembur_flat?.message}
                             />
                             <Input
                                 label="Bonus Lembur Tahunan (Rp)"

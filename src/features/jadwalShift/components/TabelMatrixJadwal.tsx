@@ -6,9 +6,7 @@ import { Loader2, MousePointerClick, X, Search, RefreshCw, Users, PlayCircle } f
 import Button from '../../../components/common/Button';
 
 import ModalKelolaShift from './ModalKelolaShift';
-import ModalGenerateMassal from './ModalGenerateMassal';
-import { ModalKelolaPolaRotasi } from './ModalKelolaPolaRotasi';
-import { ModalAssignPolaPegawai } from './ModalAssignPolaPegawai';
+import ModalKelolaJadwalMassal from './ModalKelolaJadwalMassal';
 import { useMatrixJadwal } from '../hooks/useMatrixJadwal';
 import Notif from '../../../components/common/Notif';
 import { useState } from 'react';
@@ -16,8 +14,6 @@ import { useAuthStore } from '../../../store/useAuthStore';
 
 export default function TabelMatrixJadwal() {
     const hookParams = useMatrixJadwal();
-    const [isModalPolaOpen, setIsModalPolaOpen] = useState(false);
-    const [isModalAssignOpen, setIsModalAssignOpen] = useState(false);
     const token = useAuthStore((state) => state.token) || "";
 
     // Helper untuk generate array Date (menggunakan UTC untuk mencegah pergeseran zona waktu)
@@ -63,21 +59,9 @@ export default function TabelMatrixJadwal() {
                     {/* Group Tombol Aksi Pengelolaan */}
                     <div className="flex flex-wrap items-center gap-2">
                         <Button 
-                            variant="secondary" 
-                            label="Pola Rolling Shift" 
-                            icon={<RefreshCw size={15} className="text-blue-600" />}
-                            onClick={() => setIsModalPolaOpen(true)} 
-                        />
-                        <Button 
-                            variant="info" 
-                            label="Assign Pola Pegawai" 
-                            icon={<Users size={15} />}
-                            onClick={() => setIsModalAssignOpen(true)} 
-                        />
-                        <Button 
                             variant="primary" 
-                            label="Generate Jadwal Massal" 
-                            icon={<PlayCircle size={15} />}
+                            label="Kelola Shift & Pola Massal" 
+                            icon={<Users size={15} />}
                             onClick={() => hookParams.setIsModalMassalOpen(true)} 
                         />
                     </div>
@@ -97,14 +81,14 @@ export default function TabelMatrixJadwal() {
                             <option value="tahun">Tahunan</option>
                         </select>
 
-                        {hookParams.periode === "minggu" && <input type="week" value={hookParams.filterValue} onChange={(e) => hookParams.setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none bg-white" />}
-                        {hookParams.periode === "bulan" && <input type="month" value={hookParams.filterValue} onChange={(e) => hookParams.setFilterValue(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none bg-white" />}
+                        {hookParams.periode === "minggu" && <input type="week" value={hookParams.filterValue} onChange={(e) => hookParams.handleFilterValueChange(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none bg-white" />}
+                        {hookParams.periode === "bulan" && <input type="month" value={hookParams.filterValue} onChange={(e) => hookParams.handleFilterValueChange(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-red-500 shadow-sm text-sm flex-1 md:flex-none bg-white" />}
                         {hookParams.periode === "tahun" && (
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker
                                     views={['year']}
                                     value={hookParams.filterValue ? dayjs().year(parseInt(hookParams.filterValue)) : null}
-                                    onChange={(newValue: Dayjs | null) => newValue && hookParams.setFilterValue(newValue.year().toString())}
+                                    onChange={(newValue: Dayjs | null) => newValue && hookParams.handleFilterValueChange(newValue.year().toString())}
                                     slotProps={{ textField: { size: 'small', className: "bg-white flex-1 md:w-32", sx: { '& .MuiOutlinedInput-root': { borderRadius: '8px' } } } }}
                                 />
                             </LocalizationProvider>
@@ -278,9 +262,9 @@ export default function TabelMatrixJadwal() {
                 handleProsesTukarShift={hookParams.handleProsesTukarShift}
             />
 
-            <ModalGenerateMassal
-                isModalMassalOpen={hookParams.isModalMassalOpen}
-                setIsModalMassalOpen={hookParams.setIsModalMassalOpen}
+            <ModalKelolaJadwalMassal
+                isOpen={hookParams.isModalMassalOpen}
+                onClose={() => hookParams.setIsModalMassalOpen(false)}
                 listPegawai={hookParams.listPegawai}
                 listMasterShifts={hookParams.listMasterShifts}
                 filterLevel1={hookParams.filterLevel1}
@@ -299,21 +283,6 @@ export default function TabelMatrixJadwal() {
                 setMassalShiftId={hookParams.setMassalShiftId}
                 isSaving={hookParams.isSaving}
                 handleProsesGenerateMassal={hookParams.handleProsesGenerateMassal}
-            />
-
-            <ModalKelolaPolaRotasi
-                isOpen={isModalPolaOpen}
-                onClose={() => setIsModalPolaOpen(false)}
-                shifts={hookParams.listMasterShifts}
-                token={token}
-                onSuccess={hookParams.handleFilter}
-            />
-
-            <ModalAssignPolaPegawai
-                isOpen={isModalAssignOpen}
-                onClose={() => setIsModalAssignOpen(false)}
-                listPegawai={hookParams.listPegawai}
-                shifts={hookParams.listMasterShifts}
                 onSuccess={hookParams.handleFilter}
             />
 

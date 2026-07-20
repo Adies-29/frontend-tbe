@@ -1,5 +1,6 @@
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { Box } from '@mui/material';
+import { Info } from 'lucide-react';
 
 // Pindahkan fungsi formatRupiah ke sini agar komponen ini mandiri
 const formatRupiah = (angka: number) => {
@@ -16,23 +17,63 @@ export interface RekapGajiData {
     total_potongan: number;
     gaji_bersih: number;
     status: string;
+    periode_tanggal?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rincian_bonus?: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rincian_potongan?: any;
 }
 
 interface TabelRekapGajiProps {
     data: RekapGajiData[];
     onPelunasan: (id: string) => void;
+    onShowDetail?: (row: RekapGajiData, type: 'bonus' | 'potongan') => void;
 }
 
-// Ekstrak onPelunasan dari props di sini
-export const TabelRekapGaji = ({ data, onPelunasan }: TabelRekapGajiProps) => {
+// Ekstrak onPelunasan dan onShowDetail dari props di sini
+export const TabelRekapGaji = ({ data, onPelunasan, onShowDetail }: TabelRekapGajiProps) => {
 
     // Definisi Kolom Tabel Rekap Gaji
     const columns: GridColDef[] = [
         { field: 'nama', headerName: 'Nama Pegawai', flex: 1, minWidth: 180, renderCell: (params) => <span className="font-semibold text-gray-800">{params.value}</span> },
         { field: 'jabatan', headerName: 'Jabatan', flex: 1, minWidth: 120 },
         { field: 'gaji_dasar', headerName: 'Gaji Dasar', flex: 1, minWidth: 140, renderCell: (params) => formatRupiah(params.value) },
-        { field: 'total_bonus', headerName: 'Bonus & Tunjangan', flex: 1, minWidth: 170, renderCell: (params) => <span className="text-green-600">+{formatRupiah(params.value)}</span> },
-        { field: 'total_potongan', headerName: 'Potongan (Denda)', flex: 1, minWidth: 170, renderCell: (params) => <span className="text-red-600">-{formatRupiah(params.value)}</span> },
+        { 
+            field: 'total_bonus', 
+            headerName: 'Bonus & Tunjangan', 
+            flex: 1, 
+            minWidth: 170, 
+            renderCell: (params) => (
+                <div className="w-full flex items-center h-full py-1">
+                    <button 
+                        onClick={() => onShowDetail?.(params.row as RekapGajiData, 'bonus')}
+                        className="w-full flex justify-between items-center gap-1 font-semibold text-green-700 hover:text-green-900 bg-green-50 hover:bg-green-100/90 px-3 py-1.5 rounded-lg transition-colors border border-green-200/80 shadow-2xs group cursor-pointer"
+                        title="Klik untuk melihat rincian bonus"
+                    >
+                        <span>+{formatRupiah(params.value)}</span>
+                        <Info size={14} className="text-green-500 group-hover:text-green-700 shrink-0" />
+                    </button>
+                </div>
+            ) 
+        },
+        { 
+            field: 'total_potongan', 
+            headerName: 'Potongan (Denda)', 
+            flex: 1, 
+            minWidth: 170, 
+            renderCell: (params) => (
+                <div className="w-full flex items-center h-full py-1">
+                    <button 
+                        onClick={() => onShowDetail?.(params.row as RekapGajiData, 'potongan')}
+                        className="w-full flex justify-between items-center gap-1 font-semibold text-red-700 hover:text-red-900 bg-red-50 hover:bg-red-100/90 px-3 py-1.5 rounded-lg transition-colors border border-red-200/80 shadow-2xs group cursor-pointer"
+                        title="Klik untuk melihat rincian potongan"
+                    >
+                        <span>-{formatRupiah(params.value)}</span>
+                        <Info size={14} className="text-red-500 group-hover:text-red-700 shrink-0" />
+                    </button>
+                </div>
+            ) 
+        },
         { field: 'gaji_bersih', headerName: 'Take Home Pay', flex: 1, minWidth: 160, renderCell: (params) => <span className="font-bold text-blue-700">{formatRupiah(params.value)}</span> },
         { 
             field: 'status', 

@@ -56,6 +56,7 @@ export default function EditLembur() {
 
     // State untuk fitur atur upah lembur
     const [aturUpahLembur, setAturUpahLembur] = useState(false);
+    const [tipeHitungLembur, setTipeHitungLembur] = useState<'per_jam' | 'flat'>('per_jam');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [selectedPegawai, setSelectedPegawai] = useState<any>(null);
     const [customUpahValue, setCustomUpahValue] = useState<string>("");
@@ -106,6 +107,10 @@ export default function EditLembur() {
                 menit_lembur_diizinkan: lembur.menit_lembur_diizinkan,
                 alasan_lembur: lembur.alasan_lembur || ""
             });
+
+            if (lembur.tipe_hitung_lembur) {
+                setTipeHitungLembur(lembur.tipe_hitung_lembur);
+            }
 
             // Pre-populate toggle jika ada custom upah
             if (lembur.is_custom_upah && lembur.nominal_upah_custom) {
@@ -161,7 +166,7 @@ export default function EditLembur() {
         if (aturUpahLembur) {
             const numVal = Number(customUpahValue);
             if (!customUpahValue || isNaN(numVal) || numVal <= 0) {
-                setCustomUpahError("Nominal upah/jam wajib diisi (minimal Rp 1)");
+                setCustomUpahError("Nominal upah wajib diisi (minimal Rp 1)");
                 return;
             }
             setCustomUpahError("");
@@ -170,7 +175,8 @@ export default function EditLembur() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const payload: any = {
             ...data,
-            disetujui_oleh: userToken || ""
+            disetujui_oleh: userToken || "",
+            tipe_hitung_lembur: tipeHitungLembur
         };
 
         payload.is_custom_upah = aturUpahLembur;
@@ -235,10 +241,43 @@ export default function EditLembur() {
                     }
                 />
 
+                {/* === METODE PERHITUNGAN LEMBUR === */}
+                <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        Sistem Perhitungan Lembur <span className="text-red-500">*</span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setTipeHitungLembur('per_jam')}
+                            className={`p-3 rounded-lg border text-sm font-medium transition-all flex flex-col items-center gap-1 ${
+                                tipeHitungLembur === 'per_jam'
+                                    ? 'border-red-500 bg-red-50 text-red-700 shadow-sm font-semibold'
+                                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                            }`}
+                        >
+                            <span>Per Jam</span>
+                            <span className="text-xs font-normal opacity-80">(Proporsional per jam)</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setTipeHitungLembur('flat')}
+                            className={`p-3 rounded-lg border text-sm font-medium transition-all flex flex-col items-center gap-1 ${
+                                tipeHitungLembur === 'flat'
+                                    ? 'border-red-500 bg-red-50 text-red-700 shadow-sm font-semibold'
+                                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                            }`}
+                        >
+                            <span>Flat / Borongan</span>
+                            <span className="text-xs font-normal opacity-80">(Nominal tetap)</span>
+                        </button>
+                    </div>
+                </div>
+
                 {/* === TOGGLE ATUR UPAH LEMBUR === */}
                 <div className="border border-gray-200 rounded-lg p-4 bg-gray-50/50">
                     <label htmlFor="atur_upah_lembur_edit" className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-red-50 transition-colors cursor-pointer select-none">
-                        <span className="text-sm font-semibold text-gray-700">Atur Upah Lembur</span>
+                        <span className="text-sm font-semibold text-gray-700">Atur Upah Lembur Custom</span>
                         <div className="relative">
                             <input
                                 type="checkbox"
@@ -259,11 +298,19 @@ export default function EditLembur() {
 
                     {!aturUpahLembur ? (
                         <div className="ml-8 mt-1">
-                            {selectedPegawai?.jabatan?.upah_lembur_per_jam ? (
+                            {((tipeHitungLembur === 'flat' && (selectedPegawai?.jabatan?.upah_lembur_flat || selectedPegawai?.jabatan?.upah_lembur_per_jam)) ||
+                              (tipeHitungLembur === 'per_jam' && selectedPegawai?.jabatan?.upah_lembur_per_jam)) ? (
                                 <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 flex items-center gap-2">
                                     <Banknote size={14} />
                                     Upah lembur sesuai jabatan:{" "}
-                                    <strong>Rp {Number(selectedPegawai.jabatan.upah_lembur_per_jam).toLocaleString('id-ID')}/jam</strong>
+                                    <strong>
+                                        Rp {Number(
+                                            tipeHitungLembur === 'flat' 
+                                                ? (selectedPegawai.jabatan.upah_lembur_flat || selectedPegawai.jabatan.upah_lembur_per_jam)
+                                                : selectedPegawai.jabatan.upah_lembur_per_jam
+                                        ).toLocaleString('id-ID')}
+                                        {tipeHitungLembur === 'per_jam' ? '/jam' : ' (Flat)'}
+                                    </strong>
                                 </p>
                             ) : (
                                 <p className="text-xs text-gray-500 italic ml-1">
@@ -274,7 +321,7 @@ export default function EditLembur() {
                     ) : (
                         <div className="ml-8 mt-2">
                             <label className="block text-sm font-medium text-gray-600 mb-1">
-                                Nominal Upah/Jam (Rp) <span className="text-red-500">*</span>
+                                {tipeHitungLembur === 'flat' ? 'Nominal Upah Flat (Rp)' : 'Nominal Upah/Jam (Rp)'} <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="number"
@@ -285,12 +332,13 @@ export default function EditLembur() {
                                     if (customUpahError) setCustomUpahError("");
                                 }}
                                 className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:outline-none"
-                                placeholder="Contoh: 15000"
+                                placeholder={tipeHitungLembur === 'flat' ? "Contoh: 50000" : "Contoh: 15000"}
                             />
                             {customUpahError && <p className="text-xs text-red-500 mt-1">{customUpahError}</p>}
                             {customUpahValue && Number(customUpahValue) > 0 && (
                                 <p className="text-xs text-blue-600 mt-1 font-medium italic">
-                                    Rp {Number(customUpahValue).toLocaleString('id-ID')}/jam
+                                    Rp {Number(customUpahValue).toLocaleString('id-ID')}
+                                    {tipeHitungLembur === 'per_jam' ? '/jam' : ' (Flat)'}
                                 </p>
                             )}
                         </div>
