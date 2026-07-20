@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, Calendar, ArrowRight, RotateCcw } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Calendar, RotateCcw } from 'lucide-react';
 import Button from '../../../components/common/Button';
 
 interface CustomDateRangePickerModalProps {
@@ -249,7 +249,6 @@ export default function CustomDateRangePickerModal({
                             const dStr = item.dateStr;
                             const isStart = dStr === tempStart;
                             const isEnd = dStr === tempEnd;
-                            const isSingleDay = isStart && isEnd;
 
                             // Confirmed saved range
                             const isInRange = Boolean(tempStart && tempEnd && dStr >= tempStart && dStr <= tempEnd);

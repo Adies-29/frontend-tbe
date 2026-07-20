@@ -2,19 +2,16 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-import { Loader2, MousePointerClick, X, Search, RefreshCw, Users, PlayCircle } from 'lucide-react';
+import { Loader2, MousePointerClick, X, Search, Users } from 'lucide-react';
 import Button from '../../../components/common/Button';
 
 import ModalKelolaShift from './ModalKelolaShift';
 import ModalKelolaJadwalMassal from './ModalKelolaJadwalMassal';
 import { useMatrixJadwal } from '../hooks/useMatrixJadwal';
 import Notif from '../../../components/common/Notif';
-import { useState } from 'react';
-import { useAuthStore } from '../../../store/useAuthStore';
 
 export default function TabelMatrixJadwal() {
     const hookParams = useMatrixJadwal();
-    const token = useAuthStore((state) => state.token) || "";
 
     // Helper untuk generate array Date (menggunakan UTC untuk mencegah pergeseran zona waktu)
     const getDatesInRange = (startStr: string, endStr: string) => {
