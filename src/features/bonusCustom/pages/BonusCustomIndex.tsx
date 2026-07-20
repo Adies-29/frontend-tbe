@@ -5,6 +5,7 @@ import Notif from '../../../components/common/Notif';
 import { TabelBonusCustom, type BonusCustomData } from '../components/TabelBonusCustom';
 import { useBonusCustom } from '../hooks/useBonusCustom';
 import ModalTambahBonusCustom from '../components/ModalTambahBonusCustom';
+import ModalEditBonusCustom from '../components/ModalEditBonusCustom';
 
 export default function BonusCustomIndex() {
     const {
@@ -23,21 +24,6 @@ export default function BonusCustomIndex() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingBonus, setEditingBonus] = useState<BonusCustomData | null>(null);
 
-    const handleOpenCreateModal = () => {
-        setEditingBonus(null);
-        setIsModalOpen(true);
-    };
-
-    const handleEditBonus = (bonus: BonusCustomData) => {
-        setEditingBonus(bonus);
-        setIsModalOpen(true);
-    };
-
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-        setEditingBonus(null);
-    };
-
     return (
         <div className="flex flex-col gap-6 w-full animate-in fade-in duration-300">
             
@@ -54,7 +40,7 @@ export default function BonusCustomIndex() {
                     label="Buat Bonus Baru"
                     variant="primary"
                     icon={<PlusCircle size={18} />}
-                    onClick={handleOpenCreateModal}
+                    onClick={() => setIsModalOpen(true)}
                     className="font-bold shadow-md"
                 />
             </div>
@@ -73,25 +59,32 @@ export default function BonusCustomIndex() {
                         <Loader2 className="animate-spin" size={32} />
                     </div>
                 ) : (
-                    <TabelBonusCustom
-                        data={listBonus}
-                        listPegawai={listPegawai}
-                        onDelete={handleDeleteBonus}
-                        onEdit={handleEditBonus}
+                    <TabelBonusCustom 
+                        data={listBonus} 
+                        listPegawai={listPegawai} 
+                        onDelete={handleDeleteBonus} 
+                        onEdit={(bonus) => setEditingBonus(bonus)}
                     />
                 )}
             </div>
 
-            {/* MODAL BUAT / EDIT BONUS BARU */}
+            {/* MODAL BUAT BONUS BARU */}
             <ModalTambahBonusCustom
                 isOpen={isModalOpen}
-                onClose={handleCloseModal}
+                onClose={() => setIsModalOpen(false)}
                 listPegawai={listPegawai}
                 isCreating={isCreating}
-                isUpdating={isUpdating}
-                editingBonus={editingBonus}
                 onSubmit={createBonus}
-                onUpdate={updateBonus}
+            />
+
+            {/* MODAL EDIT BONUS CUSTOM */}
+            <ModalEditBonusCustom
+                isOpen={!!editingBonus}
+                onClose={() => setEditingBonus(null)}
+                bonusData={editingBonus}
+                listPegawai={listPegawai}
+                isUpdating={isUpdating}
+                onSubmit={updateBonus}
             />
 
             <Notif show={notif.show} message={notif.message} type={notif.type} onClose={closeNotif} />

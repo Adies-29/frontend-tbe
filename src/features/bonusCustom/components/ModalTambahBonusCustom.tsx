@@ -1,29 +1,18 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, PlusCircle, Search, Gift } from 'lucide-react';
+import { X, PlusCircle, Loader2, Search, Gift, Calendar } from 'lucide-react';
 import Button from '../../../components/common/Button';
-import Input from '../../../components/common/InputText';
+import CustomDateRangePickerModal from '../../jadwalShift/components/CustomDateRangePickerModal';
 
 interface ModalTambahBonusCustomProps {
     isOpen: boolean;
     onClose: () => void;
     listPegawai: any[];
     isCreating: boolean;
-    isUpdating?: boolean;
-    editingBonus?: any | null;
     onSubmit: (
         data: {
             pegawai_ids: string[];
-            tanggal_diberikan: string;
-            keterangan: string;
-            nominal: number;
-        },
-        callbacks: { onSuccess: () => void }
-    ) => void;
-    onUpdate?: (
-        data: {
-            id: string;
-            pegawai_id: string;
-            tanggal_diberikan: string;
+            tanggal_diberikan?: string;
+            tanggals?: string[];
             keterangan: string;
             nominal: number;
         },
@@ -31,46 +20,75 @@ interface ModalTambahBonusCustomProps {
     ) => void;
 }
 
+const MONTH_SHORT_NAMES_ID = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+    'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+];
+
+const formatDateIndo = (dateStr: string) => {
+    if (!dateStr) return '';
+    const [y, m, d] = dateStr.split('-').map(Number);
+    if (!y || !m || !d) return dateStr;
+    return `${d} ${MONTH_SHORT_NAMES_ID[m - 1]} ${y}`;
+};
+
+const getDaysCount = (start: string, end: string) => {
+    if (!start || !end) return 1;
+    const d1 = new Date(start + 'T00:00:00Z');
+    const d2 = new Date(end + 'T00:00:00Z');
+    const diffTime = Math.abs(d2.getTime() - d1.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+};
+
+const generateDatesInRange = (start: string, end: string): string[] => {
+    if (!start || !end) return start ? [start] : [];
+    const result: string[] = [];
+    const current = new Date(start + 'T00:00:00Z');
+    const stop = new Date(end + 'T00:00:00Z');
+    while (current <= stop) {
+        result.push(current.toISOString().split('T')[0]);
+        current.setUTCDate(current.getUTCDate() + 1);
+    }
+    return result;
+};
+
 export default function ModalTambahBonusCustom({
     isOpen,
     onClose,
     listPegawai,
     isCreating,
-    isUpdating = false,
-    editingBonus = null,
-    onSubmit,
-    onUpdate
+    onSubmit
 }: ModalTambahBonusCustomProps) {
     // Form State
     const [selectedPegawaiIds, setSelectedPegawaiIds] = useState<string[]>([]);
-    const [tanggal, setTanggal] = useState<string>('');
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
     const [keterangan, setKeterangan] = useState<string>('');
     const [nominal, setNominal] = useState<string>('');
+
+    // Modal Date Picker State
+    const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
 
     // Form Search & Filter States
     const [formFilterDept, setFormFilterDept] = useState<string>('');
     const [formFilterJabatan, setFormFilterJabatan] = useState<string>('');
     const [formSearchQuery, setFormSearchQuery] = useState<string>('');
 
-    // Reset or load edit state when modal opens
+    // Reset state when modal opens
     useEffect(() => {
         if (isOpen) {
-            if (editingBonus) {
-                setSelectedPegawaiIds([String(editingBonus.pegawai_id)]);
-                setTanggal(editingBonus.tanggal_diberikan || new Date().toLocaleDateString('en-CA'));
-                setKeterangan(editingBonus.keterangan || '');
-                setNominal(String(editingBonus.nominal || ''));
-            } else {
-                setSelectedPegawaiIds([]);
-                setTanggal(new Date().toLocaleDateString('en-CA'));
-                setKeterangan('');
-                setNominal('');
-            }
+            const todayStr = new Date().toLocaleDateString('en-CA');
+            setSelectedPegawaiIds([]);
+            setStartDate(todayStr);
+            setEndDate(todayStr);
+            setKeterangan('');
+            setNominal('');
             setFormFilterDept('');
             setFormFilterJabatan('');
             setFormSearchQuery('');
+            setIsDatePickerOpen(false);
         }
-    }, [isOpen, editingBonus]);
+    }, [isOpen]);
 
     // Derived states for Form Checklist
     const formUniqueDepts = useMemo(() => {
@@ -97,65 +115,32 @@ export default function ModalTambahBonusCustom({
         });
     }, [listPegawai, formSearchQuery, formFilterDept, formFilterJabatan]);
 
-    const isAllFilteredSelected = useMemo(() => {
-        return formFilteredPegawai.length > 0 && formFilteredPegawai.every((p: any) => selectedPegawaiIds.includes(String(p.id)));
-    }, [formFilteredPegawai, selectedPegawaiIds]);
-
-    const handleToggleSelectAllFiltered = () => {
-        const filteredIds = formFilteredPegawai.map((p: any) => String(p.id));
-        if (isAllFilteredSelected) {
-            setSelectedPegawaiIds(prev => prev.filter(id => !filteredIds.includes(id)));
-        } else {
-            setSelectedPegawaiIds(prev => {
-                const next = [...prev];
-                filteredIds.forEach((id: string) => {
-                    if (!next.includes(id)) next.push(id);
-                });
-                return next;
-            });
-        }
-    };
-
     if (!isOpen) return null;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (selectedPegawaiIds.length === 0 || !tanggal || !keterangan || !nominal) return;
+        if (selectedPegawaiIds.length === 0 || !startDate || !endDate || !keterangan || !nominal) return;
 
-        if (editingBonus && onUpdate) {
-            onUpdate(
-                {
-                    id: String(editingBonus.id),
-                    pegawai_id: selectedPegawaiIds[0],
-                    tanggal_diberikan: tanggal,
-                    keterangan: keterangan,
-                    nominal: Number(nominal)
-                },
-                {
-                    onSuccess: () => {
-                        onClose();
-                    }
+        const allDates = generateDatesInRange(startDate, endDate);
+
+        onSubmit(
+            {
+                pegawai_ids: selectedPegawaiIds,
+                tanggals: allDates,
+                tanggal_diberikan: startDate,
+                keterangan: keterangan,
+                nominal: Number(nominal)
+            },
+            {
+                onSuccess: () => {
+                    onClose();
                 }
-            );
-        } else {
-            onSubmit(
-                {
-                    pegawai_ids: selectedPegawaiIds,
-                    tanggal_diberikan: tanggal,
-                    keterangan: keterangan,
-                    nominal: Number(nominal)
-                },
-                {
-                    onSuccess: () => {
-                        onClose();
-                    }
-                }
-            );
-        }
+            }
+        );
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-150">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl lg:max-w-5xl h-[82vh] max-h-[700px] min-h-[560px] overflow-hidden border border-gray-200 animate-in zoom-in-95 my-auto flex flex-col">
                 
                 {/* MODAL HEADER */}
@@ -165,13 +150,9 @@ export default function ModalTambahBonusCustom({
                             <Gift size={20} />
                         </div>
                         <div>
-                            <h3 className="font-extrabold text-gray-800 text-lg">
-                                {editingBonus ? "Edit Bonus Custom" : "Buat Bonus Baru"}
-                            </h3>
+                            <h3 className="font-extrabold text-gray-800 text-lg">Buat Bonus Baru</h3>
                             <p className="text-xs text-gray-500 font-semibold mt-0.5">
-                                {editingBonus 
-                                    ? "Perbarui detail atau nominal bonus custom karyawan" 
-                                    : "Tambahkan bonus/reward custom ke satu atau beberapa karyawan sekaligus"}
+                                Tambahkan bonus/reward custom ke satu atau beberapa karyawan sekaligus
                             </p>
                         </div>
                     </div>
@@ -195,42 +176,71 @@ export default function ModalTambahBonusCustom({
                                 1. Pengaturan Bonus
                             </h4>
 
-                            <Input
-                                label="Tanggal Diberikan"
-                                type="date"
-                                value={tanggal}
-                                onChange={(e) => setTanggal(e.target.value)}
-                                required
-                            />
-
-                            <Input
-                                label="Keterangan / Nama Bonus"
-                                type="text"
-                                placeholder="Cth: Reward Teladan, Ganti Bensin"
-                                value={keterangan}
-                                onChange={(e) => setKeterangan(e.target.value)}
-                                required
-                            />
-
-                            <Input
-                                label="Nominal Bonus (Rp)"
-                                type="number"
-                                placeholder="Cth: 50000"
-                                value={nominal}
-                                onChange={(e) => setNominal(e.target.value)}
-                                min="1"
-                                required
-                                helperText={
-                                    nominal && Number(nominal) > 0 ? (
-                                        <span className="text-xs font-extrabold text-emerald-600 animate-in fade-in duration-200">
-                                            Preview: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(nominal))}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">
+                                    Rentang Tanggal Diberikan
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsDatePickerOpen(true)}
+                                    className="w-full flex items-center justify-between border border-gray-300 hover:border-blue-500 rounded-xl px-3 py-2.5 bg-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-2 text-gray-800 truncate">
+                                        <Calendar size={16} className="text-blue-600 shrink-0" />
+                                        <span className="truncate">
+                                            {startDate && endDate
+                                                ? startDate === endDate
+                                                    ? formatDateIndo(startDate)
+                                                    : `${formatDateIndo(startDate)} - ${formatDateIndo(endDate)}`
+                                                : 'Pilih Rentang Tanggal'}
                                         </span>
-                                    ) : undefined
-                                }
-                            />
+                                    </div>
+                                    {startDate && endDate && (
+                                        <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200 shrink-0 ml-1">
+                                            {getDaysCount(startDate, endDate)} Hari
+                                        </span>
+                                    )}
+                                </button>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">
+                                    Keterangan / Nama Bonus
+                                </label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Cth: Reward Teladan, Ganti Bensin"
+                                    value={keterangan} 
+                                    onChange={(e) => setKeterangan(e.target.value)} 
+                                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs bg-white shadow-2xs"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-xs font-bold text-gray-700">
+                                        Nominal (Rp)
+                                    </label>
+                                    {nominal && (
+                                        <span className="text-xs font-extrabold text-green-600 animate-in fade-in duration-200">
+                                            {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(nominal))}
+                                        </span>
+                                    )}
+                                </div>
+                                <input 
+                                    type="number" 
+                                    placeholder="Cth: 50000"
+                                    value={nominal} 
+                                    onChange={(e) => setNominal(e.target.value)} 
+                                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs bg-white shadow-2xs font-bold"
+                                    min="1"
+                                    required
+                                />
+                            </div>
 
                             <p className="text-[11px] text-gray-400 font-medium mt-auto border-t border-gray-200 pt-3">
-                                * Penentu bonus masuk ke periode rekapitulasi gaji pegawai pada tanggal yang dipilih.
+                                * Penentu bonus masuk ke periode rekapitulasi gaji pegawai pada rentang tanggal yang dipilih.
                             </p>
                         </div>
 
@@ -295,15 +305,10 @@ export default function ModalTambahBonusCustom({
                                                 type="checkbox" 
                                                 checked={isChecked}
                                                 onChange={(e) => {
-                                                    if (editingBonus) {
-                                                        // Single select mode during edit
-                                                        setSelectedPegawaiIds([String(p.id)]);
+                                                    if (e.target.checked) {
+                                                        setSelectedPegawaiIds(prev => [...prev, String(p.id)]);
                                                     } else {
-                                                        if (e.target.checked) {
-                                                            setSelectedPegawaiIds(prev => [...prev, String(p.id)]);
-                                                        } else {
-                                                            setSelectedPegawaiIds(prev => prev.filter(id => id !== String(p.id)));
-                                                        }
+                                                        setSelectedPegawaiIds(prev => prev.filter(id => id !== String(p.id)));
                                                     }
                                                 }}
                                                 className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer"
@@ -322,19 +327,37 @@ export default function ModalTambahBonusCustom({
                                 )}
                             </div>
 
-                            {/* QUICK SELECT BUTTON */}
-                            {!editingBonus && (
-                                <div className="flex flex-wrap gap-2 justify-between items-center w-full shrink-0 pt-1">
-                                    <Button
+                            {/* QUICK SELECT BUTTONS */}
+                            <div className="flex flex-wrap gap-2 justify-between items-center w-full shrink-0 pt-1">
+                                <div className="flex gap-2">
+                                    <button
                                         type="button"
-                                        onClick={handleToggleSelectAllFiltered}
-                                        disabled={formFilteredPegawai.length === 0}
-                                        label={isAllFilteredSelected ? "Batal Pilih Terfilter" : "Pilih Semua Terfilter"}
-                                        variant={isAllFilteredSelected ? "danger" : "info"}
-                                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg shadow-2xs"
-                                    />
+                                        onClick={() => {
+                                            const filteredIds = formFilteredPegawai.map((p: any) => String(p.id));
+                                            setSelectedPegawaiIds(prev => {
+                                                const next = [...prev];
+                                                filteredIds.forEach((id: string) => {
+                                                    if (!next.includes(id)) next.push(id);
+                                                });
+                                                return next;
+                                            });
+                                        }}
+                                        className="text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1 transition-colors cursor-pointer"
+                                    >
+                                        Pilih Semua Terfilter
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const filteredIds = formFilteredPegawai.map((p: any) => String(p.id));
+                                            setSelectedPegawaiIds(prev => prev.filter(id => !filteredIds.includes(id)));
+                                        }}
+                                        className="text-[11px] font-bold text-red-600 hover:text-red-800 hover:bg-red-50 border border-red-200 rounded-lg px-2.5 py-1 transition-colors cursor-pointer"
+                                    >
+                                        Batal Pilih Terfilter
+                                    </button>
                                 </div>
-                            )}
+                            </div>
                         </div>
 
                     </div>
@@ -346,21 +369,33 @@ export default function ModalTambahBonusCustom({
                             variant="secondary"
                             label="Batal"
                             onClick={onClose}
-                            className="px-4 py-2 text-xs font-semibold"
+                            className="px-4 py-2 text-xs"
                         />
                         <Button 
                             type="submit" 
-                            label={editingBonus ? "Update Bonus" : "Simpan Bonus"} 
-                            variant="success" 
-                            isLoading={isCreating || isUpdating}
-                            icon={<PlusCircle size={16} />} 
-                            disabled={selectedPegawaiIds.length === 0}
-                            className="px-5 py-2 text-xs font-bold shadow-md cursor-pointer"
+                            label={isCreating ? "Menyimpan..." : "Simpan Bonus"} 
+                            variant="primary" 
+                            icon={isCreating ? <Loader2 className="animate-spin" size={16} /> : <PlusCircle size={16} />} 
+                            disabled={isCreating || selectedPegawaiIds.length === 0}
+                            className="px-5 py-2 text-xs font-bold shadow-md"
                         />
                     </div>
                 </form>
 
             </div>
+
+            {/* MODAL DATE RANGE PICKER (CALENDAR) */}
+            <CustomDateRangePickerModal
+                isOpen={isDatePickerOpen}
+                onClose={() => setIsDatePickerOpen(false)}
+                startDate={startDate}
+                endDate={endDate}
+                title="Pilih Rentang Tanggal Bonus"
+                onApply={(start, end) => {
+                    setStartDate(start);
+                    setEndDate(end);
+                }}
+            />
         </div>
     );
 }
