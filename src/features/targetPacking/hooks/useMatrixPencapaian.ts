@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, startTransition } from 'react';
 import { useAuthStore } from '../../../store/useAuthStore';
 import type { PencapaianTargetData } from '../../../types';
 import { apiFetch } from '../../../utils/apiFetch';
@@ -107,15 +107,17 @@ export function useMatrixPencapaian() {
     const handleFilter = () => {};
 
     const handlePeriodeChange = (newPeriode: string) => {
-        setPeriode(newPeriode);
-        if (newPeriode === 'minggu') {
-            setFilterValue(defaultWeekStr);
-        } else if (newPeriode === 'bulan') {
-            const monthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-            setFilterValue(monthStr);
-        } else {
-            setFilterValue(String(now.getFullYear()));
-        }
+        startTransition(() => {
+            setPeriode(newPeriode);
+            if (newPeriode === 'minggu') {
+                setFilterValue(defaultWeekStr);
+            } else if (newPeriode === 'bulan') {
+                const monthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+                setFilterValue(monthStr);
+            } else {
+                setFilterValue(String(now.getFullYear()));
+            }
+        });
     };
 
     const [searchQuery, setSearchQuery] = useState("");
@@ -251,7 +253,8 @@ export function useMatrixPencapaian() {
             if (!res.ok) throw new Error(data.message || "Gagal memuat data pencapaian");
             return data.data || [];
         },
-        enabled: listPegawai.length > 0
+        enabled: listPegawai.length > 0,
+        staleTime: 1000 * 60 * 5
     });
 
     const matrixKaryawan = useMemo(() => {
@@ -289,7 +292,6 @@ export function useMatrixPencapaian() {
         );
     }, [matrixKaryawan]);
 
-    const isLoading = pegawaiQuery.isLoading || pencapaianQuery.isLoading || jabatanQuery.isLoading;
     const errorMsg = pencapaianQuery.error?.message || "";
 
     const handleCellClick = (pegawaiId: number, pegawaiNama: string, tglFormat: string, pegawaiJabatan?: string) => {
@@ -312,7 +314,7 @@ export function useMatrixPencapaian() {
         today: now, filterStartDate, filterEndDate,
         periode, setPeriode, filterValue, setFilterValue, handleFilter, handlePeriodeChange, handleResetFilters,
         // State Data
-        matrixKaryawan, filteredMatrixKaryawan, searchQuery, setSearchQuery, isLoading, errorMsg, 
+        matrixKaryawan, filteredMatrixKaryawan, searchQuery, setSearchQuery, isLoading: pencapaianQuery.isLoading || pencapaianQuery.isFetching, errorMsg, 
         listPegawai, listMasterTargets,
         filterJabatan, setFilterJabatan, filterDepartemen, setFilterDepartemen, uniqueJabatanList, uniqueDepartemenList,
         // State Modal

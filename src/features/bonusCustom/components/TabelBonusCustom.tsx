@@ -1,5 +1,5 @@
 import { Trash2, Search, Pencil,  Users, RotateCcw } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, startTransition } from 'react';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -17,90 +17,123 @@ export interface BonusCustomData {
 interface TabelBonusCustomProps {
     data: BonusCustomData[];
     listPegawai: any[];
+    onEdit: (item: BonusCustomData) => void;
     onDelete: (id: string) => void;
-    onEdit?: (bonus: BonusCustomData) => void;
+    onBatchDelete?: (ids: string[]) => void;
+    onBatchAdd?: (pegawaiIds: string[], tanggal: string, nominal: number, keterangan: string) => void;
 }
 
-export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete, onEdit }: TabelBonusCustomProps) => {
-    // Helper to calculate week number
-    const getWeekNumber = (d: Date) => {
-        const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
-        const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-        const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-        return { year: date.getUTCFullYear(), week: weekNo };
-    };
-
-    const now = new Date();
-    const weekData = getWeekNumber(now);
-    const defaultWeekStr = `${weekData.year}-W${weekData.week.toString().padStart(2, '0')}`;
-
-    // States for Filter & Search
-    const [periode, setPeriode] = useState<'minggu' | 'bulan' | 'tahun'>('minggu');
-    const [filterValue, setFilterValue] = useState(defaultWeekStr);
+export default function TabelBonusCustom({
+    data,
+    listPegawai,
+    onEdit,
+    onDelete,
+    onBatchDelete,
+    onBatchAdd
+}: TabelBonusCustomProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterDepartemen, setFilterDepartemen] = useState('');
     const [filterJabatan, setFilterJabatan] = useState('');
+    const [periode, setPeriode] = useState<'minggu' | 'bulan' | 'tahun'>('minggu');
+
+    // Default values
+    const now = new Date();
+    const defaultWeekStr = getCurrentWeekStr();
+
+    function getCurrentWeekStr() {
+        const d = new Date();
+        const year = d.getFullYear();
+        const firstDayOfYear = new Date(year, 0, 1);
+        const pastDaysOfYear = (d.getTime() - firstDayOfYear.getTime()) / 86400000;
+        const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+        return `${year}-W${weekNum.toString().padStart(2, '0')}`;
+    }
+
+    const [filterValue, setFilterValue] = useState(defaultWeekStr);
 
     // Calculate filterStartDate and filterEndDate reactively based on period & input selection
     const { filterStartDate, filterEndDate } = useMemo(() => {
-        if (!filterValue) {
-            const currentDay = now.getDay();
-            const diff = now.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
-            const monday = new Date(now);
-            monday.setDate(diff);
-            const sunday = new Date(monday);
-            sunday.setDate(monday.getDate() + 6);
-            return {
-                filterStartDate: monday.toLocaleDateString('en-CA'),
-                filterEndDate: sunday.toLocaleDateString('en-CA')
-            };
-        }
-
-        const year = parseInt(filterValue.substring(0, 4));
+        if (!filterValue) return { filterStartDate: '', filterEndDate: '' };
 
         if (periode === 'minggu') {
-            const week = parseInt(filterValue.substring(6, 8));
-            const jan4 = new Date(year, 0, 4);
-            const jan4Day = jan4.getDay() || 7;
-            const startDate = new Date(year, 0, 4 - jan4Day + 1 + (week - 1) * 7);
-            const endDate = new Date(startDate);
-            endDate.setDate(startDate.getDate() + 6);
-
+            const parts = filterValue.split('-W');
+            if (parts.length !== 2) return { filterStartDate: '', filterEndDate: '' };
+            const year = parseInt(parts[0], 10);
+            const week = parseInt(parts[1], 10);
+            const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+            const dayOfWeek = simple.getUTCDay();
+            const monday = new Date(simple);
+            if (dayOfWeek <= 4) monday.setUTCDate(simple.getUTCDate() - simple.getUTCDay() + 1);
+            else monday.setUTCDate(simple.getUTCDate() + (8 - simple.getUTCDay()));
+            const sunday = new Date(monday);
+            sunday.setUTCDate(monday.getUTCDate() + 6);
             return {
-                filterStartDate: startDate.toLocaleDateString('en-CA'),
-                filterEndDate: endDate.toLocaleDateString('en-CA')
-            };
-        } else if (periode === 'bulan') {
-            const month = parseInt(filterValue.substring(5, 7));
-            const startDate = new Date(year, month - 1, 1);
-            const endDate = new Date(year, month, 0);
-
-            return {
-                filterStartDate: startDate.toLocaleDateString('en-CA'),
-                filterEndDate: endDate.toLocaleDateString('en-CA')
-            };
-        } else {
-            const startDate = new Date(year, 0, 1);
-            const endDate = new Date(year, 11, 31);
-            return {
-                filterStartDate: startDate.toLocaleDateString('en-CA'),
-                filterEndDate: endDate.toLocaleDateString('en-CA')
+                filterStartDate: monday.toISOString().split('T')[0],
+                filterEndDate: sunday.toISOString().split('T')[0]
             };
         }
+
+        if (periode === 'bulan') {
+            const [yStr, mStr] = filterValue.split('-');
+            const year = parseInt(yStr, 10);
+            const month = parseInt(mStr, 10);
+            if (isNaN(year) || isNaN(month)) return { filterStartDate: '', filterEndDate: '' };
+            const startDate = new Date(Date.UTC(year, month - 1, 1));
+            const endDate = new Date(Date.UTC(year, month, 0));
+            return {
+                filterStartDate: startDate.toISOString().split('T')[0],
+                filterEndDate: endDate.toISOString().split('T')[0]
+            };
+        }
+
+        if (periode === 'tahun') {
+            const year = parseInt(filterValue, 10);
+            if (isNaN(year)) return { filterStartDate: '', filterEndDate: '' };
+            const startDate = new Date(Date.UTC(year, 0, 1));
+            const endDate = new Date(Date.UTC(year, 11, 31));
+            return {
+                filterStartDate: startDate.toISOString().split('T')[0],
+                filterEndDate: endDate.toISOString().split('T')[0]
+            };
+        }
+
+        return { filterStartDate: '', filterEndDate: '' };
     }, [periode, filterValue]);
 
-    // Calculate dates array
-    const daysArray = useMemo(() => {
+    // Memoized formatted dates array untuk mencegah freeze UI saat rentang tahunan (365 hari)
+    const formattedDays = useMemo(() => {
         if (!filterStartDate || !filterEndDate) return [];
-        const dateArray = [];
-        const currentDate = new Date(filterStartDate);
-        const stopDate = new Date(filterEndDate);
+        const [sY, sM, sD] = filterStartDate.split('-').map(Number);
+        const [eY, eM, eD] = filterEndDate.split('-').map(Number);
+
+        const currentDate = new Date(Date.UTC(sY, sM - 1, sD));
+        const stopDate = new Date(Date.UTC(eY, eM - 1, eD));
+        const result = [];
+
         while (currentDate <= stopDate) {
-            dateArray.push(new Date(currentDate));
-            currentDate.setDate(currentDate.getDate() + 1);
+            const dayOfWeek = currentDate.getUTCDay();
+            const isSunday = dayOfWeek === 0;
+            const isSaturday = dayOfWeek === 6;
+            const dayNum = currentDate.getUTCDate();
+            const dayName = currentDate.toLocaleDateString('id-ID', { weekday: 'short', timeZone: 'UTC' });
+            const monthShort = currentDate.toLocaleDateString('id-ID', { month: 'short', timeZone: 'UTC' });
+            const y = currentDate.getUTCFullYear();
+            const m = String(currentDate.getUTCMonth() + 1).padStart(2, '0');
+            const d = String(dayNum).padStart(2, '0');
+            const tglKey = `${y}-${m}-${d}`;
+
+            result.push({
+                tglKey,
+                dayNum,
+                dayName,
+                monthShort,
+                isSunday,
+                isSaturday
+            });
+
+            currentDate.setUTCDate(currentDate.getUTCDate() + 1);
         }
-        return dateArray;
+        return result;
     }, [filterStartDate, filterEndDate]);
 
     // Map bonuses: pegawaiId -> tanggal_diberikan -> BonusCustomData[]
@@ -144,15 +177,17 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete, onEdit
 
     // Handle when period selection changes
     const handlePeriodeChange = (newPeriode: 'minggu' | 'bulan' | 'tahun') => {
-        setPeriode(newPeriode);
-        if (newPeriode === 'minggu') {
-            setFilterValue(defaultWeekStr);
-        } else if (newPeriode === 'bulan') {
-            const monthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-            setFilterValue(monthStr);
-        } else {
-            setFilterValue(String(now.getFullYear()));
-        }
+        startTransition(() => {
+            setPeriode(newPeriode);
+            if (newPeriode === 'minggu') {
+                setFilterValue(defaultWeekStr);
+            } else if (newPeriode === 'bulan') {
+                const monthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+                setFilterValue(monthStr);
+            } else {
+                setFilterValue(String(now.getFullYear()));
+            }
+        });
     };
 
     const handleDepartemenChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -351,7 +386,7 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete, onEdit
 
             {/* Matrix Table */}
             <div className="overflow-x-auto w-full relative max-h-[500px] rounded-b-xl scrollbar-thin">
-                <table className="w-full text-xs text-left border-collapse min-w-max">
+                <table className="w-full text-xs text-left border-collapse min-w-max table-fixed">
                     <thead className="text-[11px] font-bold text-slate-600 uppercase bg-slate-100/90 sticky top-0 z-20 shadow-xs backdrop-blur-xs">
                         <tr>
                             <th scope="col" className="px-4 py-3.5 border-r border-b border-slate-200 sticky left-0 z-30 bg-slate-100 min-w-[200px] shadow-[2px_0_6px_-2px_rgba(0,0,0,0.06)]">
@@ -360,38 +395,33 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete, onEdit
                                     <span>Nama Pegawai</span>
                                 </div>
                             </th>
-                            {daysArray.map((dateObj, idx) => {
-                                const isSunday = dateObj.getDay() === 0;
-                                const isSaturday = dateObj.getDay() === 6;
-                                const dayName = dateObj.toLocaleDateString('id-ID', { weekday: 'short' });
-                                return (
-                                    <th
-                                        key={idx}
-                                        scope="col"
-                                        className={`px-3 py-2.5 border-r border-b border-slate-200 text-center min-w-[105px] transition-colors ${isSunday ? 'bg-rose-50/70 text-rose-700' : isSaturday ? 'text-slate-700' : 'bg-slate-100 text-slate-700'
-                                            }`}
-                                    >
-                                        <div className="flex flex-col items-center justify-center">
-                                            <span className={`text-[10px] font-bold tracking-wider ${isSunday ? 'text-rose-500' : 'text-slate-400'}`}>
-                                                {dayName}
-                                            </span>
-                                            <span className={`text-sm font-black ${isSunday ? 'text-rose-600' : 'text-slate-800'}`}>
-                                                {dateObj.getDate()}
-                                            </span>
-                                            <span className={`text-[9px] font-medium ${isSunday ? 'text-rose-400' : 'text-slate-400'}`}>
-                                                {dateObj.toLocaleDateString('id-ID', { month: 'short' })}
-                                            </span>
-                                        </div>
-                                    </th>
-                                );
-                            })}
+                            {formattedDays.map((item, idx) => (
+                                <th
+                                    key={idx}
+                                    scope="col"
+                                    className={`px-3 py-2.5 border-r border-b border-slate-200 text-center min-w-[105px] transition-colors ${item.isSunday ? 'bg-rose-50/70 text-rose-700' : item.isSaturday ? 'text-slate-700' : 'bg-slate-100 text-slate-700'
+                                        }`}
+                                >
+                                    <div className="flex flex-col items-center justify-center">
+                                        <span className={`text-[10px] font-bold tracking-wider ${item.isSunday ? 'text-rose-500' : 'text-slate-400'}`}>
+                                            {item.dayName}
+                                        </span>
+                                        <span className={`text-sm font-black ${item.isSunday ? 'text-rose-600' : 'text-slate-800'}`}>
+                                            {item.dayNum}
+                                        </span>
+                                        <span className={`text-[9px] font-medium ${item.isSunday ? 'text-rose-400' : 'text-slate-400'}`}>
+                                            {item.monthShort}
+                                        </span>
+                                    </div>
+                                </th>
+                            ))}
                         </tr>
                     </thead>
 
                     <tbody className="divide-y divide-slate-200/60">
                         {filteredPegawai.length === 0 ? (
                             <tr>
-                                <td colSpan={daysArray.length + 1} className="text-center py-16 px-4 bg-white">
+                                <td colSpan={formattedDays.length + 1} className="text-center py-16 px-4 bg-white">
                                     <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto text-slate-400">
                                         <div className="p-3 bg-slate-100 rounded-full text-slate-400">
                                             <Search size={24} />
@@ -436,15 +466,12 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete, onEdit
                                         </td>
 
                                         {/* Date Cells */}
-                                        {daysArray.map((dateObj, idx) => {
-                                            const isSunday = dateObj.getDay() === 0;
-                                            const dateKey = dateObj.toLocaleDateString('en-CA');
-                                            
+                                        {formattedDays.map((item, idx) => {
                                             // Match by either pegawai_id or name
-                                            const bonusesOnDay = bonusesMap[String(pegawai.id)]?.[dateKey] || 
-                                                                  bonusesMap[pegawai.nama]?.[dateKey] || [];
+                                            const bonusesOnDay = bonusesMap[String(pegawai.id)]?.[item.tglKey] || 
+                                                                  bonusesMap[pegawai.nama]?.[item.tglKey] || [];
 
-                                            let cellBg = isSunday ? 'bg-rose-50/20' : '';
+                                            let cellBg = item.isSunday ? 'bg-rose-50/20' : '';
                                             if (bonusesOnDay.length > 0) {
                                                 cellBg = 'bg-emerald-50/30 hover:bg-emerald-100/40';
                                             }
@@ -506,7 +533,9 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete, onEdit
 
                                                                         {/* Rich Tooltip Popover on Hover */}
                                                                         {bonus.keterangan && (
-                                                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/bonus:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-48 z-40 pointer-events-none transition-all">
+                                                                            <div className={`absolute left-1/2 -translate-x-1/2 hidden group-hover/bonus:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-48 z-40 pointer-events-none transition-all ${
+                                                                                index < 2 ? 'top-full mt-2' : 'bottom-full mb-2'
+                                                                            }`}>
                                                                                 <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium pb-1 border-b border-slate-200">
                                                                                     <span>Detail Bonus</span>
                                                                                     <span>{bonus.tanggal_diberikan}</span>
@@ -543,11 +572,27 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete, onEdit
                                                                         </div>
 
                                                                         {/* Popover Breakdown on Hover */}
-                                                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/cell:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-56 z-50 transition-all pointer-events-auto">
+                                                                        <div className={`absolute left-1/2 -translate-x-1/2 hidden group-hover/cell:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-56 z-50 transition-all pointer-events-auto ${
+                                                                            index < 2 ? 'top-full mt-2' : 'bottom-full mb-2'
+                                                                        }`}>
                                                                             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold pb-1.5 border-b border-slate-200">
-                                                                                <span>{bonusesOnDay.length} Bonus ({dateKey})</span>
+                                                                                <span>{bonusesOnDay.length} Bonus ({item.tglKey})</span>
                                                                                 <span className="text-emerald-700 font-black">Total: Rp{totalNominal.toLocaleString('id-ID')}</span>
                                                                             </div>
+                                                                            {onBatchDelete && (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        onBatchDelete(bonusesOnDay.map(b => b.id));
+                                                                                    }}
+                                                                                    className="mt-1 flex items-center justify-center gap-1 w-full text-[10px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 py-1 rounded border border-rose-200 transition-colors cursor-pointer"
+                                                                                    title="Hapus semua bonus di hari ini"
+                                                                                >
+                                                                                    <Trash2 size={10} />
+                                                                                    <span>Hapus Semua ({bonusesOnDay.length})</span>
+                                                                                </button>
+                                                                            )}
                                                                             <div className="flex flex-col gap-1.5 mt-2 max-h-40 overflow-y-auto scrollbar-thin">
                                                                                 {bonusesOnDay.map((b) => (
                                                                                     <div key={b.id} className="flex items-center justify-between gap-2 p-1.5 bg-slate-50 rounded-lg border border-slate-200 text-xs">
@@ -589,7 +634,18 @@ export const TabelBonusCustom = ({ data = [], listPegawai = [], onDelete, onEdit
                                                                 );
                                                             })()
                                                         ) : (
-                                                            <span className="text-slate-200 group-hover:text-slate-400 transition-colors select-none text-base font-bold">&middot;</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    if (onBatchAdd) {
+                                                                        onBatchAdd([pegawai.id], item.tglKey, 0, '');
+                                                                    }
+                                                                }}
+                                                                className="text-slate-200 group-hover:text-emerald-500 transition-colors select-none text-base font-bold w-full h-full flex items-center justify-center cursor-pointer"
+                                                                title={`Tambah bonus untuk ${pegawai.nama} pada ${item.tglKey}`}
+                                                            >
+                                                                &middot;
+                                                            </button>
                                                         )}
                                                     </div>
                                                 </td>

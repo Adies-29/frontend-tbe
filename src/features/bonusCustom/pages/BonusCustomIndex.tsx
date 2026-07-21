@@ -3,7 +3,7 @@ import { PlusCircle, Loader2 } from 'lucide-react';
 import Button from '../../../components/common/Button';
 import Notif from '../../../components/common/Notif';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
-import { TabelBonusCustom, type BonusCustomData } from '../components/TabelBonusCustom';
+import TabelBonusCustom, { type BonusCustomData } from '../components/TabelBonusCustom';
 import { useBonusCustom } from '../hooks/useBonusCustom';
 import ModalTambahBonusCustom from '../components/ModalTambahBonusCustom';
 import ModalEditBonusCustom from '../components/ModalEditBonusCustom';
@@ -19,7 +19,9 @@ export default function BonusCustomIndex() {
         closeNotif,
         createBonus,
         updateBonus,
-        handleDeleteBonus
+        handleDeleteBonus,
+        handleBatchDelete,
+        handleBatchAdd
     } = useBonusCustom();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -66,6 +68,8 @@ export default function BonusCustomIndex() {
                         listPegawai={listPegawai} 
                         onDelete={(id) => setDeleteConfirmId(id)} 
                         onEdit={(bonus) => setEditingBonus(bonus)}
+                        onBatchDelete={handleBatchDelete}
+                        onBatchAdd={handleBatchAdd}
                     />
                 )}
             </div>

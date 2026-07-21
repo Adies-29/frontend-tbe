@@ -10,9 +10,9 @@ import { useAuthStore } from "../../../store/useAuthStore";
 import { apiFetch } from "../../../utils/apiFetch";
 import { getSafeErrorMessage } from "../../../utils/errorHandler";
 import { Input } from "../../../components/common/InputText";
-import { InputSelect, type SelectOption } from "../../../components/common/InputSelect";
 import { TextArea } from "../../../components/common/TextArea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Autocomplete, TextField } from "@mui/material";
 
 // Schema validasi sesuai dengan kebutuhan backend
 const kasbonSchema = z.object({
@@ -128,11 +128,6 @@ export default function AddKasbon() {
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pegawaiOptions: SelectOption[] = (pegawaiQuery.data || []).map((p: any) => ({
-        value: p.id,
-        label: p.nama
-    }));
-
     return (
         <div className="flex flex-col gap-6 w-full p-2 max-w-4xl mx-auto">
             <Notif show={notif.show} message={notif.message} type={notif.type} onClose={() => setNotif(prev => ({ ...prev, show: false }))} />
@@ -155,13 +150,33 @@ export default function AddKasbon() {
                             <div className="flex items-center gap-3 text-blue-600 font-bold border-b border-gray-100 pb-3">
                                 <User size={20} /> <h2>Peminjam & Tanggal</h2>
                             </div>
-                            <InputSelect
-                                label={pegawaiQuery.isLoading ? "Loading Pegawai..." : "Pilih Pegawai"}
-                                nama="pegawai_id"
-                                register={register}
-                                error={errors.pegawai_id?.message}
-                                options={pegawaiOptions}
-                            />
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-sm font-semibold text-gray-700">Pilih Pegawai <span className="text-red-500">*</span></label>
+                                <Autocomplete
+                                    options={pegawaiQuery.data || []}
+                                    getOptionLabel={(option: any) => `${option.nama}`}
+                                    disabled={pegawaiQuery.isLoading}
+                                    value={(pegawaiQuery.data || []).find((p: any) => String(p.id) === String(watch("pegawai_id"))) || null}
+                                    onChange={(_, newValue) => {
+                                        setValue("pegawai_id", newValue ? String(newValue.id) : "", { shouldValidate: true });
+                                    }}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            placeholder={pegawaiQuery.isLoading ? "Memuat pegawai..." : "Cari nama pegawai..."}
+                                            error={!!errors.pegawai_id}
+                                            helperText={errors.pegawai_id?.message}
+                                            size="small"
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: '8px',
+                                                    backgroundColor: '#f9fafb',
+                                                }
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </div>
                             <Input
                                 label="Tanggal Pengajuan"
                                 nama="tanggal_pengajuan"
@@ -234,11 +249,12 @@ export default function AddKasbon() {
 
                     <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 sm:gap-4 mt-8 pt-6 border-t border-gray-100">
                         <div className="w-full sm:w-auto">
-                            <Button variant="danger" label="Batal" type="button" onClick={() => navigate(-1)} disabled={addKasbonMutation.isPending} className="w-full sm:w-auto" />
-                        </div>
-                        <div className="w-full sm:w-auto">
                             <Button variant="success" label={addKasbonMutation.isPending ? "Menyimpan..." : "Simpan Kasbon Baru"} type="submit" disabled={addKasbonMutation.isPending} className="w-full sm:w-auto" />
                         </div>
+                        <div className="w-full sm:w-auto">
+                            <Button variant="danger" label="Batal" type="button" onClick={() => navigate(-1)} disabled={addKasbonMutation.isPending} className="w-full sm:w-auto" />
+                        </div>
+                        
                     </div>
                 </form>
             </div>
