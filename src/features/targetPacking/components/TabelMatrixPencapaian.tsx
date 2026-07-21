@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -26,49 +27,70 @@ export default function TabelMatrixPencapaian() {
                 },
                 body: JSON.stringify(payload)
             });
-            const result = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(result.message || result.error || "Gagal menyimpan pencapaian (500)");
-            return result;
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Gagal menyimpan data pencapaian");
+            return data;
         },
         onSuccess: () => {
-            hookParams.showNotif("Pencapaian berhasil disimpan", "success");
+            hookParams.showNotif("Pencapaian berhasil diperbarui!", "success");
             queryClient.invalidateQueries({ queryKey: ['pencapaianList'] });
         },
         onError: (err: any) => hookParams.showNotif(err.message, "error")
     });
 
     const deleteMutation = useMutation({
-        mutationFn: async (pencapaianId: number) => {
-            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/pencapaian/${pencapaianId}`, {
+        mutationFn: async (payload: { pencapaian_id?: number; pegawai_id: number; tanggal: string }) => {
+            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/pencapaian`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
             });
-            const result = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(result.message || result.error || "Gagal menghapus pencapaian");
-            return result;
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Gagal menghapus data pencapaian");
+            return data;
         },
         onSuccess: () => {
             hookParams.showNotif("Data pencapaian dihapus", "success");
             queryClient.invalidateQueries({ queryKey: ['pencapaianList'] });
-            hookParams.setIsModalOpen(false);
         },
         onError: (err: any) => hookParams.showNotif(err.message, "error")
     });
 
-    // Helper untuk generate array Date
-    const getDatesInRange = (startStr: string, endStr: string) => {
-        const dateArray = [];
-        const currentDate = new Date(startStr);
-        const stopDate = new Date(endStr);
-        while (currentDate <= stopDate) {
-            dateArray.push(new Date(currentDate));
-            currentDate.setDate(currentDate.getDate() + 1);
-        }
-        return dateArray;
-    };
+    // Memoized formatted dates array untuk mencegah freeze UI saat rentang tahunan (365 hari)
+    const formattedDays = useMemo(() => {
+        if (!hookParams.filterStartDate || !hookParams.filterEndDate) return [];
+        const [sY, sM, sD] = hookParams.filterStartDate.split('-').map(Number);
+        const [eY, eM, eD] = hookParams.filterEndDate.split('-').map(Number);
 
-    const daysArray = getDatesInRange(hookParams.filterStartDate, hookParams.filterEndDate);
-    const daysInMonth = daysArray.length;
+        const currentDate = new Date(Date.UTC(sY, sM - 1, sD));
+        const stopDate = new Date(Date.UTC(eY, eM - 1, eD));
+        const result = [];
+
+        while (currentDate <= stopDate) {
+            const isWeekend = currentDate.getUTCDay() === 0;
+            const dayNum = currentDate.getUTCDate();
+            const monthShort = currentDate.toLocaleDateString('id-ID', { month: 'short', timeZone: 'UTC' });
+            const y = currentDate.getUTCFullYear();
+            const m = String(currentDate.getUTCMonth() + 1).padStart(2, '0');
+            const d = String(dayNum).padStart(2, '0');
+            const tglKey = `${y}-${m}-${d}`;
+
+            result.push({
+                tglKey,
+                dayNum,
+                monthShort,
+                isWeekend
+            });
+
+            currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+        }
+        return result;
+    }, [hookParams.filterStartDate, hookParams.filterEndDate]);
+
+    const daysInMonth = formattedDays.length;
 
     return (
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col w-full overflow-hidden relative">
@@ -229,23 +251,20 @@ export default function TabelMatrixPencapaian() {
                 </div>
             ) : (
                 <div className="overflow-x-auto w-full relative">
-                    <table className="w-full text-sm text-left border-collapse min-w-max">
+                    <table className="w-full text-sm text-left border-collapse min-w-max table-fixed">
                         <thead className="text-xs text-gray-600 uppercase bg-gray-100 sticky top-0 z-20 shadow-sm">
                             <tr>
                                 <th scope="col" className="px-4 py-3 border-r border-gray-200 sticky left-0 z-30 bg-gray-100 min-w-[150px] md:min-w-[220px]">
                                     Nama Pegawai
                                 </th>
-                                {daysArray.map((dateObj, idx) => {
-                                    const isWeekend = dateObj.getDay() === 0;
-                                    return (
-                                        <th key={idx} scope="col" className={`px-2 py-3 border-r border-gray-200 text-center min-w-[60px] leading-tight ${isWeekend ? 'bg-red-50/50' : ''}`}>
-                                            <div className={`text-lg ${isWeekend ? 'text-red-600 font-bold' : ''}`}>{dateObj.getDate()}</div>
-                                            <div className={`text-[9px] ${isWeekend ? 'text-red-400 font-medium' : 'text-gray-400'}`}>
-                                                {dateObj.toLocaleDateString('id-ID', { month: 'short' })}
-                                            </div>
-                                        </th>
-                                    );
-                                })}
+                                {formattedDays.map((item, idx) => (
+                                    <th key={idx} scope="col" className={`px-2 py-3 border-r border-gray-200 text-center min-w-[60px] leading-tight ${item.isWeekend ? 'bg-red-50/50' : ''}`}>
+                                        <div className={`text-lg ${item.isWeekend ? 'text-red-600 font-bold' : ''}`}>{item.dayNum}</div>
+                                        <div className={`text-[9px] ${item.isWeekend ? 'text-red-400 font-medium' : 'text-gray-400'}`}>
+                                            {item.monthShort}
+                                        </div>
+                                    </th>
+                                ))}
                             </tr>
                         </thead>
 
@@ -265,19 +284,17 @@ export default function TabelMatrixPencapaian() {
                                             <div className="text-xs text-gray-500 font-medium">{pegawai.jabatan}</div>
                                         </td>
 
-                                        {daysArray.map((dateObj, idx) => {
-                                            const isWeekend = dateObj.getDay() === 0;
-                                            const tglKey = dateObj.toLocaleDateString('en-CA');
-                                            const pencapaianHariIni = pegawai.pencapaian[tglKey];
+                                        {formattedDays.map((item, idx) => {
+                                            const pencapaianHariIni = pegawai.pencapaian[item.tglKey];
 
-                                            let cellBg = isWeekend ? 'bg-red-50/10' : '';
+                                            let cellBg = item.isWeekend ? 'bg-red-50/10' : '';
                                             if (pencapaianHariIni && pencapaianHariIni.totalPack > 0) {
                                                 cellBg = 'bg-emerald-50'; // Warna hijau jika ada target
                                             }
 
                                             return (
                                                 <td key={idx} className={`p-1 border-r border-gray-100 relative group cursor-pointer transition-colors hover:bg-blue-100/40 ${cellBg}`}
-                                                    onClick={() => hookParams.handleCellClick(pegawai.id, pegawai.nama, tglKey, pegawai.jabatan)}>
+                                                    onClick={() => hookParams.handleCellClick(pegawai.id, pegawai.nama, item.tglKey, pegawai.jabatan)}>
 
                                                     <div className="w-full h-full min-h-[42px] flex flex-col items-center justify-center relative">
                                                         {pencapaianHariIni && pencapaianHariIni.totalPack > 0 ? (
@@ -328,7 +345,11 @@ export default function TabelMatrixPencapaian() {
                         });
                     }}
                     onDelete={async (pencapaianId) => {
-                        await deleteMutation.mutateAsync(pencapaianId);
+                        await deleteMutation.mutateAsync({
+                            pencapaian_id: pencapaianId,
+                            pegawai_id: hookParams.selectedCell.pegawaiId,
+                            tanggal: hookParams.selectedCell.tanggal
+                        });
                     }}
                 />
             )}

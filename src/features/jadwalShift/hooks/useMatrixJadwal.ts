@@ -1,4 +1,4 @@
-import { useState, useEffect,  useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { apiFetch } from '../../../utils/apiFetch';
@@ -132,7 +132,7 @@ export function useMatrixJadwal() {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handlePeriodeChange = (e: any) => {
-        const val = e.target.value;
+        const val = typeof e === 'string' ? e : e?.target?.value || e;
         setPeriode(val);
 
         let defaultVal = "";
