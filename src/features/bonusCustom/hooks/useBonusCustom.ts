@@ -160,6 +160,46 @@ export function useBonusCustom() {
     const handleDeleteBonus = (id: string) => {
         deleteBonusMutation.mutate(id);
     };
+
+    // ==========================================
+    // 6. MUTASI: HAPUS BONUS BATCH
+    // ==========================================
+    const batchDeleteMutation = useMutation({
+        mutationFn: async (ids: string[]) => {
+            const promises = ids.map(async (id) => {
+                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/bonus-custom/${id}`, {
+                    method: "DELETE",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const result = await response.json();
+                if (!response.ok || !result.success) throw new Error(result.message || "Gagal menghapus bonus.");
+                return result;
+            });
+            return await Promise.all(promises);
+        },
+        onSuccess: (results) => {
+            setNotif({ show: true, message: `Sukses menghapus ${results.length} data bonus!`, type: "success" });
+            queryClient.invalidateQueries({ queryKey: ['bonusCustomList'] });
+            queryClient.invalidateQueries({ queryKey: ['rekapGaji'] });
+        },
+        onError: (error: any) => {
+            setNotif({ show: true, message: error.message || "Gagal menghapus bonus batch.", type: "error" });
+        }
+    });
+
+    const handleBatchDelete = (ids: string[]) => {
+        batchDeleteMutation.mutate(ids);
+    };
+
+    const handleBatchAdd = (pegawaiIds: string[], tanggal: string, nominal: number, keterangan: string) => {
+        createBonusMutation.mutate({
+            pegawai_ids: pegawaiIds,
+            tanggal_diberikan: tanggal,
+            nominal,
+            keterangan
+        });
+    };
+
     return {
         listPegawai,
         listBonus,
@@ -171,6 +211,8 @@ export function useBonusCustom() {
         closeNotif,
         createBonus: createBonusMutation.mutate,
         updateBonus: updateBonusMutation.mutate,
-        handleDeleteBonus
+        handleDeleteBonus,
+        handleBatchDelete,
+        handleBatchAdd
     };
 }

@@ -354,14 +354,13 @@ export default function EditLembur() {
                     />
                     {errors.alasan_lembur && <p className="text-xs text-red-500 mt-1">{errors.alasan_lembur.message}</p>}
                 </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                
+<div className="flex flex-col-reverse sm:flex-row justify-end gap-3 sm:gap-4 mt-8 pt-6 border-t border-gray-100">
                     <Button
                         variant="success"
                         type="submit"
                         disabled={editLemburMutation.isPending}
                         label={editLemburMutation.isPending ? "Menyimpan..." : "Simpan"}
-                        className="w-full sm:w-auto"
                     />
                     <Button
                         variant="danger"
