@@ -2,11 +2,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import z from "zod"
 import { useAuthStore } from "../../../store/useAuthStore";
 import { useEffect, useState, useRef } from "react";
-
 import { useForm, Controller } from 'react-hook-form'; 
 import Autocomplete from '@mui/material/Autocomplete'; 
 import TextField from '@mui/material/TextField'; 
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Button from "../../../components/common/Button";
@@ -17,6 +15,7 @@ import Notif from "../../../components/common/Notif";
 import { apiFetch } from "../../../utils/apiFetch";
 import type { JabatanOption, KotaOption } from "../../../types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNotif } from '../../../hooks/useNotif';
 
 const schema = z.object({
     nik: z.string()
@@ -68,11 +67,7 @@ export default function EditPegawai(){
     const [jabatanList, setJabatanList] = useState<JabatanOption[]>([]);
     const [kotaList, _setKotaList] = useState<KotaOption[]>(MOCK_KOTA); 
 
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, closeNotif } = useNotif();
 
     const queryClient = useQueryClient();
 
@@ -204,15 +199,14 @@ export default function EditPegawai(){
             return result;
         },
         onSuccess: () => {
-            setNotif({ show: true, message: "Data pegawai berhasil diperbarui!", type: "success" });
+            showNotif(`Data pegawai berhasil diperbarui! (ID: ${id})`, "success" );
             queryClient.invalidateQueries({ queryKey: ['pegawai'] });
             setTimeout(() => {
                 navigate("/dashboard/data-pegawai");
             }, 2000);
         },
         onError: (error) => {
-            setNotif({ show: true, message: error.message || "Terjadi kesalahan saat memperbarui data", type: "error" });
-
+            showNotif(error.message || "Terjadi kesalahan saat memperbarui data", "error");
         }
     })
 
@@ -353,7 +347,7 @@ export default function EditPegawai(){
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     )

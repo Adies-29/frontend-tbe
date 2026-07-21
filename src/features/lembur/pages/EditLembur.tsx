@@ -11,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { apiFetch } from "../../../utils/apiFetch";
 import { formatMinutesToText } from "../../../utils/formatMinutes";
 import { Input } from "../../../components/common/InputText";
+import { useNotif } from '../../../hooks/useNotif';
 
 const lemburSchema = z.object({
     pegawai_id: z.string().min(1, "ID Pegawai wajib diisi")
@@ -62,12 +63,7 @@ export default function EditLembur() {
     const [customUpahValue, setCustomUpahValue] = useState<string>("");
     const [customUpahError, setCustomUpahError] = useState("");
 
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
-
+    const { notif, showNotif, closeNotif } = useNotif();
     const tgl = searchParams.get("tanggal");
 
     const lemburQuery = useQuery({
@@ -133,10 +129,10 @@ export default function EditLembur() {
     }, [idPegwai, pegawaiQuery.data]);
 
     const editLemburMutation = useMutation({
-       
+
         mutationFn: async (payload: any) => {
             const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/spl`, {
-                method: "POST", 
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
@@ -148,16 +144,15 @@ export default function EditLembur() {
             return result;
         },
         onSuccess: () => {
-            setNotif({ show: true, message: `Sukses! Data lembur berhasil diperbarui.`, type: "success" });
+            showNotif(`Sukses! Data lembur berhasil diperbarui. ${tgl}`, "success");
             queryClient.invalidateQueries({ queryKey: ['lemburList'] });
             queryClient.invalidateQueries({ queryKey: ['lemburDetail', idPegwai, tgl] });
             setTimeout(() => {
                 navigate("/dashboard/lembur");
             }, 2000);
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Terjadi kesalahan jaringan.", type: "error" });
+            showNotif(error.message || "Terjadi kesalahan jaringan.", "error");
         }
     });
 
@@ -250,11 +245,10 @@ export default function EditLembur() {
                         <button
                             type="button"
                             onClick={() => setTipeHitungLembur('per_jam')}
-                            className={`p-3 rounded-lg border text-sm font-medium transition-all flex flex-col items-center gap-1 ${
-                                tipeHitungLembur === 'per_jam'
+                            className={`p-3 rounded-lg border text-sm font-medium transition-all flex flex-col items-center gap-1 ${tipeHitungLembur === 'per_jam'
                                     ? 'border-red-500 bg-red-50 text-red-700 shadow-sm font-semibold'
                                     : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                            }`}
+                                }`}
                         >
                             <span>Per Jam</span>
                             <span className="text-xs font-normal opacity-80">(Proporsional per jam)</span>
@@ -262,11 +256,10 @@ export default function EditLembur() {
                         <button
                             type="button"
                             onClick={() => setTipeHitungLembur('flat')}
-                            className={`p-3 rounded-lg border text-sm font-medium transition-all flex flex-col items-center gap-1 ${
-                                tipeHitungLembur === 'flat'
+                            className={`p-3 rounded-lg border text-sm font-medium transition-all flex flex-col items-center gap-1 ${tipeHitungLembur === 'flat'
                                     ? 'border-red-500 bg-red-50 text-red-700 shadow-sm font-semibold'
                                     : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                            }`}
+                                }`}
                         >
                             <span>Flat / Borongan</span>
                             <span className="text-xs font-normal opacity-80">(Nominal tetap)</span>
@@ -299,13 +292,13 @@ export default function EditLembur() {
                     {!aturUpahLembur ? (
                         <div className="ml-8 mt-1">
                             {((tipeHitungLembur === 'flat' && (selectedPegawai?.jabatan?.upah_lembur_flat || selectedPegawai?.jabatan?.upah_lembur_per_jam)) ||
-                              (tipeHitungLembur === 'per_jam' && selectedPegawai?.jabatan?.upah_lembur_per_jam)) ? (
+                                (tipeHitungLembur === 'per_jam' && selectedPegawai?.jabatan?.upah_lembur_per_jam)) ? (
                                 <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 flex items-center gap-2">
                                     <Banknote size={14} />
                                     Upah lembur sesuai jabatan:{" "}
                                     <strong>
                                         Rp {Number(
-                                            tipeHitungLembur === 'flat' 
+                                            tipeHitungLembur === 'flat'
                                                 ? (selectedPegawai.jabatan.upah_lembur_flat || selectedPegawai.jabatan.upah_lembur_per_jam)
                                                 : selectedPegawai.jabatan.upah_lembur_per_jam
                                         ).toLocaleString('id-ID')}
@@ -354,8 +347,8 @@ export default function EditLembur() {
                     />
                     {errors.alasan_lembur && <p className="text-xs text-red-500 mt-1">{errors.alasan_lembur.message}</p>}
                 </div>
-                
-<div className="flex flex-col-reverse sm:flex-row justify-end gap-3 sm:gap-4 mt-8 pt-6 border-t border-gray-100">
+
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 sm:gap-4 mt-8 pt-6 border-t border-gray-100">
                     <Button
                         variant="success"
                         type="submit"
@@ -376,7 +369,7 @@ export default function EditLembur() {
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     );

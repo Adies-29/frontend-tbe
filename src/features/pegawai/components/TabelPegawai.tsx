@@ -10,15 +10,13 @@ import {
 import { Pencil, Trash2 } from "lucide-react";
 import { useAuthStore } from '../../../store/useAuthStore';
 import type { PegawaiData } from '../../../types';
-
-
 import { apiFetch } from "../../../utils/apiFetch";
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import Notif from '../../../components/common/Notif';
 import { useMediaQuery, useTheme } from '@mui/material';
-
 import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { useNotif } from '../../../hooks/useNotif';
 
 
 
@@ -41,11 +39,7 @@ export default function TabelPegawai({ data: initialData }: TabelPegawaiProps) {
 
     const [showPopUp, setShowPopUp] = useState(false);
     const [hapusId, setHapusId] = useState<GridRowId | null>(null);
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, closeNotif } = useNotif();
 
     const queryClient = useQueryClient();
     const deletePegawaiMutation = useMutation({
@@ -66,13 +60,13 @@ export default function TabelPegawai({ data: initialData }: TabelPegawaiProps) {
         },
         onSuccess: (deleteId) => {
             setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(deleteId)));
-            setNotif({ show: true, message: "Data pegawai berhasil dihapus", type: "success" });
+            showNotif(`Data pegawai berhasil dihapus Id ${deleteId}`, "success");
             queryClient.invalidateQueries({ queryKey: ['pegawai'] });
 
         },
         onError: (error) => {
             console.error("Gagal menghapus :", error);
-            setNotif({ show: true, message: error.message || "terjadi kesalahan, Periksa koneksi", type: 'error' });
+            showNotif(error.message || "terjadi kesalahan, Periksa koneksi", 'error');
         },
         onSettled: () => {
             setShowPopUp(false);
@@ -275,7 +269,7 @@ export default function TabelPegawai({ data: initialData }: TabelPegawaiProps) {
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     );

@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiFetch } from "../../../utils/apiFetch";
 import { formatMinutesToText } from "../../../utils/formatMinutes";
+import { useNotif } from '../../../hooks/useNotif';
 
 const lemburSchema = z.object({
     pegawai_id: z.string().min(1, "ID Pegawai wajib diisi")
@@ -82,11 +83,7 @@ export default function AddLembur() {
         }
     }, [idPegwai, pegawaiQuery.data]);
 
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, closeNotif } = useNotif();
 
     const addLemburMutation = useMutation({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,8 +100,9 @@ export default function AddLembur() {
             if (!response.ok || !result.success) throw new Error("Gagal menyimpan ke database.");
             return result;
         },
-        onSuccess: () => {
-            setNotif({ show: true, message: `Sukses! Perintah lembur telah disimpan`, type: "success" });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onSuccess: (data: any) => {
+            showNotif(`Sukses! Perintah lembur telah disimpan. ${data.data.tanggal}`, "success");
             queryClient.invalidateQueries({ queryKey: ['lemburList'] });
             setTimeout(() => {
                 navigate("/dashboard/lembur");
@@ -112,7 +110,7 @@ export default function AddLembur() {
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Terjadi kesalahan jaringan.", type: "error" });
+            showNotif( error.message || "Terjadi kesalahan jaringan.", "error" );
         }
     });
 
@@ -366,7 +364,7 @@ export default function AddLembur() {
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     );

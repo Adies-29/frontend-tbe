@@ -4,7 +4,6 @@ import { ArrowLeft, Award, Banknote, Loader2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Button from '../../../components/common/Button';
 import { z } from 'zod';
-
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '../../../components/common/InputText';
@@ -12,6 +11,7 @@ import { useAuthStore } from '../../../store/useAuthStore';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import Notif from '../../../components/common/Notif';
 import { apiFetch } from "../../../utils/apiFetch";
+import { useNotif } from '../../../hooks/useNotif';
 
 // 1. UPDATE SCHEMA: Tambahkan tipe_penggajian dan gaji_pokok_bulanan
 const schema = z.object({
@@ -39,11 +39,7 @@ export default function AturGajiJabatan() {
     const [jabatanInfo, setJabatanInfo] = useState({ nama_jabatan: "Memuat...", departemen: "..." });
 
     const [showResetPopup, setShowResetPopup] = useState(false);
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
 
     const {
         register,
@@ -124,15 +120,15 @@ export default function AturGajiJabatan() {
             return result;
         },
         onSuccess: () => {
-            setNotif({ show: true, message: "Pengaturan gaji berhasil disimpan!", type: "success" });
+            showNotif("Pengaturan gaji berhasil disimpan!", "success");
             queryClient.invalidateQueries({ queryKey: ['master-jabatan'] });
             queryClient.invalidateQueries({ queryKey: ['gajiJabatan', id] });
             setTimeout(() => {
                 navigate('/dashboard/gaji-tunjangan', { state: { tab: 'master' } });
             }, 2000);
         },
-        onError: () => {
-            setNotif({ show: true, message: "Terjadi kesalahan jaringan atau database.", type: "error" });
+        onError: (error) => {
+            showErrorNotif(error);
         }
     });
 
@@ -163,7 +159,7 @@ export default function AturGajiJabatan() {
             bonus_lembur_tahunan: 0,
         });
         setShowResetPopup(false);
-        setNotif({ show: true, message: "Angka di-reset. Jangan lupa klik Simpan!", type: "success" });
+        showNotif("Angka di-reset. Jangan lupa klik Simpan!", "success");
     };
 
     return (
@@ -367,7 +363,7 @@ export default function AturGajiJabatan() {
                 show={notif.show} 
                 message={notif.message} 
                 type={notif.type} 
-                onClose={() => setNotif({ show: false, message: "", type: "success" })} 
+                onClose={closeNotif} 
             />
 
         </div>

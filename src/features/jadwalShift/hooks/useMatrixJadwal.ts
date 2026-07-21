@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { apiFetch } from '../../../utils/apiFetch';
+import { useNotif } from '../../../hooks/useNotif';
 
 
 // Interfaces
@@ -307,21 +308,7 @@ export function useMatrixJadwal() {
     const [massalShiftId, setMassalShiftId] = useState("");
 
     // Notification State
-    const [notifState, setNotifState] = useState<{ show: boolean, message: string, type: 'success' | 'error' }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
-
-    const showNotif = (message: string, type: 'success' | 'error' = 'success') => {
-        setNotifState({ show: true, message, type });
-    };
-
-    const closeNotif = () => {
-        setNotifState(prev => ({ ...prev, show: false }));
-    };
-
-
+   const { notif, showNotif, closeNotif } = useNotif();
 
     // Cascading Filter State
     const [filterLevel1, setFilterLevel1] = useState<'all_karyawan' | 'filter_departemen'>('all_karyawan');
@@ -485,7 +472,7 @@ export function useMatrixJadwal() {
         filterLevel1, setFilterLevel1, filterLevel2, setFilterLevel2,
         filterLevel3, setFilterLevel3, selectedPegawaiIds, setSelectedPegawaiIds,
         // Notif State
-        notifState, closeNotif,
+        notif, closeNotif,
         // Handler & Flags
         isSaving,
         handleCellClick, handleSimpanShiftHarian, handleProsesTukarShift, handleProsesGenerateMassal

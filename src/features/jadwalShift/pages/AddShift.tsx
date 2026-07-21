@@ -7,13 +7,11 @@ import { z } from 'zod';
 import Button from '../../../components/common/Button';
 import { Input } from '../../../components/common/InputText';
 import { useAuthStore } from '../../../store/useAuthStore';
-import { useState } from 'react';
 import Notif from '../../../components/common/Notif';
 import { apiFetch } from "../../../utils/apiFetch";
 import { formatMinutesToText } from "../../../utils/formatMinutes";
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-
+import { useNotif } from '../../../hooks/useNotif';
 
 // 1. SCHEMA ZOD - Disesuaikan dengan penamaan presisi dari Database
 const schema = z.object({
@@ -45,11 +43,7 @@ type FormData = z.infer<typeof schema>;
 export default function AddShift() {
     const navigate = useNavigate();
     const token = useAuthStore((state) => state.token);
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
 
     const queryClient = useQueryClient();
 
@@ -94,15 +88,16 @@ export default function AddShift() {
             }
             return result;
         },
-        onSuccess: () => {
-            setNotif({ show: true, message: "Shift berhasil disimpan!", type: "success"});
-            queryClient.invalidateQueries({ queryKey: [] })
+        onSuccess: (result) => {
+            const kode = result.data?.kode_shift || "";
+            showNotif(`Shift ${kode} berhasil disimpan!`.trim(), "success");
+            queryClient.invalidateQueries({ queryKey: ['shifts'] });
             setTimeout(() => {
                 navigate("/dashboard/jadwal-shift", {state: {activeTab: 'shift'}});
-            }, 2000);
+            }, 1500);
         },
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Gagal menyimpan data shift", type: "error" });
+            showErrorNotif(error);
         }
     })
 
@@ -375,7 +370,7 @@ export default function AddShift() {
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     );

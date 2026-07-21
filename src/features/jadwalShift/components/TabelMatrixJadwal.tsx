@@ -353,9 +353,9 @@ export default function TabelMatrixJadwal() {
             />
 
             <Notif
-                show={hookParams.notifState.show}
-                message={hookParams.notifState.message}
-                type={hookParams.notifState.type}
+                show={hookParams.notif.show}
+                message={hookParams.notif.message}
+                type={hookParams.notif.type}
                 onClose={hookParams.closeNotif}
             />
         </div>

@@ -10,16 +10,12 @@ import dayjs from "dayjs";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-
 import { useMediaQuery, useTheme } from "@mui/material";
-import { getSafeErrorMessage } from "../../../utils/errorHandler";
 import { apiFetch } from "../../../utils/apiFetch";
-
 import Notif from "../../../components/common/Notif";
 import { defaultDataGridSx } from "../../../components/common/dataGridStyles";
 import ButtonNuklir from "../../../components/common/ButtonNuklir";
-
-
+import { useNotif } from "../../../hooks/useNotif";
 
 
 interface TabelAbsensiProps {
@@ -37,11 +33,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     const [rows, setRows] = useState<AbsensiData[]>(initialData);
     const [rowModesModel] = useState<GridRowModesModel>({});
     const [updatingId, setUpdatingId] = useState<string | number | null>(null);
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
     const token = useAuthStore((state) => state.token);
     const navigate = useNavigate();
     const location = useLocation();
@@ -88,12 +80,14 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                 )
             );
 
+            showNotif(`Status kerapihan ${row.nama} diperbarui`, "success");
+
             if (onRefresh) {
                 onRefresh();
             }
         } catch (error) {
             console.error("Gagal update kerapihan:", error);
-            setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
+            showErrorNotif(error);
         } finally {
             setUpdatingId(null);
         }
@@ -431,7 +425,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     );

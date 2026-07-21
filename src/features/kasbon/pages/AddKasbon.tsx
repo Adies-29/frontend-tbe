@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Wallet, FileText, User } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -13,6 +12,7 @@ import { Input } from "../../../components/common/InputText";
 import { TextArea } from "../../../components/common/TextArea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Autocomplete, TextField } from "@mui/material";
+import { useNotif } from "../../../hooks/useNotif";
 
 // Schema validasi sesuai dengan kebutuhan backend
 const kasbonSchema = z.object({
@@ -29,10 +29,7 @@ export default function AddKasbon() {
     const navigate = useNavigate();
     const token = useAuthStore((state) => state.token);
     const queryClient = useQueryClient();
-
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false, message: "", type: "success"
-    });
+    const { notif, showNotif, closeNotif } = useNotif();
 
     const {
         register,
@@ -87,21 +84,21 @@ export default function AddKasbon() {
             return result;
         },
         onSuccess: () => {
-            setNotif({ show: true, message: "Kasbon berhasil diajukan!", type: "success" });
+            showNotif("Kasbon berhasil diajukan!", "success");
             // Hapus cache kasbonList agar KasbonIndex langsung mereload data baru
             queryClient.invalidateQueries({ queryKey: ['kasbonList'] });
             setTimeout(() => navigate('/dashboard/kasbon'), 1500);
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Gagal menghubungi server", type: "error" });
+            showNotif(error.message || "Gagal menghubungi server", "error");
         }
     });
 
     const onSubmit = (data: KasbonFormData) => {
         const cleanNominal = parseInt(data.nominal_pinjaman.replace(/[^0-9]/g, '')) || 0;
         if (cleanNominal <= 0) {
-            setNotif({ show: true, message: "Nominal pinjaman tidak valid", type: "error" });
+            showNotif("Nominal pinjaman tidak valid", "error");
             return;
         }
 
@@ -130,7 +127,7 @@ export default function AddKasbon() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (
         <div className="flex flex-col gap-6 w-full p-2 max-w-4xl mx-auto">
-            <Notif show={notif.show} message={notif.message} type={notif.type} onClose={() => setNotif(prev => ({ ...prev, show: false }))} />
+            <Notif show={notif.show} message={notif.message} type={notif.type} onClose={closeNotif} />
 
             <div data-tour="add-kasbon-form" className="bg-white rounded-xl shadow-md p-4 md:p-8 border border-gray-100">
                 <div className="flex justify-between items-center mb-6 mt-2">

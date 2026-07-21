@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Clock, AlertCircle, Banknote, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-
 import Button from '../../../components/common/Button';
 import { Input } from '../../../components/common/InputText';
 import { useAuthStore } from '../../../store/useAuthStore';
@@ -12,7 +11,7 @@ import Notif from '../../../components/common/Notif';
 import { apiFetch } from "../../../utils/apiFetch";
 import { formatMinutesToText } from "../../../utils/formatMinutes";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
+import { useNotif } from '../../../hooks/useNotif';
 
 // 1. SCHEMA ZOD 
 const schema = z.object({
@@ -46,11 +45,7 @@ export default function EditShift() {
     const navigate = useNavigate();
     const token = useAuthStore((state) => (state.token));
     const queryClient = useQueryClient();
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
 
     const { register,
         handleSubmit,
@@ -114,16 +109,16 @@ export default function EditShift() {
             return result;
         },
         onSuccess: () => {
-            setNotif({ show: true, message: "Perubahan konfigurasi Jadwal & Shift berhasil diperbarui", type: "success" });
+            showNotif("Perubahan konfigurasi Jadwal & Shift berhasil diperbarui", "success");
             queryClient.invalidateQueries({ queryKey: ['masterShiftList'] });
             queryClient.invalidateQueries({ queryKey: ['masterShift', id] });
             setTimeout(() => {
                 navigate("/dashboard/jadwal-shift", { state: { activeTab: 'shift' } });
-            }, 2000);
+            }, 1500);
         },
        
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Terjadi kesalahan jaringan.", type: "error" });
+            showErrorNotif(error);
         }
     });
 
@@ -397,7 +392,7 @@ export default function EditShift() {
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     );

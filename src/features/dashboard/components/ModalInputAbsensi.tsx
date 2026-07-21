@@ -8,10 +8,10 @@ import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 import { useAuthStore } from "../../../store/useAuthStore";
 import { apiFetch } from "../../../utils/apiFetch";
-import { getSafeErrorMessage } from "../../../utils/errorHandler";
 import Button from "../../../components/common/Button";
 import Notif from "../../../components/common/Notif";
 import { Input } from "../../../components/common/InputText";
+import { useNotif } from "../../../hooks/useNotif";
 
 const absenManualSchema = z.object({
     pegawai_id: z.string().min(1, "Pegawai wajib dipilih"),
@@ -31,11 +31,7 @@ export default function ModalInputAbsensi({ isOpen, onClose, onSuccess }: ModalI
     const token = useAuthStore((state) => state.token);
     const [pegawaiList, setPegawaiList] = useState<{ id: string; nama?: string; nama_lengkap?: string; pin_mesin?: string }[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
 
     const {
         register,
@@ -112,7 +108,7 @@ export default function ModalInputAbsensi({ isOpen, onClose, onSuccess }: ModalI
                 throw new Error(result.message || "Gagal menyimpan absensi manual");
             }
 
-            setNotif({ show: true, message: "Absensi manual berhasil disimpan!", type: "success" });
+            showNotif(`Absensi manual ${result.data?.nama_pegawai} berhasil disimpan`, "success");
 
             setTimeout(() => {
                 onClose();
@@ -121,7 +117,7 @@ export default function ModalInputAbsensi({ isOpen, onClose, onSuccess }: ModalI
 
         } catch (error) {
             console.error("Error Absen Manual:", error);
-            setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
+            showErrorNotif(error);
         } finally {
             setIsLoading(false);
         }
@@ -226,7 +222,7 @@ export default function ModalInputAbsensi({ isOpen, onClose, onSuccess }: ModalI
                     show={notif.show}
                     message={notif.message}
                     type={notif.type}
-                    onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                    onClose={closeNotif}
                 />
             </div>
         </div>

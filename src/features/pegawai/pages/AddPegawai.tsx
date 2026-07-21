@@ -1,14 +1,11 @@
 import { z } from "zod";
 import { zodResolver } from '@hookform/resolvers/zod';
-
 import { useForm, Controller } from 'react-hook-form'; 
 import Autocomplete from '@mui/material/Autocomplete'; 
 import TextField from '@mui/material/TextField'; 
-
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../../components/common/Button";
-
 import { TextArea } from "../../../components/common/TextArea";
 import InputSelect from "../../../components/common/InputSelect";
 import { Input } from "../../../components/common/InputText";
@@ -18,7 +15,7 @@ import Notif from "../../../components/common/Notif";
 import { apiFetch } from "../../../utils/apiFetch";
 import type { JabatanOption, KotaOption } from "../../../types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
+import { useNotif } from '../../../hooks/useNotif';
 
 
 // 2. REVISI SCHEMA ZOD 
@@ -67,11 +64,7 @@ export default function AddPegawai() {
     const token = useAuthStore((state) => state.token);
     const [jabatanList, setJabatanList] = useState<JabatanOption[]>([]);
     const [kotaList, _setKotaList] = useState<KotaOption[]>(MOCK_KOTA); 
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, closeNotif } = useNotif();
     const queryClient = useQueryClient();
 
     // Tambahkan watch dan setValue di sini
@@ -167,7 +160,6 @@ export default function AddPegawai() {
                 } else if (result.error) {
                     errorMsg = typeof result.error === 'string' ? result.error : JSON.stringify(result.error);
                 } else if (result.errors) {
-                    // Jika error berupa array/object (misal hasil validasi form dari backend)
                     errorMsg = Object.values(result.errors).flat().join(", ");
                 }
                 const lowerError = errorMsg.toLowerCase();
@@ -179,14 +171,14 @@ export default function AddPegawai() {
             return result.data;
         },
         onSuccess: (data) => {
-            setNotif({ show: true, message: `Sukses! Pegawai baru disimpan (ID: ${data.id})`, type: "success" });
+            showNotif(`Sukses! Pegawai baru disimpan (ID: ${data.id})`, "success" );
             queryClient.invalidateQueries({queryKey: ['pegawai']});
             setTimeout(() => {
                  navigate("/dashboard/data-pegawai");
             }, 2000)
         },
         onError: (error) => {
-             setNotif({ show: true, message: error.message, type: "error" });
+            showNotif(error.message, "error");
         }
 
     })
@@ -326,7 +318,7 @@ export default function AddPegawai() {
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     )

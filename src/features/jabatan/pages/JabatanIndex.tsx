@@ -1,25 +1,18 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Briefcase, Users, Loader2 } from "lucide-react";
 import Button from "../../../components/common/Button";
-
 import type { JabatanData, JabatanOption, PegawaiData } from "../../../types";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { apiFetch } from "../../../utils/apiFetch";
 import Notif from "../../../components/common/Notif";
 import TabelJabatan from "../components/TabelJabatan";
-
 import { useQuery } from "@tanstack/react-query";
+import { useNotif } from "../../../hooks/useNotif";
 
 export default function JabatanIndex() {
     const navigate = useNavigate();
     const token = useAuthStore((state) => state.token)
-
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showErrorNotif, closeNotif } = useNotif();
 
     const fetchJabatan = async (): Promise<JabatanData[]> => {
         try {
@@ -54,7 +47,7 @@ export default function JabatanIndex() {
             }
         } catch (error) {
             console.error("Error fetching jabatan:", error);
-            setNotif({ show: true, message: "Gagal memuat data jabatan. Pastikan backend berjalan.", type: "error" });
+            showErrorNotif(error);
             return [];
         }
     };
@@ -136,7 +129,7 @@ export default function JabatanIndex() {
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     );

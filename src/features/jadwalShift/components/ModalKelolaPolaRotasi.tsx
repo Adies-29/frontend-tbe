@@ -214,14 +214,14 @@ export const ModalKelolaPolaRotasi: React.FC<ModalKelolaPolaRotasiProps> = ({
 
           {errorMsg && (
             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs font-semibold">
-              <AlertCircle size={16} className="flex-shrink-0" />
+              <AlertCircle size={16} className="shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
             <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-xs font-semibold">
-              <CheckCircle size={16} className="flex-shrink-0" />
+              <CheckCircle size={16} className="shrink-0" />
               <span>{successMsg}</span>
             </div>
           )}

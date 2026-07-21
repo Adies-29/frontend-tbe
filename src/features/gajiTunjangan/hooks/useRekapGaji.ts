@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { apiFetch } from '../../../utils/apiFetch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNotif } from '../../../hooks/useNotif';
+
+
 
 // =========================================================================
 // HELPER FUNCTIONS
@@ -79,12 +82,7 @@ export function useRekapGaji() {
     const queryClient = useQueryClient();
     const [periode, setPeriode] = useState("minggu");
     const [filterValue, setFilterValue] = useState(getCurrentWeek());
-
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, closeNotif } = useNotif();
 
     // =========================================================================
     // GET / FETCH DATA REKAP GAJI
@@ -208,7 +206,7 @@ export function useRekapGaji() {
             }
         } catch (error) {
             console.error("Error fetchRekapGaji:", error);
-            setNotif({ show: true, message: "Terjadi kesalahan koneksi.", type: "error" });
+            showNotif("Terjadi kesalahan koneksi.","error" );
             throw error;
         }
     };
@@ -249,11 +247,12 @@ export function useRekapGaji() {
             return result;
         },
         onSuccess: (result) => {
-            setNotif({ show: true, message: `Sukses! ${result.message}`, type: "success" });
+            showNotif(`Sukses ${result.message}`,"success")
             queryClient.invalidateQueries({ queryKey: ['rekapGaji'] });
+            
         },
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Terjadi kesalahan koneksi saat menghitung gaji.", type: "error" });
+            showNotif(error.message || "Terjadi kesalahan koneksi saat menghitung gaji.","error");
         }
     });
 
@@ -274,11 +273,11 @@ export function useRekapGaji() {
             return result;
         },
         onSuccess: (result) => {
-            setNotif({ show: true, message: `Sukses! ${result.message}`, type: "success" });
+            showNotif(`Sukses ${result.message}`,"success")
             queryClient.invalidateQueries({ queryKey: ['rekapGaji'] }); // Refresh tabel otomatis
         },
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Terjadi kesalahan saat pelunasan gaji.", type: "error" });
+            showNotif(error.message || "Terjadi kesalahan saat pelunasan gaji.","error");
         }
     });
 
@@ -294,12 +293,12 @@ export function useRekapGaji() {
     // ==========================================================
     const handleGenerateGaji = () => {
         if (!filterValue) {
-            setNotif({ show: true, message: "Harap pilih periode di kalender terlebih dahulu sebelum men-generate gaji.", type: "error" });
+            showNotif("Harap pilih periode di kalender terlebih dahulu sebelum men-generate gaji.","error");
             return;
         }
 
         if (periode !== 'bulan' && periode !== 'minggu') {
-            setNotif({ show: true, message: "Sistem Generate Gaji hanya mendukung periode Mingguan dan Bulanan.", type: "error" });
+            showNotif("Sistem Generate Gaji hanya mendukung periode Mingguan dan Bulanan.","error");
             return;
         }
 
@@ -324,7 +323,7 @@ export function useRekapGaji() {
         } else if (periode === 'minggu') {
             const parsed = parseWeekValue(filterValue);
             if (!parsed) {
-                setNotif({ show: true, message: "Format minggu tidak valid.", type: "error" });
+                showNotif("Format minggu tidak valid.","error");
                 return;
             }
 
@@ -352,11 +351,7 @@ export function useRekapGaji() {
             (item: any) => item.status === 'Lunas' || item.status?.toLowerCase() === 'lunas'
         );
         if (dataLunas.length === 0) {
-            setNotif({
-                show: true,
-                message: "Tidak ada data gaji berstatus Lunas yang dapat dicetak!",
-                type: "error"
-            });
+            showNotif("Tidak ada data gaji berstatus Lunas yang dapat dicetak!","error");
             return;
         }
         window.print();
@@ -364,7 +359,7 @@ export function useRekapGaji() {
 
     const handleFilter = () => {
         if (!filterValue && periode !== "minggu") {
-            setNotif({ show: true, message: "Harap pilih tanggal/waktu terlebih dahulu!", type: "error" });
+            showNotif("Harap pilih tanggal/waktu terlebih dahulu!","error");
             return;
         }
         refetch();
@@ -379,8 +374,7 @@ export function useRekapGaji() {
         else setFilterValue("");
     };
 
-    const closeNotif = () => setNotif(prev => ({ ...prev, show: false }));
-
+    
     return {
         periode,
         filterValue,
@@ -391,12 +385,12 @@ export function useRekapGaji() {
         isPelunasanPending: pelunasanGajiMutation.isPending,
         summaryCards,
         notif,
+        closeNotif,
         isErrorRekap,
         handleGenerateGaji,
         handlePelunasanGaji, 
         handleCetakSemuaSlip,
         handleFilter,
         handlePeriodeChange,
-        closeNotif
     };
 }

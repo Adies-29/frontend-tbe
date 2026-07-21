@@ -1,19 +1,12 @@
-import { useState } from 'react';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { apiFetch } from '../../../utils/apiFetch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNotif } from '../../../hooks/useNotif';
 
 export function useBonusCustom() {
     const token = useAuthStore((state) => state.token);
     const queryClient = useQueryClient();
-
-    // State untuk Notifikasi
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
-    const closeNotif = () => setNotif(prev => ({ ...prev, show: false }));
+    const { notif, showNotif, closeNotif } = useNotif();
 
     // ==========================================
     // 1. FETCH DATA PEGAWAI (Untuk Dropdown Form)
@@ -93,12 +86,12 @@ export function useBonusCustom() {
             return await Promise.all(promises);
         },
         onSuccess: (results) => {
-            setNotif({ show: true, message: `Sukses menambahkan ${results.length} data bonus!`, type: "success" });
+            showNotif(`Sukses menambahkan ${results.length} data bonus!`, "success");
             queryClient.invalidateQueries({ queryKey: ['bonusCustomList'] });
             queryClient.invalidateQueries({ queryKey: ['rekapGaji'] });
         },
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Terjadi kesalahan.", type: "error" });
+            showNotif(error.message || "Terjadi kesalahan.", "error");
         }
     });
 
@@ -125,12 +118,12 @@ export function useBonusCustom() {
             return result;
         },
         onSuccess: () => {
-            setNotif({ show: true, message: "Sukses memperbarui data bonus!", type: "success" });
+            showNotif("Sukses memperbarui data bonus!", "success");
             queryClient.invalidateQueries({ queryKey: ['bonusCustomList'] });
             queryClient.invalidateQueries({ queryKey: ['rekapGaji'] });
         },
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Gagal memperbarui.", type: "error" });
+            showNotif(error.message || "Gagal memperbarui.", "error");
         }
     });
 
@@ -148,12 +141,12 @@ export function useBonusCustom() {
             return result;
         },
         onSuccess: (result) => {
-            setNotif({ show: true, message: `Sukses! ${result.message}`, type: "success" });
+            showNotif(`Sukses! ${result.message}`, "success");
             queryClient.invalidateQueries({ queryKey: ['bonusCustomList'] });
             queryClient.invalidateQueries({ queryKey: ['rekapGaji'] });
         },
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Gagal menghapus.", type: "error" });
+            showNotif(error.message || "Gagal menghapus.", "error");
         }
     });
 
@@ -178,12 +171,12 @@ export function useBonusCustom() {
             return await Promise.all(promises);
         },
         onSuccess: (results) => {
-            setNotif({ show: true, message: `Sukses menghapus ${results.length} data bonus!`, type: "success" });
+            showNotif(`Sukses menghapus ${results.length} data bonus!`, "success");
             queryClient.invalidateQueries({ queryKey: ['bonusCustomList'] });
             queryClient.invalidateQueries({ queryKey: ['rekapGaji'] });
         },
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Gagal menghapus bonus batch.", type: "error" });
+            showNotif(error.message || "Gagal menghapus bonus batch.", "error");
         }
     });
 

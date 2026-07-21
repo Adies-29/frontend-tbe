@@ -13,7 +13,7 @@ import Button from "../../../components/common/Button";
 import Notif from "../../../components/common/Notif";
 import backgroundImage from "../../../assets/bg_login.png";
 import tb from "../../../assets/tb.jpg";
-
+import { useNotif } from "../../../hooks/useNotif";
 
 // 1. Ubah email menjadi username agar sesuai dengan backend
 type FormData = {
@@ -31,11 +31,7 @@ export default function Login() {
     const navigate = useNavigate();
     const login = useAuthStore((state) => state.login);
     const [isLoading, setIsLoading] = useState(false); // State untuk loading button
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, closeNotif } = useNotif();
 
     const {
         register,
@@ -69,19 +65,19 @@ export default function Login() {
                 // Simpan token JWT ke Zustand (dan LocalStorage)
                 login(data.username, result.token, result.role || "admin");
 
-                setNotif({ show: true, message: "Login berhasil", type: "success" });
+                showNotif("Login berhasil", "success");
                 setTimeout(() => {
                     navigate("/dashboard");
                 }, 2000);
             } else {
                 // Tampilkan pesan error dari backend (misal: "Username salah")
                 const errorMessage = result.message || (response.status === 401 ? "Username atau password salah." : getSafeErrorMessage(response.status));
-                setNotif({ show: true, message: errorMessage, type: "error" });
+                showNotif(errorMessage, "error");
             }
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
-            setNotif({ show: true, message: "Terjadi kesalahan saat login. Silakan coba lagi.", type: "error" });
+            showNotif("Terjadi kesalahan saat login. Silakan coba lagi.", "error");
         } finally {
             setIsLoading(false);
         }
@@ -179,13 +175,8 @@ export default function Login() {
             show={notif.show}
             message={notif.message}
             type={notif.type}
-            onClose={() =>
-                setNotif({
-                    show: false,
-                    message: "",
-                    type: "success",
-                })
-            }
+            onClose={closeNotif}
         />
     </>
-);}
+);
+}

@@ -7,6 +7,7 @@ import Notif from '../../../components/common/Notif';
 import type { MasterTargetData } from '../../../types';
 import { apiFetch } from '../../../utils/apiFetch';
 import { useAuthStore } from '../../../store/useAuthStore';
+import { useNotif } from '../../../hooks/useNotif';
 
 interface FormMasterTargetProps {
     jabatanId: string;
@@ -32,15 +33,7 @@ export default function FormMasterTarget({ jabatanId, isAdding, setIsAdding }: F
     const [deleteId, setDeleteId] = useState<number | null>(null);
 
     // Notifications
-    const [notifState, setNotifState] = useState<{ show: boolean, message: string, type: 'success' | 'error' }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
-
-    const showNotif = (message: string, type: 'success' | 'error' = 'success') => {
-        setNotifState({ show: true, message, type });
-    };
+    const { notif, showNotif, closeNotif } = useNotif();
 
     const targetsQuery = useQuery({
         queryKey: ['masterTargetList', jabatanId],
@@ -332,10 +325,10 @@ export default function FormMasterTarget({ jabatanId, isAdding, setIsAdding }: F
             />
             
             <Notif 
-                show={notifState.show} 
-                message={notifState.message} 
-                type={notifState.type} 
-                onClose={() => setNotifState(prev => ({...prev, show: false}))} 
+                show={notif.show} 
+                message={notif.message} 
+                type={notif.type} 
+                onClose={closeNotif} 
             />
         </section>
     );

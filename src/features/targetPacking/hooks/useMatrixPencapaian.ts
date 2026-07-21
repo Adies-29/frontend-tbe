@@ -3,6 +3,7 @@ import { useAuthStore } from '../../../store/useAuthStore';
 import type { PencapaianTargetData } from '../../../types';
 import { apiFetch } from '../../../utils/apiFetch';
 import { useQuery } from '@tanstack/react-query';
+import { useNotif } from '../../../hooks/useNotif';
 
 
 export interface TargetDetail {
@@ -19,12 +20,12 @@ export interface PegawaiMatrix {
     nama: string;
     jabatan: string;
     departemen: string;
-    pencapaian: { 
+    pencapaian: {
         [tanggal: string]: {
             totalPack: number;
             totalNominal: number;
             details: TargetDetail[];
-        } 
+        }
     };
 }
 
@@ -46,7 +47,7 @@ export function useMatrixPencapaian() {
         const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
         return { year: date.getUTCFullYear(), week: weekNo };
     };
-    
+
     const weekData = getWeekNumber(now);
     const defaultWeekStr = `${weekData.year}-W${weekData.week.toString().padStart(2, '0')}`;
 
@@ -104,7 +105,7 @@ export function useMatrixPencapaian() {
         return { filterStartDate: firstDay, filterEndDate: lastDay };
     }, [periode, filterValue, firstDay, lastDay]);
 
-    const handleFilter = () => {};
+    const handleFilter = () => { };
 
     const handlePeriodeChange = (newPeriode: string) => {
         startTransition(() => {
@@ -131,21 +132,9 @@ export function useMatrixPencapaian() {
     // Modal State
     const [selectedCell, setSelectedCell] = useState<SelectedCell>({ pegawaiId: 0, pegawaiNama: "", tanggal: "" });
     const [isModalOpen, setIsModalOpen] = useState(false);
-    
+
     // Notification State
-    const [notifState, setNotifState] = useState<{ show: boolean, message: string, type: 'success' | 'error' }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
-
-    const showNotif = (message: string, type: 'success' | 'error' = 'success') => {
-        setNotifState({ show: true, message, type });
-    };
-
-    const closeNotif = () => {
-        setNotifState(prev => ({ ...prev, show: false }));
-    };
+    const { notif, showNotif, closeNotif } = useNotif();
 
     // --- ACTUAL API FETCHES WITH REACT QUERY ---
     const pegawaiQuery = useQuery({
@@ -228,7 +217,7 @@ export function useMatrixPencapaian() {
                 const curr = matrixMap[pegId].pencapaian[pencapaian.tanggal];
                 curr.totalPack += pencapaian.jumlah_pencapaian;
                 curr.totalNominal += pencapaian.nominal_total_riil;
-                
+
                 curr.details.push({
                     master_target_id: masterTargetId,
                     nama_target: pencapaian.master_target?.nama_target || "Unknown",
@@ -314,14 +303,14 @@ export function useMatrixPencapaian() {
         today: now, filterStartDate, filterEndDate,
         periode, setPeriode, filterValue, setFilterValue, handleFilter, handlePeriodeChange, handleResetFilters,
         // State Data
-        matrixKaryawan, filteredMatrixKaryawan, searchQuery, setSearchQuery, isLoading: pencapaianQuery.isLoading || pencapaianQuery.isFetching, errorMsg, 
+        matrixKaryawan, filteredMatrixKaryawan, searchQuery, setSearchQuery, isLoading: pencapaianQuery.isLoading || pencapaianQuery.isFetching, errorMsg,
         listPegawai, listMasterTargets,
         filterJabatan, setFilterJabatan, filterDepartemen, setFilterDepartemen, uniqueJabatanList, uniqueDepartemenList,
         // State Modal
         selectedCell, setSelectedCell,
         isModalOpen, setIsModalOpen,
         // Notif State
-        notifState, closeNotif, showNotif,
+        notif, closeNotif, showNotif,
         // Handlers
         isSaving, setIsSaving,
         handleCellClick

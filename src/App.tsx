@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 
 
-const Home = lazy(() => import('./pages/Home'))
+const Home = lazy(() => import('./features/landing/pages/Home'))
 const Login = lazy(() => import('./features/auth/pages/Login'))
 const DashboardIndex = lazy(() => import('./features/dashboard/pages/DashboardIndex'))
 

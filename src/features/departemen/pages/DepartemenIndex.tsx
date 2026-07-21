@@ -1,23 +1,18 @@
 import { useNavigate } from "react-router-dom";
 import Button from "../../../components/common/Button";
 import TabelDepartemen from "../../../features/departemen/components/TabelDepartemen";
-import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import type { DepartemenData, DepartemenOption, JabatanOption } from "../../../types";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { apiFetch } from "../../../utils/apiFetch";
 import Notif from "../../../components/common/Notif";
 import { useQuery } from "@tanstack/react-query";
+import { useNotif } from "../../../hooks/useNotif";
 
 export default function DepartemenIndex() {
     const navigate = useNavigate();
     const token = useAuthStore((state) => state.token)
-
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showErrorNotif, closeNotif } = useNotif();
 
     const fetchDepartemen = async (): Promise<DepartemenData[]> => {
         try {
@@ -50,7 +45,7 @@ export default function DepartemenIndex() {
             return [];
         } catch (error) {
             console.error("Error fetching data departemen & jabatan:", error);
-            setNotif({ show: true, message: "Gagal memuat data Departemen. Pastikan backend berjalan.", type: "error" });
+            showErrorNotif(error);
             throw error;
         }
     };
@@ -116,7 +111,7 @@ export default function DepartemenIndex() {
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     );

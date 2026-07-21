@@ -11,14 +11,12 @@ import {
 import { Pencil, Trash2, Save, X } from 'lucide-react';
 import { useAuthStore } from '../../../store/useAuthStore';
 import type { JabatanData, DepartemenOption } from '../../../types';
-
-import { getSafeErrorMessage } from '../../../utils/errorHandler';
 import { apiFetch } from "../../../utils/apiFetch";
-
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import Notif from '../../../components/common/Notif';
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useNotif } from '../../../hooks/useNotif';
 
 
 interface TabelJabatanProps {
@@ -33,11 +31,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
 
     const [showPopUp, setShowPopUp] = useState(false);
     const [hapusId, setHapusId] = useState<GridRowId | null>(null);
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
     const queryClient = useQueryClient();
 
     
@@ -117,11 +111,11 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
         },
         onSuccess: (deleteId) => {
             setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(deleteId)));
-            setNotif({show: true, message: "Data jabatan berhasil dihapus", type: "success"});
+            showNotif("Data jabatan berhasil dihapus", "success");
             queryClient.invalidateQueries({ queryKey: ['jabatan_pegawai']});
         },
         onError: (error) => {
-             setNotif({ show: true, message: error.message || "Gagal menghapus data. Periksa koneksi.", type: "error" });
+            showErrorNotif(error);
         },
         onSettled: () => {
             setShowPopUp(false);
@@ -156,12 +150,12 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
             return newRow;
         },
         onSuccess: () => {
-            setNotif({ show: true, message: "Data jabatan berhasil diperbarui!", type: "success" });
+            showNotif("Data jabatan berhasil diperbarui!", "success");
             queryClient.invalidateQueries({ queryKey: ['jabatan_pegawai'] });
 
         },
         onError: (error) =>{
-            setNotif({ show: true, message: error.message, type:"error"});
+            showErrorNotif(error);
         }
     })
 
@@ -187,7 +181,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
 
         } catch (error: unknown) {
             console.error("Error updating jabatan:", error);
-            setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
+            showErrorNotif(error);
             return Promise.reject(error);
         } 
     };
@@ -337,7 +331,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
 
