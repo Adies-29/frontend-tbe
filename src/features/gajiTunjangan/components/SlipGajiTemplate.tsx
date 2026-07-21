@@ -85,8 +85,9 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                 const rb = pegawai.rincian_bonus || {};
                 const rt = pegawai.informasi_tabungan || {};
                 
-                // Menarik array detail kasbon dari JSON
+                // Menarik array detail kasbon & potongan custom dari JSON
                 const detailKasbon = pegawai.rincian_potongan?.detail_kasbon || [];
+                const detailPotonganCustom = pegawai.rincian_potongan?.detail_potongan_custom || [];
                 // Cek apakah gaji ini sudah lunas
                 const isLunas = pegawai.status === 'Lunas';
 
@@ -268,6 +269,18 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                                             </td>
                                             <td className="py-0.5 px-2 text-red-600 align-middle">
                                                 -{formatAngka(bon.nominal_potongan)}
+                                            </td>
+                                        </tr>
+                                    ))}
+
+                                    {/* TAMPILKAN POTONGAN CUSTOM DINAMIS */}
+                                    {detailPotonganCustom.map((pot: any, i: number) => (
+                                        <tr key={'potongan-custom-'+i} className="border-b border-black">
+                                            <td className="py-0.5 pr-2 border-r border-black text-red-600 leading-tight">
+                                                Pot. Custom ({pot.keterangan})
+                                            </td>
+                                            <td className="py-0.5 px-2 text-red-600 align-middle">
+                                                -{formatAngka(pot.nominal)}
                                             </td>
                                         </tr>
                                     ))}

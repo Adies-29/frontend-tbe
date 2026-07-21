@@ -154,6 +154,22 @@ export default function ModalRincianGaji({
                                     </div>
                                 </div>
                             )}
+
+                            {/* DETAIL POTONGAN CUSTOM JIKA ADA */}
+                            {Array.isArray(data.detail_potongan_custom) && data.detail_potongan_custom.length > 0 && (
+                                <div className="mt-3">
+                                    <h5 className="text-xs font-bold text-gray-600 mb-2">Potongan Custom Tambahan:</h5>
+                                    <div className="border border-red-200 bg-red-50/50 rounded-lg p-2.5 space-y-2">
+                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                        {data.detail_potongan_custom.map((pc: any, idx: number) => (
+                                            <div key={idx} className="flex justify-between items-center text-xs">
+                                                <span className="text-gray-700 font-medium">{pc.keterangan || 'Potongan Custom'}</span>
+                                                <span className="font-bold text-red-600">-{formatRupiah(pc.nominal)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
