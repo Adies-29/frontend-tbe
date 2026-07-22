@@ -86,7 +86,7 @@ export default function ModalPreviewSlipGaji({
     const filteredEmployees = useMemo(() => {
         return data.filter(item => {
             const matchSearch = item.nama?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                item.jabatan?.toLowerCase().includes(searchQuery.toLowerCase());
+                item.jabatan?.toLowerCase().includes(searchQuery.toLowerCase());
             const itemStatus = item.status?.toLowerCase() === 'lunas' ? 'Lunas' : 'Pending';
             const matchStatus = statusFilter === 'Semua' || itemStatus === statusFilter;
             const matchTipe = tipeFilter === 'Semua' || item.tipe_penggajian === tipeFilter;
@@ -329,7 +329,7 @@ export default function ModalPreviewSlipGaji({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-5 animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl h-[92vh] max-h-[850px] overflow-hidden border border-gray-200 flex flex-col my-auto">
-                
+
                 {/* MODAL HEADER */}
                 <div className="bg-slate-900 text-white px-5 py-4 flex justify-between items-center shrink-0">
                     <div className="flex items-center gap-3">
@@ -356,10 +356,10 @@ export default function ModalPreviewSlipGaji({
 
                 {/* MODAL BODY (2 COLUMNS: LEFT FILTER/CONTROLS, RIGHT LIVE PREVIEW) */}
                 <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-0">
-                    
+
                     {/* LEFT PANEL: FILTERS & EMPLOYEE SELECTOR (4 COLUMNS) */}
                     <div className="lg:col-span-4 bg-slate-50 border-r border-slate-200 p-4 flex flex-col gap-3.5 h-full overflow-hidden min-h-0">
-                        
+
                         {/* SEARCH INPUT */}
                         <div className="relative shrink-0">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
@@ -433,9 +433,8 @@ export default function ModalPreviewSlipGaji({
                                     return (
                                         <label
                                             key={pId}
-                                            className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${
-                                                isChecked ? 'bg-emerald-50/80 border border-emerald-200/60' : 'hover:bg-slate-50'
-                                            }`}
+                                            className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${isChecked ? 'bg-emerald-50/80 border border-emerald-200/60' : 'hover:bg-slate-50'
+                                                }`}
                                         >
                                             <div className="flex items-center gap-2.5 min-w-0">
                                                 <input
@@ -452,11 +451,10 @@ export default function ModalPreviewSlipGaji({
 
                                             <div className="flex flex-col items-end shrink-0 pl-2">
                                                 <span className="text-xs font-extrabold text-slate-800">{formatRupiah(pegawai.total_upah)}</span>
-                                                <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${
-                                                    isLunas
-                                                        ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                                                        : 'bg-amber-100 text-amber-800 border-amber-200'
-                                                }`}>
+                                                <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${isLunas
+                                                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                                                    : 'bg-amber-100 text-amber-800 border-amber-200'
+                                                    }`}>
                                                     {isLunas ? 'Lunas' : 'Pending'}
                                                 </span>
                                             </div>
@@ -506,7 +504,7 @@ export default function ModalPreviewSlipGaji({
 
                     {/* RIGHT PANEL: LIVE A4 SLIP GAJI PREVIEW (8 COLUMNS) */}
                     <div className="lg:col-span-8 bg-slate-200/70 p-4 sm:p-6 flex flex-col h-full overflow-hidden min-h-0">
-                        
+
                         {/* PREVIEW TOOLBAR / PAGINATION */}
                         <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex justify-between items-center shrink-0 mb-4">
                             <div className="flex items-center gap-2">
@@ -566,7 +564,7 @@ export default function ModalPreviewSlipGaji({
 
                                         <div className="text-right">
                                             <h1 className="font-extrabold text-sm text-slate-900 uppercase tracking-wider">Perusahaan Krupuk Mie</h1>
-                                            <h2 className="font-black text-base text-emerald-700 tracking-widest">" KAS MUDA MUDI "</h2>
+                                            <h2 className="font-black text-base text-emerald-700 tracking-widest">" Tiga Berlian Official "</h2>
                                             <p className="mt-0.5 leading-tight text-[9px] text-slate-500 font-medium">
                                                 Jl. Raya Belakang Yonif 407 &middot; Ds. Harjosari Lor RT 28 RW 06<br />
                                                 Kec. Adiwerna Kab. Tegal &middot; Telp. 095743404555
@@ -691,7 +689,7 @@ export default function ModalPreviewSlipGaji({
                                                         </tr>
                                                     )}
                                                     {getGroupedBonusCustom(currentPreviewPegawai).map((bGroup, i) => (
-                                                        <tr key={'bg-'+i}>
+                                                        <tr key={'bg-' + i}>
                                                             <td className="py-0.5 text-emerald-700 font-semibold italic">Bonus ({bGroup.keterangan}):</td>
                                                             <td className="py-0.5 text-right font-extrabold text-emerald-600">+{formatRupiah(bGroup.total)}</td>
                                                         </tr>
@@ -705,13 +703,13 @@ export default function ModalPreviewSlipGaji({
                                                         </tr>
                                                     )}
                                                     {currentPreviewPegawai.rincian_potongan?.detail_kasbon?.map((bon: any, i: number) => (
-                                                        <tr key={'bon-'+i}>
+                                                        <tr key={'bon-' + i}>
                                                             <td className="py-0.5 text-rose-600 font-medium">Pot. Kasbon ({bon.keterangan}):</td>
                                                             <td className="py-0.5 text-right font-bold text-rose-600">-{formatRupiah(bon.nominal_potongan)}</td>
                                                         </tr>
                                                     ))}
                                                     {getGroupedPotonganCustom(currentPreviewPegawai).map((pGroup, i) => (
-                                                        <tr key={'pg-'+i}>
+                                                        <tr key={'pg-' + i}>
                                                             <td className="py-0.5 text-rose-700 font-semibold italic">Pot. Custom ({pGroup.keterangan}):</td>
                                                             <td className="py-0.5 text-right font-extrabold text-rose-600">-{formatRupiah(pGroup.total)}</td>
                                                         </tr>
@@ -768,7 +766,7 @@ export default function ModalPreviewSlipGaji({
 
                                 <div className="text-right">
                                     <h1 className="font-extrabold text-sm text-slate-900 uppercase tracking-wider">Perusahaan Krupuk Mie</h1>
-                                    <h2 className="font-black text-base text-emerald-700 tracking-widest">" KAS MUDA MUDI "</h2>
+                                    <h2 className="font-black text-base text-emerald-700 tracking-widest">" Tiga Berlian Official "</h2>
                                     <p className="mt-0.5 leading-tight text-[9px] text-slate-500 font-medium">
                                         Jl. Raya Belakang Yonif 407 &middot; Ds. Harjosari Lor RT 28 RW 06<br />
                                         Kec. Adiwerna Kab. Tegal &middot; Telp. 095743404555
@@ -891,7 +889,7 @@ export default function ModalPreviewSlipGaji({
                                                 </tr>
                                             )}
                                             {getGroupedBonusCustom(pegawai).map((bGroup, i) => (
-                                                <tr key={'bg-'+i}>
+                                                <tr key={'bg-' + i}>
                                                     <td className="py-0.5 text-emerald-700 font-semibold italic">Bonus ({bGroup.keterangan}):</td>
                                                     <td className="py-0.5 text-right font-extrabold text-emerald-600">+{formatRupiah(bGroup.total)}</td>
                                                 </tr>
@@ -904,13 +902,13 @@ export default function ModalPreviewSlipGaji({
                                                 </tr>
                                             )}
                                             {pegawai.rincian_potongan?.detail_kasbon?.map((bon: any, i: number) => (
-                                                <tr key={'bon-'+i}>
+                                                <tr key={'bon-' + i}>
                                                     <td className="py-0.5 text-rose-600 font-medium">Pot. Kasbon ({bon.keterangan}):</td>
                                                     <td className="py-0.5 text-right font-bold text-rose-600">-{formatRupiah(bon.nominal_potongan)}</td>
                                                 </tr>
                                             ))}
                                             {getGroupedPotonganCustom(pegawai).map((pGroup, i) => (
-                                                <tr key={'pg-'+i}>
+                                                <tr key={'pg-' + i}>
                                                     <td className="py-0.5 text-rose-700 font-semibold italic">Pot. Custom ({pGroup.keterangan}):</td>
                                                     <td className="py-0.5 text-right font-extrabold text-rose-600">-{formatRupiah(pGroup.total)}</td>
                                                 </tr>
