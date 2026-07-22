@@ -1,61 +1,21 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-import { Loader2, Search, RotateCcw, Plus, Target } from 'lucide-react';
+import { Loader2, Search, RotateCcw } from 'lucide-react';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { apiFetch } from '../../../utils/apiFetch';
 import Button from '../../../components/common/Button';
 import { useMatrixPencapaian } from '../hooks/useMatrixPencapaian';
 import Notif from '../../../components/common/Notif';
 import ModalInputPencapaian from './ModalInputPencapaian';
-import ModalInputPencapaianMassal from './ModalInputPencapaianMassal';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function TabelMatrixPencapaian() {
     const hookParams = useMatrixPencapaian();
     const token = useAuthStore(state => state.token);
     const queryClient = useQueryClient();
-
-    const [isModalMassalOpen, setIsModalMassalOpen] = useState(false);
-
-    const saveMassalMutation = useMutation({
-        mutationFn: async (payload: { pegawai_ids: number[], tanggals: string[], master_target_id: number, jumlah_pencapaian: number }) => {
-            const promises = [];
-            for (const id of payload.pegawai_ids) {
-                for (const tgl of payload.tanggals) {
-                    promises.push(
-                        (async () => {
-                            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/pencapaian`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`
-                                },
-                                body: JSON.stringify({
-                                    pegawai_id: id,
-                                    master_target_id: payload.master_target_id,
-                                    tanggal: tgl,
-                                    jumlah_pencapaian: payload.jumlah_pencapaian
-                                })
-                            });
-                            const data = await res.json();
-                            if (!res.ok) throw new Error(data.message || "Gagal menyimpan pencapaian target");
-                            return data;
-                        })()
-                    );
-                }
-            }
-            return Promise.all(promises);
-        },
-        onSuccess: () => {
-            hookParams.showNotif("Pencapaian massal berhasil dibuat!", "success");
-            queryClient.invalidateQueries({ queryKey: ['pencapaianList'] });
-            setIsModalMassalOpen(false);
-        },
-        onError: (err: any) => hookParams.showNotif(err.message, "error")
-    });
 
     const saveMutation = useMutation({
         mutationFn: async (payload: any) => {
@@ -276,17 +236,6 @@ export default function TabelMatrixPencapaian() {
                             </select>
                         </div>
                     </div>
-
-                    {/* Tombol Buat Target Massal */}
-                    <div className="w-full sm:w-auto shrink-0 self-stretch sm:self-auto flex items-center">
-                        <Button
-                            variant="primary"
-                            label="Buat Target Massal"
-                            icon={<Plus size={15} />}
-                            onClick={() => setIsModalMassalOpen(true)}
-                            className="w-full sm:w-auto font-bold text-xs"
-                        />
-                    </div>
                 </div>
             </div>
 
@@ -404,23 +353,6 @@ export default function TabelMatrixPencapaian() {
                     }}
                 />
             )}
-
-            <ModalInputPencapaianMassal
-                isOpen={isModalMassalOpen}
-                onClose={() => setIsModalMassalOpen(false)}
-                listPegawai={hookParams.listPegawai}
-                listMasterTargets={hookParams.listMasterTargets}
-                targetJabatanNames={hookParams.targetJabatanNames}
-                isSaving={saveMassalMutation.isPending}
-                onSubmit={async (data, callbacks) => {
-                    try {
-                        await saveMassalMutation.mutateAsync(data);
-                        callbacks.onSuccess();
-                    } catch (err) {
-                        console.error(err);
-                    }
-                }}
-            />
 
             <Notif
                 show={hookParams.notifState.show}
