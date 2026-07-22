@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import Button from "../../../components/common/Button";
 import TabelDepartemen from "../../../features/departemen/components/TabelDepartemen";
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Layers, Plus } from "lucide-react";
 import type { DepartemenData, DepartemenOption, JabatanOption } from "../../../types";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { apiFetch } from "../../../utils/apiFetch";
@@ -69,39 +69,45 @@ export default function DepartemenIndex() {
     const totalDepartemen = dataDepartemen.length;
 
     return (
-        <div className="flex flex-col gap-4 md:gap-6 w-full">
-
+        <div className="flex flex-col gap-6 w-full animate-in fade-in duration-300">
             {isError && (
                 <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm border border-red-300">
                     Gagal memuat data departemen. Pastikan koneksi internet & backend berjalan lancar.
                 </div>
             )}
 
+            {/* HEADER */}
+            <section data-tour="departemen-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                            <Layers size={28} className="text-teal-600" /> Data Departemen
+                        </h1>
+                        <p className="text-sm text-gray-500 mt-1">Kelola data divisi dan departemen operasional perusahaan.</p>
+                    </div>
+                    <div className="flex gap-3 items-center w-full md:w-auto">
+                        <Button
+                            variant="primary"
+                            label="Tambah Departemen"
+                            icon={<Plus size={16} />}
+                            onClick={() => navigate("/dashboard/departemen/tambah-departemen")}
+                            className="w-full md:w-auto font-bold text-xs shadow-md"
+                            data-tour="btn-add-dept"
+                        />
+                    </div>
+                </div>
+            </section>
+
+            {/* STATS */}
             <div data-tour="dept-stats" className="flex gap-4 w-full">
                 <div className="bg-white border border-gray-300 rounded-xl p-4 w-full md:w-48 shadow-sm flex flex-col items-center justify-center">
                     <span className="text-gray-800 text-sm md:text-base font-medium">Total Departemen</span>
                     <span className="text-4xl font-bold mt-2 text-black">{totalDepartemen}</span>
                 </div>
             </div>
-           
-            <section data-tour="departemen-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
 
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4">
-                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                        Data Departemen
-                    </h1>
-
-                    <div className="flex flex-col gap-3 w-full md:w-auto">
-                        <Button
-                            variant="primary"
-                            label="Tambah Departemen"
-                            onClick={() => navigate("/dashboard/departemen/tambah-departemen")}
-                            className="w-full md:w-auto"
-                            data-tour="btn-add-dept"
-                        />
-                    </div>
-                </div>
-
+            {/* TABLE SECTION */}
+            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center h-64 text-gray-400">
                         <Loader2 className="animate-spin mb-4 text-red-600" size={32} />
@@ -110,7 +116,6 @@ export default function DepartemenIndex() {
                 ) : (
                     <TabelDepartemen data={dataDepartemen} onRefresh={refetch} />
                 )}
-
             </section>
             <Notif
                 show={notif.show}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Briefcase, Users, Loader2 } from "lucide-react";
+import { Briefcase, Users, Loader2, Rows2, Plus } from "lucide-react";
 import Button from "../../../components/common/Button";
 
 import type { JabatanData, JabatanOption, PegawaiData } from "../../../types";
@@ -74,13 +74,35 @@ export default function JabatanIndex() {
 
 
     return (
-        <div className="flex flex-col gap-4 md:gap-6 w-full">
+        <div className="flex flex-col gap-6 w-full animate-in fade-in duration-300">
             {isError && (
                 <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm border border-red-300">
                     Gagal memuat data jabatan. Pastikan koneksi internet & backend berjalan lancar.
                 </div>
             )}
 
+            {/* HEADER */}
+            <section data-tour="jabatan-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                            <Rows2 size={28} className="text-amber-600" /> Data Jabatan
+                        </h1>
+                        <p className="text-sm text-gray-500 mt-1">Kelola data jabatan, hierarki, dan kapasitas pegawai di perusahaan.</p>
+                    </div>
+                    <div className="flex gap-3 items-center w-full md:w-auto">
+                        <Button
+                            label="Tambah Jabatan"
+                            icon={<Plus size={16} />}
+                            onClick={() => navigate("/dashboard/jabatan/tambah-jabatan")}
+                            className="w-full md:w-auto font-bold text-xs shadow-md"
+                            data-tour="btn-add-jabatan"
+                        />
+                    </div>
+                </div>
+            </section>
+
+            {/* STATS */}
             <div data-tour="jabatan-stats" className="flex flex-col md:flex-row gap-4 w-full">
                 {/* Kotak 1: Total Jabatan */}
                 <div className="bg-white border border-gray-300 rounded-xl p-4 w-full md:min-w-48 shadow-sm flex items-center gap-4">
@@ -105,24 +127,9 @@ export default function JabatanIndex() {
                 </div>
             </div>
 
-            {/* 2. BAGIAN TABEL DAN TOMBOL */}
-            <section data-tour="jabatan-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-100">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4">
-                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                        Data Jabatan
-                    </h1>
-
-                    <div className="flex flex-col gap-3 w-full md:w-auto">
-                        <Button
-                            label="Tambah Jabatan"
-                            onClick={() => navigate("/dashboard/jabatan/tambah-jabatan")}
-                            className="w-full md:w-auto"
-                            data-tour="btn-add-jabatan"
-                        />
-                    </div>
-                </div>
-
-                {/* 3. PEMANGGILAN KOMPONEN TABEL */}
+            {/* 2. BAGIAN TABEL */}
+            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-100">
+                {/* PEMANGGILAN KOMPONEN TABEL */}
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center h-64 text-gray-400">
                         <Loader2 className="animate-spin mb-4 text-red-600" size={32} />

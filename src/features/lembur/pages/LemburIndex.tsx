@@ -1,4 +1,4 @@
-import { Clock, Plus } from "lucide-react";
+import { Coffee, Plus } from "lucide-react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { apiFetch } from "../../../utils/apiFetch";
 import TabelLembur from "../../../features/lembur/components/TabelLembur";
@@ -44,29 +44,36 @@ export default function LemburIndex() {
     });
 
     return (
-        <div className="flex flex-col gap-4 md:gap-6 w-full">
-            <section data-tour="lembur-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-[400px]">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4">
-                    <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                        <Clock size={28} className="text-red-600" /> Data Perintah Lembur
-                    </h1>
+        <div className="flex flex-col gap-6 w-full animate-in fade-in duration-300">
+            {/* HEADER */}
+            <section data-tour="lembur-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                            <Coffee size={28} className="text-amber-600" /> Data Perintah Lembur
+                        </h1>
+                        <p className="text-sm text-gray-500 mt-1">Kelola data perintah kerja lembur pegawai.</p>
+                    </div>
                     <div className="w-full md:w-auto">
                         <Button
                             label="Tambah Lembur"
-                            icon={<Plus size={18} />}
+                            icon={<Plus size={16} />}
                             onClick={() => navigate('/dashboard/lembur/tambah-lembur')}
-                            className="w-full md:w-auto"
+                            className="w-full md:w-auto font-bold text-xs shadow-md"
                             data-tour="btn-add-lembur"
                         />
                     </div>
                 </div>
+            </section>
 
+            {/* TABLE SECTION */}
+            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-[400px]">
                 <div data-tour="lembur-table">
-                <TabelLembur 
-                    data={lemburQuery.data || []} 
-                    isLoading={lemburQuery.isLoading} 
-                    onRefresh={() => lemburQuery.refetch()} 
-                />
+                    <TabelLembur 
+                        data={lemburQuery.data || []} 
+                        isLoading={lemburQuery.isLoading} 
+                        onRefresh={() => lemburQuery.refetch()} 
+                    />
                 </div>
             </section>
         </div>

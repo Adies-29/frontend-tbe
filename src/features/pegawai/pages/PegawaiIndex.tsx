@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import Button from "../../../components/common/Button";
 import { useAuthStore } from "../../../store/useAuthStore";
-import { Loader2 } from "lucide-react";
+import { Loader2, Users, Plus } from "lucide-react";
 import TabelPegawai from "../../../features/pegawai/components/TabelPegawai";
 import type { PegawaiData } from "../../../types";
 import { getSafeErrorMessage } from "../../../utils/errorHandler";
@@ -54,8 +54,28 @@ export default function PegawaiIndex() {
     const totalPegawai = dataPegawai.length;
 
     return (
-        <div className="flex flex-col gap-4 md:gap-6 w-full">
-            
+        <div className="flex flex-col gap-6 w-full animate-in fade-in duration-300">
+            {/* HEADER */}
+            <section data-tour="pegawai-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                            <Users size={28} className="text-blue-600" /> Data Pegawai Aktif
+                        </h1>
+                        <p className="text-sm text-gray-500 mt-1">Kelola data profil, jabatan, dan informasi kontrak kerja seluruh pegawai.</p>
+                    </div>
+                    <div className="w-full md:w-auto">
+                        <Button 
+                            label="Tambah Pegawai" 
+                            icon={<Plus size={16} />}
+                            onClick={() => navigate("/dashboard/data-pegawai/tambah-pegawai")} 
+                            className="w-full md:w-auto font-bold text-xs shadow-md"
+                            data-tour="btn-add-pegawai"
+                        />
+                    </div>
+                </div>
+            </section>
+
             {/* 1. BAGIAN STATISTIK */}
             <div data-tour="pegawai-stats" className="flex gap-4 w-full">
                 <div className="bg-white border border-gray-300 rounded-xl p-4 w-full md:w-48 shadow-sm flex flex-col items-center justify-center">
@@ -64,26 +84,8 @@ export default function PegawaiIndex() {
                 </div>
             </div>
 
-            {/* 2. BAGIAN TABEL DAN TOMBOL */}
-            <section data-tour="pegawai-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
-                
-                {/* Header Tabel & Kumpulan Tombol */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4">
-                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                        Data Pegawai Aktif
-                    </h1>
-                    
-                    <div className="flex flex-col gap-3 w-full md:w-auto">
-                        <Button 
-                            label="Tambah Pegawai" 
-                            onClick={() => navigate("/dashboard/data-pegawai/tambah-pegawai")} 
-                            data-tour="btn-add-pegawai"
-                        />
-                    </div>
-                </div>
-                
-                {/* 3. PEMANGGILAN KOMPONEN TABEL */}
-        
+            {/* 2. BAGIAN TABEL */}
+            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
                 <div data-tour="pegawai-table" className="w-full">
                     {errorMsg ? (
                         <div className="bg-red-50 text-red-600 p-4 rounded-lg text-center font-medium text-sm md:text-base">
