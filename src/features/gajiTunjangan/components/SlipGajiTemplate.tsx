@@ -18,6 +18,82 @@ const chunkArray = <T,>(arr: T[], size: number): T[][] => {
     return chunked;
 };
 
+const getBonusCustomForHari = (hari: any, pegawai: any, idx: number) => {
+    if (Number(hari.bonus_custom) > 0) {
+        return Number(hari.bonus_custom);
+    }
+
+    const bonusList = pegawai.rincian_bonus?.detail_bonus_custom;
+    if (!Array.isArray(bonusList) || bonusList.length === 0) return 0;
+
+    const detailHarian = pegawai.detail_harian || [];
+    const hDate = (hari.hari_tanggal || '').toLowerCase();
+    const hTanggal = (hari.tanggal || '').toLowerCase();
+
+    const firstIdx = detailHarian.findIndex((h: any) => {
+        const dateStr = (h.hari_tanggal || '').toLowerCase();
+        const tglStr = (h.tanggal || '').toLowerCase();
+        return (dateStr && hDate && dateStr === hDate) || (tglStr && hTanggal && tglStr === hTanggal);
+    });
+
+    if (firstIdx !== -1 && idx !== firstIdx) {
+        return 0;
+    }
+
+    const matched = bonusList.filter((b: any) => {
+        const bTanggal = (b.tanggal || '').toLowerCase();
+        const bHari = (b.hari_tanggal || '').toLowerCase();
+        if (hTanggal && bTanggal && hTanggal === bTanggal) return true;
+        if (hDate && bHari && hDate === bHari) return true;
+        if (hDate && bTanggal && bTanggal.includes(hDate)) return true;
+        return false;
+    });
+
+    if (matched.length > 0) {
+        return matched.reduce((sum: number, b: any) => sum + (Number(b.nominal) || 0), 0);
+    }
+
+    return 0;
+};
+
+const getPotonganCustomForHari = (hari: any, pegawai: any, idx: number) => {
+    if (Number(hari.potongan_custom) > 0) {
+        return Number(hari.potongan_custom);
+    }
+
+    const potonganList = pegawai.rincian_potongan?.detail_potongan_custom;
+    if (!Array.isArray(potonganList) || potonganList.length === 0) return 0;
+
+    const detailHarian = pegawai.detail_harian || [];
+    const hDate = (hari.hari_tanggal || '').toLowerCase();
+    const hTanggal = (hari.tanggal || '').toLowerCase();
+
+    const firstIdx = detailHarian.findIndex((h: any) => {
+        const dateStr = (h.hari_tanggal || '').toLowerCase();
+        const tglStr = (h.tanggal || '').toLowerCase();
+        return (dateStr && hDate && dateStr === hDate) || (tglStr && hTanggal && tglStr === hTanggal);
+    });
+
+    if (firstIdx !== -1 && idx !== firstIdx) {
+        return 0;
+    }
+
+    const matched = potonganList.filter((p: any) => {
+        const pTanggal = (p.tanggal || '').toLowerCase();
+        const pHari = (p.hari_tanggal || '').toLowerCase();
+        if (hTanggal && pTanggal && hTanggal === pTanggal) return true;
+        if (hDate && pHari && hDate === pHari) return true;
+        if (hDate && pTanggal && pTanggal.includes(hDate)) return true;
+        return false;
+    });
+
+    if (matched.length > 0) {
+        return matched.reduce((sum: number, p: any) => sum + (Number(p.nominal) || 0), 0);
+    }
+
+    return 0;
+};
+
 export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplateProps) {
     const dataLunas = data?.filter(
         (pegawai) => pegawai.status === 'Lunas' || pegawai.status?.toLowerCase() === 'lunas'
@@ -142,27 +218,41 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                                         </thead>
                                         <tbody>
                                             {pegawai.detail_harian && pegawai.detail_harian.length > 0 ? (
-                                                pegawai.detail_harian.map((hari: DetailHarian, idx: number) => (
-                                                    <tr key={idx} className="border-b border-black">
-                                                        <td className="border-r border-black py-0.5">{idx + 1}</td>
-                                                        <td className="border-r border-black py-0.5 text-left px-1">{hari.hari_tanggal || '-'}</td>
+                                                pegawai.detail_harian.map((hari: DetailHarian, idx: number) => {
+                                                    const bCustom = getBonusCustomForHari(hari, pegawai, idx);
+                                                    const pCustom = getPotonganCustomForHari(hari, pegawai, idx);
+                                                    const upahPokok = isTarget 
+                                                        ? (Number(hari.harga_satuan) || 0) * (Number(hari.capaian) || 0)
+                                                        : (Number(hari.gaji_kehadiran) || 0);
+                                                    const totalHarianKalkulasi = upahPokok
+                                                        + (Number(hari.t_absensi) || 0)
+                                                        + (Number(hari.t_kerapian) || 0)
+                                                        + (Number(hari.lembur) || 0)
+                                                        + bCustom
+                                                        - pCustom;
 
-                                                        {isTarget ? (
-                                                            <>
-                                                                <td className="border-r border-black py-0.5 text-left px-1 uppercase truncate max-w-[80px]">{hari.nama_target || '-'}</td>
-                                                                <td className="border-r border-black py-0.5 text-right px-1">{formatAngka(hari.harga_satuan)}</td>
-                                                                <td className="border-r border-black py-0.5 font-bold">{formatAngka(hari.capaian)}</td>
-                                                            </>
-                                                        ) : (
-                                                            <td className="border-r border-black py-0.5 text-right px-1">{formatAngka(hari.gaji_kehadiran)}</td>
-                                                        )}
+                                                    return (
+                                                        <tr key={idx} className="border-b border-black">
+                                                            <td className="border-r border-black py-0.5">{idx + 1}</td>
+                                                            <td className="border-r border-black py-0.5 text-left px-1">{hari.hari_tanggal || '-'}</td>
 
-                                                        <td className="border-r border-black py-0.5 text-right px-1">{formatAngka(hari.t_absensi)}</td>
-                                                        <td className="border-r border-black py-0.5 text-right px-1">{formatAngka(hari.t_kerapian)}</td>
-                                                        <td className="border-r border-black py-0.5 text-right px-1">{formatAngka(hari.lembur)}</td>
-                                                        <td className="py-0.5 font-bold text-right px-1.5">{formatAngka(hari.total_harian)}</td>
-                                                    </tr>
-                                                ))
+                                                            {isTarget ? (
+                                                                <>
+                                                                    <td className="border-r border-black py-0.5 text-left px-1 uppercase truncate max-w-[80px]">{hari.nama_target || '-'}</td>
+                                                                    <td className="border-r border-black py-0.5 text-right px-1">{formatAngka(hari.harga_satuan)}</td>
+                                                                    <td className="border-r border-black py-0.5 font-bold">{formatAngka(hari.capaian)}</td>
+                                                                </>
+                                                            ) : (
+                                                                <td className="border-r border-black py-0.5 text-right px-1">{formatAngka(hari.gaji_kehadiran)}</td>
+                                                            )}
+
+                                                            <td className="border-r border-black py-0.5 text-right px-1">{formatAngka(hari.t_absensi)}</td>
+                                                            <td className="border-r border-black py-0.5 text-right px-1">{formatAngka(hari.t_kerapian)}</td>
+                                                            <td className="border-r border-black py-0.5 text-right px-1">{formatAngka(hari.lembur)}</td>
+                                                            <td className="py-0.5 font-bold text-right px-1.5">{formatAngka(totalHarianKalkulasi)}</td>
+                                                        </tr>
+                                                    );
+                                                })
                                             ) : (
                                                 <tr><td colSpan={isTarget ? 9 : 7} className="py-2 text-gray-500 italic">Data absen tidak tersedia</td></tr>
                                             )}

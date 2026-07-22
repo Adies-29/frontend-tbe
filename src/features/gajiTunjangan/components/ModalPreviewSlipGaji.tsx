@@ -619,7 +619,18 @@ export default function ModalPreviewSlipGaji({
                                                                 <td className="border-r border-slate-900 py-0.5 text-right px-1.5 font-bold text-rose-600 bg-rose-50/30">
                                                                     {pCustom > 0 ? `-${formatAngka(pCustom)}` : '-'}
                                                                 </td>
-                                                                <td className="py-0.5 font-extrabold text-right px-1.5 text-slate-900">{formatAngka(hari.total_harian)}</td>
+                                                                <td className="py-0.5 font-extrabold text-right px-1.5 text-slate-900">
+                                                                    {formatAngka(
+                                                                        (currentPreviewPegawai.tipe_penggajian === 'Target'
+                                                                            ? (Number(hari.harga_satuan) || 0) * (Number(hari.capaian) || 0)
+                                                                            : (Number(hari.gaji_kehadiran) || 0))
+                                                                        + (Number(hari.t_absensi) || 0)
+                                                                        + (Number(hari.t_kerapian) || 0)
+                                                                        + (Number(hari.lembur) || 0)
+                                                                        + bCustom
+                                                                        - pCustom
+                                                                    )}
+                                                                </td>
                                                             </tr>
                                                         );
                                                     })
@@ -821,7 +832,18 @@ export default function ModalPreviewSlipGaji({
                                                         <td className="border-r border-slate-900 py-0.2 text-right px-1 font-bold text-rose-600 bg-rose-50/30">
                                                             {pCustom > 0 ? `-${formatAngka(pCustom)}` : '-'}
                                                         </td>
-                                                        <td className="py-0.2 font-extrabold text-right px-1.5 text-slate-900">{formatAngka(hari.total_harian)}</td>
+                                                        <td className="py-0.2 font-extrabold text-right px-1.5 text-slate-900">
+                                                            {formatAngka(
+                                                                (pegawai.tipe_penggajian === 'Target'
+                                                                    ? (Number(hari.harga_satuan) || 0) * (Number(hari.capaian) || 0)
+                                                                    : (Number(hari.gaji_kehadiran) || 0))
+                                                                + (Number(hari.t_absensi) || 0)
+                                                                + (Number(hari.t_kerapian) || 0)
+                                                                + (Number(hari.lembur) || 0)
+                                                                + bCustom
+                                                                - pCustom
+                                                            )}
+                                                        </td>
                                                     </tr>
                                                 );
                                             })
