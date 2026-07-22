@@ -38,6 +38,7 @@ const AturGajiJabatan = lazy(() => import('./features/gajiTunjangan/pages/AturGa
 const DetailPegawai = lazy(() => import('./features/pegawai/pages/DetailPegawai'))
 
 const BonusCustomIndex = lazy(() => import('./features/bonusCustom/pages/BonusCustomIndex'))
+const PotonganCustomIndex = lazy(() => import('./features/potonganCustom/pages/PotonganCustomIndex'))
 
 
 function PageLoader() {
@@ -105,6 +106,7 @@ function App() {
                   <Route path="/dashboard/kasbon/tambah" element={<AddKasbon />} />
 
                   <Route path="/dashboard/bonus-custom" element={<BonusCustomIndex />} />
+                  <Route path="/dashboard/potongan-custom" element={<PotonganCustomIndex />} />
                 </Route>
 
                 {/* RUTE ADMIN, HRD, DAN MANDOR */}

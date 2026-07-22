@@ -1,7 +1,7 @@
 
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
-import { CalendarDays, ChevronLeft, Coffee, DollarSign, LaptopMinimal, Layers, LogOut, Menu, Rows2, Users, X, ListCheck, Wallet, Gift } from "lucide-react";
+import { CalendarDays, ChevronLeft, Coffee, DollarSign, LaptopMinimal, Layers, LogOut,  Menu,  Rows2,  Users, X, ListCheck, Wallet, Gift, Scissors } from "lucide-react";
 import logoTbe from "../../assets/r3a.png";
 
 interface SidebarProps {
@@ -41,6 +41,7 @@ export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: Sidebar
         { title: "Kasbon", path: "/dashboard/kasbon", icon: Wallet },
         { title: "Target", path: "/dashboard/target-packing", icon: ListCheck },
         { title: "Bonus Custom", path: "/dashboard/bonus-custom", icon: Gift },
+        { title: "Potongan Custom", path: "/dashboard/potongan-custom", icon: Scissors },
     ];
 
     return (

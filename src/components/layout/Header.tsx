@@ -76,10 +76,11 @@ export default function Header() {
         "/dashboard/kasbon": { title: "Kasbon", showDate: false },
         "/dashboard/kasbon/tambah": { title: "Kasbon", showDate: false },
 
-
         "/dashboard/target-packing": { title: "Target", showDate: false },
 
         "/dashboard/bonus-custom": { title: "Bonus", showDate: false },
+        
+        "/dashboard/potongan-custom":{ title: "Potongan", showDate: false },
     };
 
     // 3. DIUBAH: Cari pengaturan berdasarkan URL menggunakan matchPath
