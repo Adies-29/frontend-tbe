@@ -347,19 +347,18 @@ export function useRekapGaji() {
         });
     };
 
+    const [isModalPreviewOpen, setIsModalPreviewOpen] = useState(false);
+
     const handleCetakSemuaSlip = () => {
-        const dataLunas = rekapGajiData.filter(
-            (item: any) => item.status === 'Lunas' || item.status?.toLowerCase() === 'lunas'
-        );
-        if (dataLunas.length === 0) {
+        if (!rekapGajiData || rekapGajiData.length === 0) {
             setNotif({
                 show: true,
-                message: "Tidak ada data gaji berstatus Lunas yang dapat dicetak!",
+                message: "Tidak ada data rekap gaji yang dapat dicetak/dipratinjau!",
                 type: "error"
             });
             return;
         }
-        window.print();
+        setIsModalPreviewOpen(true);
     };
 
     const handleFilter = () => {
@@ -389,6 +388,8 @@ export function useRekapGaji() {
         isLoadingRekap,
         isGenerating: generateGajiMutation.isPending,
         isPelunasanPending: pelunasanGajiMutation.isPending,
+        isModalPreviewOpen,
+        setIsModalPreviewOpen,
         summaryCards,
         notif,
         isErrorRekap,
