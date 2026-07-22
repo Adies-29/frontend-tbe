@@ -1,24 +1,20 @@
 import { z } from "zod";
 import { zodResolver } from '@hookform/resolvers/zod';
-
-import { useForm, Controller } from 'react-hook-form'; 
-import Autocomplete from '@mui/material/Autocomplete'; 
-import TextField from '@mui/material/TextField'; 
-
+import { useForm, Controller } from 'react-hook-form';
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../../components/common/Button";
-
 import { TextArea } from "../../../components/common/TextArea";
 import InputSelect from "../../../components/common/InputSelect";
 import { Input } from "../../../components/common/InputText";
 import { useEffect, useState } from "react";
-import { useAuthStore } from "../../../store/useAuthStore";
 import Notif from "../../../components/common/Notif";
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import type { JabatanOption, KotaOption } from "../../../types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
+import { useNotif } from '../../../hooks/useNotif';
 
 
 // 2. REVISI SCHEMA ZOD 
@@ -64,14 +60,9 @@ const MOCK_KOTA = [
 
 export default function AddPegawai() {
     const navigate = useNavigate();
-    const token = useAuthStore((state) => state.token);
     const [jabatanList, setJabatanList] = useState<JabatanOption[]>([]);
-    const [kotaList, _setKotaList] = useState<KotaOption[]>(MOCK_KOTA); 
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const [kotaList, _setKotaList] = useState<KotaOption[]>(MOCK_KOTA);
+    const { notif, showNotif, closeNotif } = useNotif();
     const queryClient = useQueryClient();
 
     // Tambahkan watch dan setValue di sini
@@ -85,25 +76,21 @@ export default function AddPegawai() {
     } = useForm<FormData>({
         resolver: zodResolver(schema)
     });
-    
-    
-        const { data: masterData } = useQuery({
+
+
+    const { data: masterData } = useQuery({
         queryKey: ['masterDataPegawai'],
         queryFn: async () => {
-            const [resDept, resJabatan, resShift] = await Promise.all([
-                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, { headers: { "Authorization": `Bearer ${token}` } }),
-                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Authorization": `Bearer ${token}` } }),
-                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, { headers: { "Authorization": `Bearer ${token}` } }),
+            const [dept, jab, shift] = await Promise.all([
+                apiFetchJson('/api/v1/departemen'),
+                apiFetchJson('/api/v1/jabatan'),
+                apiFetchJson('/api/v1/shifts'),
             ]);
-            
-            const dept = await resDept.json();
-            const jab = await resJabatan.json();
-            const shift = await resShift.json();
-            
+
             return {
-                departemen: dept.success ? dept.data : [],
-                jabatan: jab.success ? jab.data : [],
-                shift: shift.success ? shift.data : []
+                departemen: dept.data || [],
+                jabatan: jab.data || [],
+                shift: shift.data || []
             };
         }
     });
@@ -113,32 +100,31 @@ export default function AddPegawai() {
     const allJabatan = masterData?.jabatan || [];
     const shiftList = masterData?.shift || [];
 
-    
+
     const selectedDept = watch("departemen"); // Menangkap ID departemen yang dipilih
 
     useEffect(() => {
-        if(selectedDept) {
+        if (selectedDept) {
 
             const pilih = allJabatan.filter((j: any) => {
-               
 
-                return j.departemen_id?.toString() === selectedDept.toString()      
+
+                return j.departemen_id?.toString() === selectedDept.toString()
             });
 
             setJabatanList(pilih);
             setValue("jabatan_id", "");
-        } else{
+        } else {
             setJabatanList([]);
         }
     }, [selectedDept, allJabatan, setValue]);
 
     const addPegawaiMutation = useMutation({
-        mutationFn: async(data: FormData) => {
-            const respons = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
+        mutationFn: async (data: FormData) => {
+            const result = await apiFetchJson('/api/v1/pegawai', {
                 method: "POST",
                 headers: {
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     nik: data.nik || null,
@@ -154,56 +140,36 @@ export default function AddPegawai() {
                     pin_mesin: data.pin_mesin || null,
                     jabatan_id: parseInt(data.jabatan_id),
                     default_shift_id: parseInt(data.default_shift_id),
-                }),
+                })
             });
-            const result = await respons.json();
-
-            if(!respons.ok || !result.success){
-
-                let errorMsg = "Gagal menyimpan ke database. Coba lagi.";
-                
-                if (result.message) {
-                    errorMsg = result.message;
-                } else if (result.error) {
-                    errorMsg = typeof result.error === 'string' ? result.error : JSON.stringify(result.error);
-                } else if (result.errors) {
-                    // Jika error berupa array/object (misal hasil validasi form dari backend)
-                    errorMsg = Object.values(result.errors).flat().join(", ");
-                }
-                const lowerError = errorMsg.toLowerCase();
-                if (lowerError.includes("duplicate") || lowerError.includes("sudah terdaftar") || lowerError.includes("already exists") || lowerError.includes("unique")) {
-                    errorMsg = `Data sudah digunakan! Pastikan NIK, No BPJS, No HP, Email, atau PIN Mesin tidak sama dengan pegawai lain. (Server: ${errorMsg})`;
-                }
-                throw new Error(errorMsg);
-            }
-            return result.data;
+            return result;
         },
-        onSuccess: (data) => {
-            setNotif({ show: true, message: `Sukses! Pegawai baru disimpan (ID: ${data.id})`, type: "success" });
-            queryClient.invalidateQueries({queryKey: ['pegawai']});
+        onSuccess: (res: any) => {
+            const newId = res?.data?.id ?? res?.id;
+            showNotif(`Sukses! Pegawai baru disimpan${newId ? ` (ID: ${newId})` : ''}`, "success");
+            queryClient.invalidateQueries({ queryKey: ['pegawai'] });
             setTimeout(() => {
-                 navigate("/dashboard/data-pegawai");
-            }, 2000)
+                navigate("/dashboard/data-pegawai");
+            }, 2000);
         },
-        onError: (error) => {
-             setNotif({ show: true, message: error.message, type: "error" });
+        onError: (error: any) => {
+            showNotif(error.message, "error");
         }
-
     })
 
-    
+
     const onSubmit = (data: FormData) => {
-       addPegawaiMutation.mutate(data);
+        addPegawaiMutation.mutate(data);
     }
 
-    
+
     return (
-        
-        <div className="p-3 md:p-6 w-full"> 
-            
-        
+
+        <div className="p-3 md:p-6 w-full">
+
+
             <div data-tour="add-pegawai-form" className="bg-white rounded-xl shadow-md p-4 md:p-8 border border-gray-100">
-                
+
                 {/* --- HEADER --- */}
                 <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                     <h2 className="text-xl md:text-2xl font-bold text-gray-800">
@@ -211,14 +177,14 @@ export default function AddPegawai() {
                     </h2>
                     <Button
                         variant="back"
-                        icon={<ArrowLeft size={20} />} 
+                        icon={<ArrowLeft size={20} />}
                         onClick={() => navigate(-1)}
                         label="Kembali"
                     />
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-                    
+
                     {/* --- SEKSI 1: INFORMASI PRIBADI --- */}
                     <div data-tour="add-pegawai-pribadi">
                         <h3 className="text-base md:text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4 md:mb-5">
@@ -227,10 +193,10 @@ export default function AddPegawai() {
                         {/* Jarak antar kotak (gap) dibuat lebih rapat di HP (gap-4) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                             <Input label="NIK Pegawai" nama="nik" register={register} error={errors.nik?.message} />
-                            <Input label="No BPJS Pegawai" nama="bpjs" register={register} error={errors.bpjs?.message}  />
+                            <Input label="No BPJS Pegawai" nama="bpjs" register={register} error={errors.bpjs?.message} />
                             <Input label="Nama Pegawai" nama="nama" register={register} error={errors.nama?.message} />
                             <InputSelect label="Jenis Kelamin" nama="jenis_kelamin" register={register} error={errors.jenis_kelamin?.message} options={[{ value: "Laki-laki", label: "Laki-laki" }, { value: "Perempuan", label: "Perempuan" }]} />
-                            
+
                             {/* Autocomplete Tempat Lahir */}
                             <div className="flex flex-col w-full">
                                 <label className="mb-1 text-sm font-medium text-gray-700">
@@ -256,11 +222,11 @@ export default function AddPegawai() {
                                                     size="small"
                                                     sx={{
                                                         '& .MuiOutlinedInput-root': {
-                                                            borderRadius: '0.5rem', 
+                                                            borderRadius: '0.5rem',
                                                             backgroundColor: 'white',
                                                             '&.Mui-focused fieldset': {
-                                                                borderColor: '#3b82f6', 
-                                                                borderWidth: '1px', 
+                                                                borderColor: '#3b82f6',
+                                                                borderWidth: '1px',
                                                             },
                                                         }
                                                     }}
@@ -303,21 +269,21 @@ export default function AddPegawai() {
 
                     {/* --- TOMBOL SUBMIT --- */}
                     <div data-tour="add-pegawai-submit" className="flex justify-end gap-3 mt-8 pt-5 border-t border-gray-100">
-                        <Button 
+                        <Button
                             variant="success"
-                            type="submit" 
-                            label={addPegawaiMutation.isPending ? "Menyimpan..." : "Simpan"} 
-                            disabled={addPegawaiMutation.isPending} 
-                            icon={addPegawaiMutation.isPending ? <Loader2 className="animate-spin" size={20} /> : undefined} 
+                            type="submit"
+                            label={addPegawaiMutation.isPending ? "Menyimpan..." : "Simpan"}
+                            disabled={addPegawaiMutation.isPending}
+                            icon={addPegawaiMutation.isPending ? <Loader2 className="animate-spin" size={20} /> : undefined}
                         />
-                        <Button 
-                            type="button" 
-                            variant="danger" 
-                            label="Batal" 
-                            onClick={() => navigate(-1)} 
-                            disabled={addPegawaiMutation.isPending} 
+                        <Button
+                            type="button"
+                            variant="danger"
+                            label="Batal"
+                            onClick={() => navigate(-1)}
+                            disabled={addPegawaiMutation.isPending}
                         />
-                        
+
                     </div>
 
                 </form>
@@ -326,7 +292,7 @@ export default function AddPegawai() {
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     )

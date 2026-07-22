@@ -3,6 +3,7 @@ import { X, User, Lock } from 'lucide-react';
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/InputText';
 import type { PotonganCustomData } from './TabelPotonganCustom';
+import { formatRupiah } from '../../../utils/formatCurrency';
 
 interface ModalEditPotonganCustomProps {
     isOpen: boolean;
@@ -100,7 +101,7 @@ export default function ModalEditPotonganCustom({
                     
                     {/* KARYAWAN PENERIMA (READ-ONLY CARD) */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1 flex items-center justify-between">
+                        <label className="block text-xs font-bold text-gray-700 mb-1 items-center justify-between">
                             <span>Pegawai Penerima Potongan</span>
                             <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
                                 <Lock size={10} /> Tidak dapat diubah saat edit
@@ -154,7 +155,7 @@ export default function ModalEditPotonganCustom({
                         helperText={
                             nominal && Number(nominal) > 0 ? (
                                 <span className="text-xs font-extrabold text-red-600 animate-in fade-in duration-200">
-                                    Preview: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(nominal))}
+                                    {formatRupiah(nominal)}
                                 </span>
                             ) : undefined
                         }

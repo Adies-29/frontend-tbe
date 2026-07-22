@@ -3,6 +3,7 @@ import { X, PlusCircle, Search, Scissors, Calendar } from 'lucide-react';
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/InputText';
 import CustomDateRangePickerModal from '../../jadwalShift/components/CustomDateRangePickerModal';
+import { formatRupiah } from '../../../utils/formatCurrency';
 
 interface ModalTambahPotonganCustomProps {
     isOpen: boolean;
@@ -243,7 +244,7 @@ export default function ModalTambahPotonganCustom({
                                 helperText={
                                     nominal && Number(nominal) > 0 ? (
                                         <span className="text-xs font-extrabold text-red-600 animate-in fade-in duration-200">
-                                            Preview: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(nominal))}
+                                            {formatRupiah(nominal)}
                                         </span>
                                     ) : undefined
                                 }
@@ -369,7 +370,7 @@ export default function ModalTambahPotonganCustom({
                             />
                             <Button
                                 label={isCreating ? "Menyimpan..." : "Simpan Potongan"}
-                                variant="primary"
+                                variant="danger"
                                 type="submit"
                                 icon={<PlusCircle size={16} />}
                                 disabled={isCreating || selectedPegawaiIds.length === 0 || !keterangan || !nominal}

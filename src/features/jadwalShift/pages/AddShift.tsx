@@ -6,14 +6,12 @@ import { z } from 'zod';
 
 import Button from '../../../components/common/Button';
 import { Input } from '../../../components/common/InputText';
-import { useAuthStore } from '../../../store/useAuthStore';
-import { useState } from 'react';
 import Notif from '../../../components/common/Notif';
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import { formatMinutesToText } from "../../../utils/formatMinutes";
-
+import { formatRupiah } from "../../../utils/formatCurrency";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-
+import { useNotif } from '../../../hooks/useNotif';
 
 // 1. SCHEMA ZOD - Disesuaikan dengan penamaan presisi dari Database
 const schema = z.object({
@@ -44,12 +42,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function AddShift() {
     const navigate = useNavigate();
-    const token = useAuthStore((state) => state.token);
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
 
     const queryClient = useQueryClient();
 
@@ -61,6 +54,9 @@ export default function AddShift() {
     } = useForm<FormData>({
         resolver: zodResolver(schema) as any ,
         defaultValues: {
+            kode_shift: "",
+            jam_masuk: "",
+            jam_pulang: "",
             lintas_hari: false,
             batas_toleransi_menit: 0,
             batas_maksimal_lembur_menit: 0,
@@ -78,33 +74,27 @@ export default function AddShift() {
 
     const addShiftMutation = useMutation({
         mutationFn: async (finallyPayload: any) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, {
+            const result = await apiFetchJson('/api/v1/shifts', {
                 method: "POST",
                 headers: {
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify(finallyPayload)
             });
-
-            const result = await response.json();
-
-            if(!response.ok || !result.success) {
-                throw new Error(result.message || "Gagal menyimpan data shift");
-            }
             return result;
         },
-        onSuccess: () => {
-            setNotif({ show: true, message: "Shift berhasil disimpan!", type: "success"});
-            queryClient.invalidateQueries({ queryKey: [] })
+        onSuccess: (result) => {
+            const kode = result.data?.kode_shift || "";
+            showNotif(`Shift ${kode} berhasil disimpan!`.trim(), "success");
+            queryClient.invalidateQueries({ queryKey: ['shifts'] });
             setTimeout(() => {
-                navigate("/dashboard/jadwal-shift", {state: {activeTab: 'shift'}});
-            }, 2000);
+                navigate("/dashboard/jadwal-shift", { state: { activeTab: 'shift' } });
+            }, 1500);
         },
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Gagal menyimpan data shift", type: "error" });
+            showErrorNotif(error);
         }
-    })
+    });
 
 
     const onSubmit = async (data: FormData) => {
@@ -305,7 +295,9 @@ export default function AddShift() {
                                 register={register}
                                 error={errors.denda_terlambat_per_menit?.message}
                                 disabled={!watch("is_potong_gaji_terlambat")}
-
+                                helperText={watch("is_potong_gaji_terlambat") && watch("denda_terlambat_per_menit") > 0 ? (
+                                    <span className="text-xs text-emerald-600 font-medium italic">{formatRupiah(watch("denda_terlambat_per_menit"))} {watch("tipe_denda") === "tetap" ? "(Flat)" : "/ Menit"}</span>
+                                ) : null}
                             />
 
                         </div>
@@ -349,6 +341,9 @@ export default function AddShift() {
                                 register={register}
                                 error={errors.denda_pulang_awal_per_menit?.message}
                                 disabled={!watch("is_potong_gaji_pulang_awal")}
+                                helperText={watch("is_potong_gaji_pulang_awal") && watch("denda_pulang_awal_per_menit") > 0 ? (
+                                    <span className="text-xs text-emerald-600 font-medium italic">{formatRupiah(watch("denda_pulang_awal_per_menit"))} {watch("tipe_denda") === "tetap" ? "(Flat)" : "/ Menit"}</span>
+                                ) : null}
                             />
                         </div>
 
@@ -375,7 +370,7 @@ export default function AddShift() {
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     );

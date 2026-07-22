@@ -4,7 +4,10 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { readFileSync } from 'fs'
 
-const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'))
+const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'));
+const now = new Date();
+const formattedDate = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
+const autoVersion = `${packageJson.version} (${formattedDate})`;
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -33,6 +36,6 @@ export default defineConfig({
     })
   ],
   define: {
-    'import.meta.env.PACKAGE_VERSION': JSON.stringify(packageJson.version)
+    'import.meta.env.PACKAGE_VERSION': JSON.stringify(autoVersion)
   }
 })

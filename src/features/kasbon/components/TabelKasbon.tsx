@@ -4,6 +4,7 @@ import { Trash2, Banknote } from "lucide-react";
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import Notif from '../../../components/common/Notif';
+import { useNotif } from '../../../hooks/useNotif';
 
 interface TabelKasbonProps {
     data: any[];
@@ -16,11 +17,7 @@ interface TabelKasbonProps {
 export default function TabelKasbon({ data, isLoading = false, onDelete, onStatusChange, onBayar }: TabelKasbonProps) {
     const [showPopUp, setShowPopUp] = useState(false);
     const [hapusId, setHapusId] = useState<GridRowId | null>(null);
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, closeNotif } = useNotif();
 
     const handleDeleteClick = (id: GridRowId) => () => {
         setHapusId(id);
@@ -30,7 +27,7 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
     const confirmDelete = () => {
         if (hapusId) {
             onDelete(Number(hapusId));
-            setNotif({ show: true, message: "Data kasbon berhasil dihapus", type: "success" });
+            showNotif("Data kasbon berhasil dihapus", "success");
         }
         setShowPopUp(false);
         setHapusId(null);
@@ -229,7 +226,7 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     );

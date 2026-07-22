@@ -1,34 +1,20 @@
-import { useState } from 'react';
-import { useAuthStore } from '../../../store/useAuthStore';
-import { apiFetch } from '../../../utils/apiFetch';
+import { apiFetchJson } from '../../../utils/apiFetch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNotif } from '../../../hooks/useNotif';
 
 export function usePotonganCustom() {
-    const token = useAuthStore((state) => state.token);
     const queryClient = useQueryClient();
-
-    // State untuk Notifikasi
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
-    const closeNotif = () => setNotif(prev => ({ ...prev, show: false }));
+    const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
 
     // ==========================================
     // 1. FETCH DATA PEGAWAI (Untuk Dropdown Form)
     // ==========================================
     const { data: listPegawai = [], isLoading: isLoadingPegawai } = useQuery({
-        queryKey: ['pegawaiListPotongan'],
+        queryKey: ['pegawai'],
         queryFn: async () => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error("Gagal mengambil data pegawai");
+            const result = await apiFetchJson('/api/v1/pegawai');
             return result.data || [];
-        },
-        enabled: !!token
+        }
     });
 
     // ==========================================
@@ -37,11 +23,7 @@ export function usePotonganCustom() {
     const { data: listPotongan = [], isLoading: isLoadingPotongan } = useQuery({
         queryKey: ['potonganCustomList'],
         queryFn: async () => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/potongan-custom`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error("Gagal mengambil data potongan custom");
+            const result = await apiFetchJson('/api/v1/potongan-custom');
             
             // Flatten data
             return (result.data || []).map((item: any) => ({
@@ -52,8 +34,7 @@ export function usePotonganCustom() {
                 keterangan: item.keterangan,
                 nominal: item.nominal
             }));
-        },
-        enabled: !!token
+        }
     });
 
     // ==========================================
@@ -70,11 +51,10 @@ export function usePotonganCustom() {
                 for (const tgl of dates) {
                     promises.push(
                         (async () => {
-                            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/potongan-custom`, {
+                            const result = await apiFetchJson('/api/v1/potongan-custom', {
                                 method: "POST",
                                 headers: {
-                                    "Content-Type": "application/json",
-                                    "Authorization": `Bearer ${token}`
+                                    "Content-Type": "application/json"
                                 },
                                 body: JSON.stringify({
                                     pegawai_id: id,
@@ -83,8 +63,6 @@ export function usePotonganCustom() {
                                     nominal: payload.nominal
                                 })
                             });
-                            const result = await response.json();
-                            if (!response.ok || !result.success) throw new Error(result.message || "Gagal menambah potongan.");
                             return result;
                         })()
                     );
@@ -93,12 +71,12 @@ export function usePotonganCustom() {
             return await Promise.all(promises);
         },
         onSuccess: (results) => {
-            setNotif({ show: true, message: `Sukses menambahkan ${results.length} data potongan!`, type: "success" });
+            showNotif(`Sukses menambahkan ${results.length} data potongan!`, "success");
             queryClient.invalidateQueries({ queryKey: ['potonganCustomList'] });
             queryClient.invalidateQueries({ queryKey: ['rekapGaji'] });
         },
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Terjadi kesalahan.", type: "error" });
+            showErrorNotif(error);
         }
     });
 
@@ -107,11 +85,10 @@ export function usePotonganCustom() {
     // ==========================================
     const updatePotonganMutation = useMutation({
         mutationFn: async (payload: { id: string; pegawai_id: string; tanggal_diberikan: string; keterangan: string; nominal: number }) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/potongan-custom/${payload.id}`, {
+            const result = await apiFetchJson(`/api/v1/potongan-custom/${payload.id}`, {
                 method: "PUT",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     pegawai_id: payload.pegawai_id,
@@ -120,17 +97,15 @@ export function usePotonganCustom() {
                     nominal: payload.nominal
                 })
             });
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error(result.message || "Gagal memperbarui potongan.");
             return result;
         },
         onSuccess: () => {
-            setNotif({ show: true, message: "Sukses memperbarui data potongan!", type: "success" });
+            showNotif("Sukses memperbarui data potongan!", "success");
             queryClient.invalidateQueries({ queryKey: ['potonganCustomList'] });
             queryClient.invalidateQueries({ queryKey: ['rekapGaji'] });
         },
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Gagal memperbarui.", type: "error" });
+            showErrorNotif(error);
         }
     });
 
@@ -139,21 +114,18 @@ export function usePotonganCustom() {
     // ==========================================
     const deletePotonganMutation = useMutation({
         mutationFn: async (id: string) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/potongan-custom/${id}`, {
-                method: "DELETE",
-                headers: { "Authorization": `Bearer ${token}` }
+            const result = await apiFetchJson(`/api/v1/potongan-custom/${id}`, {
+                method: "DELETE"
             });
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error(result.message || "Gagal menghapus potongan.");
             return result;
         },
         onSuccess: (result) => {
-            setNotif({ show: true, message: `Sukses! ${result.message}`, type: "success" });
+            showNotif(`Sukses! ${result.message}`, "success");
             queryClient.invalidateQueries({ queryKey: ['potonganCustomList'] });
             queryClient.invalidateQueries({ queryKey: ['rekapGaji'] });
         },
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Gagal menghapus.", type: "error" });
+            showErrorNotif(error);
         }
     });
 
@@ -169,6 +141,8 @@ export function usePotonganCustom() {
         isCreating: createPotonganMutation.isPending,
         isUpdating: updatePotonganMutation.isPending,
         notif,
+        showNotif,
+        showErrorNotif,
         closeNotif,
         createPotongan: createPotonganMutation.mutate,
         updatePotongan: updatePotonganMutation.mutate,

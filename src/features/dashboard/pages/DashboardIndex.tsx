@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Loader2, PlusCircle } from "lucide-react";
 import type { AbsensiData, DashboardKaryawanResponse } from "../../../types";
-import { useAuthStore } from "../../../store/useAuthStore";
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import TabelDashboard from "../components/TabelDashboard";
 import ModalInputAbsensi from "../components/ModalInputAbsensi";
 
@@ -21,7 +20,6 @@ export default function DashboardIndex() {
     const [rows, setRows] = useState<AbsensiData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalAbsenOpen, setIsModalAbsenOpen] = useState(false);
-    const token = useAuthStore((state) => state.token);
 
     // 2. JAM BERDETAK
     useEffect(() => {
@@ -33,69 +31,59 @@ export default function DashboardIndex() {
     const fetchLiveDashboard = useCallback(async () => {
         try {
             const timestamp = new Date().getTime();
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/dashboard/live?_t=${timestamp}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+            const result = await apiFetchJson(`/api/dashboard/live?_t=${timestamp}`);
+
+            setSummary(result.statistik);
+
+            // Format data agar sesuai dengan interface AbsensiData di TabelDashboard
+            const formattedRows = (result.data_karyawan || []).map((karyawan: DashboardKaryawanResponse, index: number) => {
+                let labelStatus = "Belum Hadir";
+
+                const statusBackend = (karyawan.status || "").toLowerCase();
+
+                if (statusBackend === 'intime' || statusBackend === 'ontime') labelStatus = 'Tepat';
+                else if (statusBackend === 'late') labelStatus = 'Terlambat';
+                else if (statusBackend === 'void') labelStatus = 'Void';
+                // Jika backend mengirim "Tepat" / "Terlambat" secara langsung dari update kita sebelumnya
+                else if (karyawan.status_masuk === 'Tepat' || karyawan.status_masuk === 'Terlambat' || karyawan.status_masuk === 'Void') {
+                    labelStatus = karyawan.status_masuk;
                 }
+
+                return {
+                    // PERBAIKAN UTAMA: Jika karyawan.id kosong, cari pegawai_id. Jika kosong juga, pakai index + 1
+                    id: karyawan.id || karyawan.pegawai_id || index + 1,
+                    pegawai_id: karyawan.pegawai_id,
+                    nama: karyawan.nama || "Tanpa Nama",
+                    jabatan: karyawan.jabatan || "-",
+                    info_shift: karyawan.info_shift || "-",
+                    waktu_masuk: karyawan.waktu_masuk || "-",
+                    status_masuk: karyawan.status_masuk || labelStatus,
+                    waktu_pulang: karyawan.waktu_pulang || "-",
+                    status_lembur: karyawan.status_lembur || "-",
+                    is_kerapian: karyawan.is_kerapian || false
+                };
             });
 
-            const result = await response.json();
+            const sortedRows = formattedRows.sort((a: AbsensiData, b: AbsensiData) => {
+                // Ambil waktu terakhir pegawai A (prioritaskan waktu pulang, jika "-" pakai waktu masuk)
+                const jam_A = a.waktu_pulang !== "-" ? a.waktu_pulang : (a.waktu_masuk !== "-" ? a.waktu_masuk : "00:00:00");
 
-            if (response.ok && result.success) {
-                setSummary(result.statistik);
+                // Ambil waktu terakhir pegawai B
+                const jam_B = b.waktu_pulang !== "-" ? b.waktu_pulang : (b.waktu_masuk !== "-" ? b.waktu_masuk : "00:00:00");
 
-                // Format data agar sesuai dengan interface AbsensiData di TabelDashboard
-                const formattedRows = result.data_karyawan.map((karyawan: DashboardKaryawanResponse, index: number) => {
-                    let labelStatus = "Belum Hadir";
+                // Urutkan menurun (Descending) - Waktu paling besar/terbaru ada di atas
+                if (jam_A > jam_B) return -1;
+                if (jam_A < jam_B) return 1;
+                return 0;
+            });
 
-                    const statusBackend = (karyawan.status || "").toLowerCase();
-
-                    if (statusBackend === 'intime' || statusBackend === 'ontime') labelStatus = 'Tepat';
-                    else if (statusBackend === 'late') labelStatus = 'Terlambat';
-                    else if (statusBackend === 'void') labelStatus = 'Void';
-                    // Jika backend mengirim "Tepat" / "Terlambat" secara langsung dari update kita sebelumnya
-                    else if (karyawan.status_masuk === 'Tepat' || karyawan.status_masuk === 'Terlambat' || karyawan.status_masuk === 'Void') {
-                        labelStatus = karyawan.status_masuk;
-                    }
-
-                    return {
-                        // PERBAIKAN UTAMA: Jika karyawan.id kosong, cari pegawai_id. Jika kosong juga, pakai index + 1
-                        id: karyawan.id || karyawan.pegawai_id || index + 1,
-                        pegawai_id: karyawan.pegawai_id,
-                        nama: karyawan.nama || "Tanpa Nama",
-                        jabatan: karyawan.jabatan || "-",
-                        info_shift: karyawan.info_shift || "-",
-                        waktu_masuk: karyawan.waktu_masuk || "-",
-                        status_masuk: karyawan.status_masuk || labelStatus,
-                        waktu_pulang: karyawan.waktu_pulang || "-",
-                        status_lembur: karyawan.status_lembur || "-",
-                        is_kerapian: karyawan.is_kerapian || false
-                    };
-                });
-
-                const sortedRows = formattedRows.sort((a: AbsensiData, b: AbsensiData) => {
-                    // Ambil waktu terakhir pegawai A (prioritaskan waktu pulang, jika "-" pakai waktu masuk)
-                    const jam_A = a.waktu_pulang !== "-" ? a.waktu_pulang : (a.waktu_masuk !== "-" ? a.waktu_masuk : "00:00:00");
-
-                    // Ambil waktu terakhir pegawai B
-                    const jam_B = b.waktu_pulang !== "-" ? b.waktu_pulang : (b.waktu_masuk !== "-" ? b.waktu_masuk : "00:00:00");
-
-                    // Urutkan menurun (Descending) - Waktu paling besar/terbaru ada di atas
-                    if (jam_A > jam_B) return -1;
-                    if (jam_A < jam_B) return 1;
-                    return 0;
-                });
-
-                setRows(sortedRows);
-            }
+            setRows(sortedRows);
         } catch (error) {
             console.error("Gagal menarik data live dashboard:", error);
         } finally {
             setIsLoading(false);
         }
-    }, [token]);
+    }, []);
 
     // 4. AUTO REFRESH (Hanya jalan jika tab aktif)
     useEffect(() => {

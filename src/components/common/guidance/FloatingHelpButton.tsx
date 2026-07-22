@@ -16,7 +16,7 @@ export default function FloatingHelpButton() {
                 }}
                 aria-label="Buka Pusat Bantuan"
                 title="Klik untuk membuka Pusat Bantuan"
-                className="fixed right-0 bottom-24 z-9998 bg-gradient-to-l from-indigo-700 to-blue-600 text-white rounded-l-xl py-2.5 pl-3 pr-2 shadow-lg shadow-blue-500/20 flex items-center gap-1.5 hover:-translate-x-1 transition-all group border-l border-y border-blue-400/30 cursor-pointer"
+                className="fixed right-0 bottom-24 z-9998 bg-linear-to-l from-indigo-700 to-blue-600 text-white rounded-l-xl py-2.5 pl-3 pr-2 shadow-lg shadow-blue-500/20 flex items-center gap-1.5 hover:-translate-x-1 transition-all group border-l border-y border-blue-400/30 cursor-pointer"
             >
                 <ChevronLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
             </button>
@@ -24,7 +24,7 @@ export default function FloatingHelpButton() {
     }
 
     return (
-        <div className="fixed bottom-6 right-6 z-9998 flex items-center group/container">
+        <div className="fixed bottom-20 right-6 z-9998 flex items-center group/container">
             {/* Tombol Hide ke Tepi */}
             <button
                 onClick={(e) => {
@@ -40,8 +40,8 @@ export default function FloatingHelpButton() {
 
             <button
                 onClick={toggleHelpDrawer}
-                aria-label=""
-                title=""
+                aria-label="Buka Pusat Bantuan"
+                title="Buka Pusat Bantuan"
                 className={`
                     w-14 h-14 rounded-full
                     bg-linear-to-br from-blue-600 to-indigo-700

@@ -1,9 +1,7 @@
 import { Trash2, Search, Pencil,  Users, RotateCcw } from 'lucide-react';
 import { useState, useMemo, startTransition } from 'react';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs, { Dayjs } from 'dayjs';
+import { getCurrentWeek } from '../../../utils/dateHelpers';
+import PeriodSwitcher from '../../../components/common/PeriodSwitcher';
 
 export interface BonusCustomData {
     id: string;
@@ -38,16 +36,7 @@ export default function TabelBonusCustom({
 
     // Default values
     const now = new Date();
-    const defaultWeekStr = getCurrentWeekStr();
-
-    function getCurrentWeekStr() {
-        const d = new Date();
-        const year = d.getFullYear();
-        const firstDayOfYear = new Date(year, 0, 1);
-        const pastDaysOfYear = (d.getTime() - firstDayOfYear.getTime()) / 86400000;
-        const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-        return `${year}-W${weekNum.toString().padStart(2, '0')}`;
-    }
+    const defaultWeekStr = getCurrentWeek();
 
     const [filterValue, setFilterValue] = useState(defaultWeekStr);
 
@@ -233,102 +222,12 @@ export default function TabelBonusCustom({
 
                     {/* Period Switcher & Date Controls */}
                     <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                        {/* Segmented Control */}
-                        <div className="bg-slate-200/80 p-1 rounded-xl flex items-center gap-1 shadow-inner">
-                            <button
-                                type="button"
-                                onClick={() => handlePeriodeChange('minggu')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                                    periode === 'minggu'
-                                        ? 'bg-white text-slate-800 shadow-xs'
-                                        : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                            >
-                                Mingguan
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handlePeriodeChange('bulan')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                                    periode === 'bulan'
-                                        ? 'bg-white text-slate-800 shadow-xs'
-                                        : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                            >
-                                Bulanan
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handlePeriodeChange('tahun')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                                    periode === 'tahun'
-                                        ? 'bg-white text-slate-800 shadow-xs'
-                                        : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                            >
-                                Tahunan
-                            </button>
-                        </div>
-
-                        {/* Date Picker Input */}
-                        <div className="relative">
-                            {periode === 'minggu' && (
-                                <input
-                                    type="week"
-                                    value={filterValue}
-                                    onChange={(e) => setFilterValue(e.target.value)}
-                                    className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
-                                />
-                            )}
-                            {periode === 'bulan' && (
-                                <input
-                                    type="month"
-                                    value={filterValue}
-                                    onChange={(e) => setFilterValue(e.target.value)}
-                                    className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
-                                />
-                            )}
-                            {periode === 'tahun' && (
-                                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                    <DatePicker
-                                        views={['year']}
-                                        value={filterValue ? dayjs().year(parseInt(filterValue)) : null}
-                                        onChange={(newValue: Dayjs | null) => newValue && setFilterValue(newValue.year().toString())}
-                                        slotProps={{
-                                            textField: {
-                                                size: 'small',
-                                                className: "bg-white flex-1 md:w-32",
-                                                sx: {
-                                                    '& .MuiOutlinedInput-root': {
-                                                        borderRadius: '12px',
-                                                        fontSize: '12px',
-                                                        fontWeight: 600,
-                                                        height: '35px',
-                                                        color: '#334155',
-                                                        '& fieldset': {
-                                                            borderColor: '#cbd5e1',
-                                                        },
-                                                        '&:hover fieldset': {
-                                                            borderColor: '#94a3b8',
-                                                        },
-                                                        '&.Mui-focused fieldset': {
-                                                            borderColor: '#ef4444',
-                                                        },
-                                                    },
-                                                    '& .MuiOutlinedInput-input': {
-                                                        padding: '6px 12px',
-                                                    },
-                                                    '& .MuiIconButton-root': {
-                                                        padding: '4px',
-                                                        color: '#64748b'
-                                                    }
-                                                }
-                                            }
-                                        }}
-                                    />
-                                </LocalizationProvider>
-                            )}
-                        </div>
+                        <PeriodSwitcher
+                            periode={periode}
+                            filterValue={filterValue}
+                            onPeriodeChange={handlePeriodeChange}
+                            onFilterValueChange={setFilterValue}
+                        />
 
                         {isFiltered && (
                             <button
@@ -386,7 +285,7 @@ export default function TabelBonusCustom({
 
             {/* Matrix Table */}
             <div className="overflow-x-auto w-full relative max-h-[500px] rounded-b-xl scrollbar-thin">
-                <table className="w-full text-xs text-left border-collapse min-w-max table-fixed">
+                <table className="w-full text-xs text-left border-collapse min-w-max">
                     <thead className="text-[11px] font-bold text-slate-600 uppercase bg-slate-100/90 sticky top-0 z-20 shadow-xs backdrop-blur-xs">
                         <tr>
                             <th scope="col" className="px-4 py-3.5 border-r border-b border-slate-200 sticky left-0 z-30 bg-slate-100 min-w-[200px] shadow-[2px_0_6px_-2px_rgba(0,0,0,0.06)]">

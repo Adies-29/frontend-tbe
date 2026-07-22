@@ -1,36 +1,25 @@
 import { useMemo } from 'react';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs, { Dayjs } from 'dayjs';
 import { Loader2, Search, RotateCcw } from 'lucide-react';
-import { useAuthStore } from '../../../store/useAuthStore';
-import { apiFetch } from '../../../utils/apiFetch';
-import Button from '../../../components/common/Button';
+import { apiFetchJson } from '../../../utils/apiFetch';
 import { useMatrixPencapaian } from '../hooks/useMatrixPencapaian';
 import Notif from '../../../components/common/Notif';
 import ModalInputPencapaian from './ModalInputPencapaian';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import PeriodSwitcher from '../../../components/common/PeriodSwitcher';
 
 export default function TabelMatrixPencapaian() {
     const hookParams = useMatrixPencapaian();
-    const token = useAuthStore(state => state.token);
     const queryClient = useQueryClient();
 
     const saveMutation = useMutation({
-        mutationFn: async (payload: any) => {
-            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/pencapaian`, {
+        mutationFn: (payload: any) =>
+            apiFetchJson('/api/v1/target/pencapaian', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload)
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || "Gagal menyimpan data pencapaian");
-            return data;
-        },
+            }),
         onSuccess: () => {
             hookParams.showNotif("Pencapaian berhasil diperbarui!", "success");
             queryClient.invalidateQueries({ queryKey: ['pencapaianList'] });
@@ -39,18 +28,17 @@ export default function TabelMatrixPencapaian() {
     });
 
     const deleteMutation = useMutation({
-        mutationFn: async (payload: { pencapaian_id?: number; pegawai_id: number; tanggal: string }) => {
-            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/pencapaian`, {
+        mutationFn: (payload: { pencapaian_id?: number; pegawai_id: number; tanggal: string }) => {
+            const url = payload.pencapaian_id 
+                ? `/api/v1/target/pencapaian/${payload.pencapaian_id}` 
+                : '/api/v1/target/pencapaian';
+            return apiFetchJson(url, {
                 method: 'DELETE',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload)
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || "Gagal menghapus data pencapaian");
-            return data;
         },
         onSuccess: () => {
             hookParams.showNotif("Data pencapaian dihapus", "success");
@@ -121,66 +109,12 @@ export default function TabelMatrixPencapaian() {
 
                     {/* Period Switcher & Date Controls */}
                     <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                        {/* Segmented Control */}
-                        <div className="bg-slate-200/80 p-1 rounded-xl flex items-center gap-1 shadow-inner">
-                            <Button
-                                label="Mingguan"
-                                onClick={() => hookParams.handlePeriodeChange('minggu')}
-                                className={`px-3! py-1.5! text-xs! font-semibold! shadow-none ${
-                                    hookParams.periode === 'minggu'
-                                        ? 'bg-white! text-slate-800! shadow-xs'
-                                        : 'bg-transparent! text-slate-600! hover:text-slate-900!'
-                                }`}
-                            />
-                            <Button
-                                label="Bulanan"
-                                onClick={() => hookParams.handlePeriodeChange('bulan')}
-                                className={`px-3! py-1.5! text-xs! font-semibold! shadow-none ${
-                                    hookParams.periode === 'bulan'
-                                        ? 'bg-white! text-slate-800! shadow-xs'
-                                        : 'bg-transparent! text-slate-600! hover:text-slate-900!'
-                                }`}
-                            />
-                            <Button
-                                label="Tahunan"
-                                onClick={() => hookParams.handlePeriodeChange('tahun')}
-                                className={`px-3! py-1.5! text-xs! font-semibold shadow-none ${
-                                    hookParams.periode === 'tahun'
-                                        ? 'bg-white! text-slate-800! shadow-xs'
-                                        : 'bg-transparent! text-slate-600! hover:text-slate-900!'
-                                }`}
-                            />
-                        </div>
-
-                        {/* Date Picker Input */}
-                        <div className="relative">
-                            {hookParams.periode === 'minggu' && (
-                                <input
-                                    type="week"
-                                    value={hookParams.filterValue}
-                                    onChange={(e) => hookParams.setFilterValue(e.target.value)}
-                                    className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
-                                />
-                            )}
-                            {hookParams.periode === 'bulan' && (
-                                <input
-                                    type="month"
-                                    value={hookParams.filterValue}
-                                    onChange={(e) => hookParams.setFilterValue(e.target.value)}
-                                    className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
-                                />
-                            )}
-                            {hookParams.periode === 'tahun' && (
-                                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                    <DatePicker
-                                        views={['year']}
-                                        value={hookParams.filterValue ? dayjs().year(parseInt(hookParams.filterValue)) : null}
-                                        onChange={(newValue: Dayjs | null) => newValue && hookParams.setFilterValue(newValue.year().toString())}
-                                        slotProps={{ textField: { size: 'small', className: "bg-white flex-1 md:w-32", sx: { '& .MuiOutlinedInput-root': { borderRadius: '12px', fontSize: '12px' } } } }}
-                                    />
-                                </LocalizationProvider>
-                            )}
-                        </div>
+                        <PeriodSwitcher
+                            periode={hookParams.periode}
+                            filterValue={hookParams.filterValue}
+                            onPeriodeChange={hookParams.handlePeriodeChange}
+                            onFilterValueChange={hookParams.setFilterValue}
+                        />
 
                         {(hookParams.searchQuery || hookParams.filterDepartemen || hookParams.filterJabatan) && (
                             <button
@@ -251,7 +185,7 @@ export default function TabelMatrixPencapaian() {
                 </div>
             ) : (
                 <div className="overflow-x-auto w-full relative">
-                    <table className="w-full text-sm text-left border-collapse min-w-max table-fixed">
+                    <table className="w-full text-sm text-left border-collapse min-w-max">
                         <thead className="text-xs text-gray-600 uppercase bg-gray-100 sticky top-0 z-20 shadow-sm">
                             <tr>
                                 <th scope="col" className="px-4 py-3 border-r border-gray-200 sticky left-0 z-30 bg-gray-100 min-w-[150px] md:min-w-[220px]">
@@ -355,9 +289,9 @@ export default function TabelMatrixPencapaian() {
             )}
 
             <Notif
-                show={hookParams.notifState.show}
-                message={hookParams.notifState.message}
-                type={hookParams.notifState.type}
+                show={hookParams.notif.show}
+                message={hookParams.notif.message}
+                type={hookParams.notif.type}
                 onClose={hookParams.closeNotif}
             />
         </div>

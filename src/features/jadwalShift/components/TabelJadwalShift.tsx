@@ -1,84 +1,68 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from "react";
-import { 
-    DataGrid, 
-    type GridColDef, 
-    type GridRowModesModel, 
- 
-    GridActionsCellItem, 
-    type GridRowId, 
+import {
+    DataGrid,
+    type GridColDef,
+    type GridRowModesModel,
+
+    GridActionsCellItem,
+    type GridRowId,
     type GridRowModel,
 } from "@mui/x-data-grid";
 import { Pencil, Trash2, Clock } from "lucide-react";
 import type { JadwalShiftData } from '../../../types';
-import { useAuthStore } from '../../../store/useAuthStore';
-
-import { getSafeErrorMessage } from '../../../utils/errorHandler';
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import Notif from '../../../components/common/Notif';
 import { useMutation } from "@tanstack/react-query";
-
-
-
-
+import { useNotif } from '../../../hooks/useNotif';
 
 interface TabelJadwalShiftProps {
-    data : JadwalShiftData[];
-    onRefresh: () => void; 
+    data: JadwalShiftData[];
+    onRefresh: () => void;
 }
 
-export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJadwalShiftProps) {
+export default function TabelJadwalShift({ data: initialData, onRefresh }: TabelJadwalShiftProps) {
 
     const [rows, setRows] = useState<JadwalShiftData[]>(initialData);
     const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
 
-    const token = useAuthStore((state) => state.token);
     const navigate = useNavigate();
 
     const [showPopUp, setShowPopUp] = useState(false);
     const [hapusId, setHapusId] = useState<GridRowId | null>(null);
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
 
     useEffect(() => {
         setRows(initialData);
     }, [initialData]);
 
     const handleDeleteClick = (id: GridRowId) => async () => {
-       setHapusId(id);
+        setHapusId(id);
         setShowPopUp(true);
     };
 
-        const deleteShiftMutation = useMutation({
+    const deleteShiftMutation = useMutation({
         mutationFn: async (idToDelete: GridRowId) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${idToDelete}`, {
+            await apiFetchJson(`/api/v1/shifts/${idToDelete}`, {
                 method: "DELETE",
                 headers: {
-                    "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json"
                 }
             });
-            const result = await response.json();
-            if (!response.ok || !result.success) {
-                throw new Error(getSafeErrorMessage(response.status));
-            }
-            return result;
+            return idToDelete;
         },
         // data ini otomatis membaca id yang berhasil dihapus
-        onSuccess: ( deletedId) => {
+        onSuccess: (deletedId) => {
             setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(deletedId)));
-            setNotif({ show: true, message: "Data jadwal shift berhasil dihapus", type: "success" });
+            showNotif("Data jadwal shift berhasil dihapus", "success");
             setTimeout(() => {
                 onRefresh(); // Pakai onRefresh bawaan komponen saja!
-            }, 2000);
+            }, 1000);
         },
         onError: (error) => {
-            setNotif({ show: true, message: error.message || "Gagal menghapus data. Periksa koneksi.", type: "error" });
+            showErrorNotif(error);
         },
         onSettled: () => {
             setShowPopUp(false);
@@ -92,42 +76,37 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
         }
     };
 
-        const editShiftMutation = useMutation({
+    const editShiftMutation = useMutation({
         mutationFn: async (newRow: GridRowModel) => {
             const { kode_shift, jam_masuk, jam_pulang } = newRow as JadwalShiftData;
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${newRow.id}`, {
+            await apiFetchJson(`/api/v1/shifts/${newRow.id}`, {
                 method: "PUT",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ kode_shift, jam_masuk, jam_pulang }),
             });
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || "Server Error");
-            }
             return newRow as JadwalShiftData;
         },
         onSuccess: (updatedRow) => {
             setRows((prevRows) => prevRows.map((row) => (row.id === updatedRow.id ? updatedRow : row)));
-            onRefresh(); 
+            showNotif("Data jadwal shift berhasil diperbarui", "success");
+            onRefresh();
         },
         onError: (error) => {
-            setNotif({ show: true, message: error.message || getSafeErrorMessage(), type: "error" });
+            showErrorNotif(error);
         }
     });
 
     const processRowUpdate = async (newRow: GridRowModel, oldRow: GridRowModel) => {
         if (JSON.stringify(newRow) === JSON.stringify(oldRow)) return oldRow;
-        
+
         try {
-           
+
             const updatedRow = await editShiftMutation.mutateAsync(newRow);
             return updatedRow;
         } catch (error) {
-            return Promise.reject(error); 
+            return Promise.reject(error);
         }
     };
 
@@ -138,19 +117,19 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
     // --- DEFINISI KOLOM ---
     const columns: GridColDef[] = [
         { field: 'id', headerName: 'Id', width: 70 },
-        { 
-            field: 'kode_shift', 
-            headerName: 'Kode Shift', 
+        {
+            field: 'kode_shift',
+            headerName: 'Kode Shift',
             flex: 1,
             minWidth: 150,
-            renderCell: (params) => <span className="font-bold text-gray-800">{params.value}</span> 
+            renderCell: (params) => <span className="font-bold text-gray-800">{params.value}</span>
         },
-        { 
-            field: 'jam_kerja', 
-            headerName: 'Jam Kerja', 
+        {
+            field: 'jam_kerja',
+            headerName: 'Jam Kerja',
             width: 220,
-            align:'center',
-            headerAlign:'center',
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => (
                 <div className="flex items-center justify-center w-full h-full">
                     <div className="flex items-center justify-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold border border-blue-100">
@@ -167,9 +146,9 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
             align: 'center',
             headerAlign: 'center',
             renderCell: (params) => (
-                params.value ? 
-                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">Ya (Malam)</span> : 
-                <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">Tidak</span>
+                params.value ?
+                    <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">Ya (Malam)</span> :
+                    <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">Tidak</span>
             )
         },
         {
@@ -178,21 +157,21 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
             flex: 1,
             minWidth: 200,
             renderCell: (params) => (
-                params.row.is_potong_gaji_terlambat ? 
-                <span className="text-red-600 text-sm font-medium">
-                    Rp {params.row.denda_terlambat_per_menit} {params.row.istetap ? '/ Tetap' : '/ menit'}
-                </span> :
-                <span className="text-gray-400 text-sm italic">Tidak ada denda</span>
+                params.row.is_potong_gaji_terlambat ?
+                    <span className="text-red-600 text-sm font-medium">
+                        Rp {params.row.denda_terlambat_per_menit} {params.row.istetap ? '/ Tetap' : '/ menit'}
+                    </span> :
+                    <span className="text-gray-400 text-sm italic">Tidak ada denda</span>
             )
         },
         {
             field: 'actions',
-            type: 'actions', 
+            type: 'actions',
             headerName: 'Aksi',
             width: 120,
             cellClassName: 'actions',
             getActions: ({ id }) => {
-    
+
                 return [
                     <GridActionsCellItem
                         icon={<Pencil size={18} className="text-gray-600 hover:text-black" />}
@@ -211,9 +190,9 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
             },
         },
     ];
-        
 
-    return(
+
+    return (
         <div className="w-full bg-white relative">
             <DataGrid
                 showToolbar
@@ -231,7 +210,7 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
                     },
                     columns: {
                         columnVisibilityModel: {
-                            id: false, 
+                            id: false,
                         },
                     },
                 }}
@@ -261,7 +240,7 @@ export default function TabelJadwalShift({data: initialData, onRefresh }: TabelJ
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     );

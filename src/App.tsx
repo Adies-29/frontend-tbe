@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 
 
-const Home = lazy(() => import('./pages/Home'))
+const Home = lazy(() => import('./features/landing/pages/Home'))
 const Login = lazy(() => import('./features/auth/pages/Login'))
 const DashboardIndex = lazy(() => import('./features/dashboard/pages/DashboardIndex'))
 
@@ -49,7 +49,14 @@ function PageLoader() {
   );
 }
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // Data dianggap segar selama 5 menit
+      refetchOnWindowFocus: false, // Menghindari hit API berulang saat pindah tab browser
+    },
+  },
+});
 
 function App() {
   return (

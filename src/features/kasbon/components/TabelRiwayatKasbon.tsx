@@ -1,22 +1,15 @@
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import { useQuery } from "@tanstack/react-query";
-import { apiFetch } from "../../../utils/apiFetch";
-import { useAuthStore } from "../../../store/useAuthStore";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import { AlertCircle } from "lucide-react";
 
 export default function TabelRiwayatKasbon() {
-    const token = useAuthStore((state) => state.token);
-
     const riwayatQuery = useQuery({
         queryKey: ['riwayatKasbonList'],
         queryFn: async () => {
-            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/kasbon/riwayat`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await res.json();
-            if (!res.ok) throw new Error(result.message || "Gagal load data riwayat kasbon");
-            return result.data || [];
+            const res = await apiFetchJson('/api/v1/kasbon/riwayat');
+            return res.data || [];
         }
     });
 

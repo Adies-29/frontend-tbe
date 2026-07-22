@@ -12,11 +12,13 @@ import {
     RotateCcw,
     CheckCircle2,
     Sparkles,
+    MessageCircle,
 } from 'lucide-react';
 import { useGuidanceStore } from '../../../features/guidance/store/useGuidanceStore';
 import {
     getGuidanceForCurrentPage,
     getAllGuidancePages,
+    HELP_CENTER_SUPPORT_CONFIG,
     type GuidancePageConfig,
 } from '../../../features/guidance/config/guidanceConfig';
 
@@ -38,17 +40,27 @@ export default function HelpDrawer() {
     const currentPageGuide = getGuidanceForCurrentPage(location.pathname);
     const allGuides = getAllGuidancePages();
 
-    // Filter panduan berdasarkan pencarian
-    const filteredGuides = allGuides.filter(
-        (guide) =>
-            guide.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            guide.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            guide.faqs.some(
-                (faq) =>
-                    faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-    );
+    // Filter panduan berdasarkan pencarian (Judul, Deskripsi, FAQ, & Keywords)
+    const filteredGuides = allGuides.filter((guide) => {
+        const q = searchQuery.toLowerCase().trim();
+        if (!q) return true;
+        const matchTitle = guide.title.toLowerCase().includes(q);
+        const matchDesc = guide.description.toLowerCase().includes(q);
+        const matchKeywords = guide.keywords?.some((k) => k.toLowerCase().includes(q));
+        const matchFaqs = guide.faqs.some(
+            (faq) =>
+                faq.question.toLowerCase().includes(q) ||
+                faq.answer.toLowerCase().includes(q)
+        );
+        return matchTitle || matchDesc || matchKeywords || matchFaqs;
+    });
+
+    // Auto switch ke tab 'Semua Panduan' ketika user mengetik di search bar
+    useEffect(() => {
+        if (searchQuery.trim().length > 0 && activeSection === 'current') {
+            setActiveSection('all');
+        }
+    }, [searchQuery, activeSection]);
 
     // Fungsi untuk menjalankan Driver.js tour
     const startDriverTour = useCallback(
@@ -61,6 +73,7 @@ export default function HelpDrawer() {
                     showProgress: true,
                     animate: true,
                     allowClose: true,
+                    disableActiveInteraction: true,
                     overlayColor: 'rgba(0, 0, 0, 0.6)',
                     stagePadding: 8,
                     stageRadius: 12,
@@ -372,6 +385,27 @@ export default function HelpDrawer() {
                                 )}
                             </div>
                         )}
+
+                        {/* ===== BANNER BANTUAN DIRECT WHATSAPP ===== */}
+                        <div className="bg-emerald-50/90 border border-emerald-200 rounded-xl p-4 flex items-center justify-between gap-3 shadow-2xs mt-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                    <MessageCircle size={22} />
+                                </div>
+                                <div>
+                                    <h4 className="text-xs font-bold text-emerald-900">Kendala Teknis Aplikasi?</h4>
+                                    <p className="text-[11px] text-emerald-700 font-medium">Hubungi Customer Support via WA</p>
+                                </div>
+                            </div>
+                            <a
+                                href={`https://wa.me/${HELP_CENTER_SUPPORT_CONFIG.whatsappNumber}?text=${encodeURIComponent(HELP_CENTER_SUPPORT_CONFIG.messageText)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="shrink-0 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                            >
+                                Chat WA
+                            </a>
+                        </div>
                     </div>
                 </div>
 

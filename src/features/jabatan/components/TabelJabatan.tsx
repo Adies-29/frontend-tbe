@@ -9,16 +9,13 @@ import {
     type GridRowModel
 } from '@mui/x-data-grid';
 import { Pencil, Trash2, Save, X } from 'lucide-react';
-import { useAuthStore } from '../../../store/useAuthStore';
 import type { JabatanData, DepartemenOption } from '../../../types';
-
-import { getSafeErrorMessage } from '../../../utils/errorHandler';
-import { apiFetch } from "../../../utils/apiFetch";
-
+import { apiFetchJson } from "../../../utils/apiFetch";
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import Notif from '../../../components/common/Notif';
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useNotif } from '../../../hooks/useNotif';
 
 
 interface TabelJabatanProps {
@@ -29,15 +26,10 @@ interface TabelJabatanProps {
 export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     const [rows, setRows] = useState(initialData);
     const [rowModesModel, setRowModesModel] = useState<GridRowModel>({});
-    const token = useAuthStore((state) => state.token);
 
     const [showPopUp, setShowPopUp] = useState(false);
     const [hapusId, setHapusId] = useState<GridRowId | null>(null);
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
     const queryClient = useQueryClient();
 
     
@@ -52,17 +44,10 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     const { data: departemenOptions = [] } = useQuery({
         queryKey: ['masterDepartemen'],
         queryFn: async () => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, {
-                headers: { "Authorization": `Bearer ${token}` } 
-            });
-            const result = await response.json();
-            
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || "Gagal memuat daftar departemen");
-            }
+            const result = await apiFetchJson('/api/v1/departemen');
             
             // Format data langsung sesuai kebutuhan MUI DataGrid
-            return result.data.map((dept: DepartemenOption) => ({
+            return (result.data || []).map((dept: DepartemenOption) => ({
                 value: dept.id,
                 label: dept.nama_departemen
             }));
@@ -101,27 +86,22 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
 
     const deleteJabatanMutation = useMutation({
         mutationFn: async (idToDelete: GridRowId) => {
-            const response = await apiFetch (`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${idToDelete}`, {
+            await apiFetchJson(`/api/v1/jabatan/${idToDelete}`, {
                 method: 'DELETE',
                 headers: {
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
             });
-            const result = await response.json();
-            
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || "Gagal menghapus jabatan")
-            }
+
             return idToDelete;
         },
-        onSuccess: (deleteId) => {
-            setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(deleteId)));
-            setNotif({show: true, message: "Data jabatan berhasil dihapus", type: "success"});
+        onSuccess: (idToDelete) => {
+            setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(idToDelete)));
+            showNotif(`Data jabatan berhasil dihapus (ID: ${idToDelete})`, "success");
             queryClient.invalidateQueries({ queryKey: ['jabatan_pegawai']});
         },
         onError: (error) => {
-             setNotif({ show: true, message: error.message || "Gagal menghapus data. Periksa koneksi.", type: "error" });
+            showErrorNotif(error);
         },
         onSettled: () => {
             setShowPopUp(false);
@@ -137,31 +117,26 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     };
 
     const editJabatanMutation = useMutation({
-        mutationFn: async (newRow: GridRowModel) =>{
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${newRow.id}`, {
+        mutationFn: async (newRow: GridRowModel) => {
+            await apiFetchJson(`/api/v1/jabatan/${newRow.id}`, {
                 method: "PUT",
                 headers: {
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     nama_jabatan: newRow.nama_jabatan,
                     departemen_id: Number(newRow.departemen_id)
                 }),
             });
-            const result = await response.json();
-            if (!response.ok || !result.success){
-                throw new Error(result.message || "Gagal memperbarui jabatan")
-            }
             return newRow;
         },
         onSuccess: () => {
-            setNotif({ show: true, message: "Data jabatan berhasil diperbarui!", type: "success" });
+            showNotif("Data jabatan berhasil diperbarui!", "success");
             queryClient.invalidateQueries({ queryKey: ['jabatan_pegawai'] });
 
         },
         onError: (error) =>{
-            setNotif({ show: true, message: error.message, type:"error"});
+            showErrorNotif(error);
         }
     })
 
@@ -187,7 +162,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
 
         } catch (error: unknown) {
             console.error("Error updating jabatan:", error);
-            setNotif({ show: true, message: getSafeErrorMessage(), type: "error" });
+            showErrorNotif(error);
             return Promise.reject(error);
         } 
     };
@@ -210,10 +185,12 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
         {
             field: 'departemen_id',
             headerName: 'Departemen',
+            type: 'singleSelect',
             flex: 1,
             minWidth: 150,
             editable: true,
             valueOptions: departemenOptions,
+            valueGetter: (_, row) => row.departemen_id ?? row.departemen?.id ?? null,
             renderCell: (params) => {
                 let namaDept = params.row.departemen?.nama_departemen;
                 if (!namaDept && params.value) {
@@ -337,7 +314,7 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
 

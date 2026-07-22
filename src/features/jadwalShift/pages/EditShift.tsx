@@ -1,18 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Clock, AlertCircle, Banknote, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-
 import Button from '../../../components/common/Button';
 import { Input } from '../../../components/common/InputText';
-import { useAuthStore } from '../../../store/useAuthStore';
 import Notif from '../../../components/common/Notif';
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import { formatMinutesToText } from "../../../utils/formatMinutes";
+import { formatRupiah } from "../../../utils/formatCurrency";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
+import { useNotif } from '../../../hooks/useNotif';
 
 // 1. SCHEMA ZOD 
 const schema = z.object({
@@ -44,13 +43,9 @@ type FormData = z.infer<typeof schema>;
 export default function EditShift() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const token = useAuthStore((state) => (state.token));
+    const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
+
     const queryClient = useQueryClient();
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
 
     const { register,
         handleSubmit,
@@ -65,11 +60,7 @@ export default function EditShift() {
     const shiftQuery = useQuery({
         queryKey: ['masterShift', id],
         queryFn: async () => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${id}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error("Gagal memuat data konfigurasi shift.");
+            const result = await apiFetchJson(`/api/v1/shifts/${id}`);
             return result.data;
         },
         enabled: !!id
@@ -99,31 +90,26 @@ export default function EditShift() {
     }, [shiftQuery.data, reset]);
 
     const editShiftMutation = useMutation({
-    
         mutationFn: async (finalPayload: any) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${id}`, {
+            const result = await apiFetchJson(`/api/v1/shifts/${id}`, {
                 method: "PUT",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify(finalPayload)
             });
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error(result.message || "Gagal menyimpan ke database. Coba lagi.");
             return result;
         },
         onSuccess: () => {
-            setNotif({ show: true, message: "Perubahan konfigurasi Jadwal & Shift berhasil diperbarui", type: "success" });
-            queryClient.invalidateQueries({ queryKey: ['masterShiftList'] });
+            showNotif("Perubahan konfigurasi Jadwal & Shift berhasil diperbarui", "success");
+            queryClient.invalidateQueries({ queryKey: ['shifts'] });
             queryClient.invalidateQueries({ queryKey: ['masterShift', id] });
             setTimeout(() => {
                 navigate("/dashboard/jadwal-shift", { state: { activeTab: 'shift' } });
-            }, 2000);
+            }, 1500);
         },
-       
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Terjadi kesalahan jaringan.", type: "error" });
+            showErrorNotif(error);
         }
     });
 
@@ -329,7 +315,9 @@ export default function EditShift() {
                                 register={register}
                                 error={errors.denda_terlambat_per_menit?.message}
                                 disabled={!watch("is_potong_gaji_terlambat")}
-
+                                helperText={watch("is_potong_gaji_terlambat") && watch("denda_terlambat_per_menit") > 0 ? (
+                                    <span className="text-xs text-emerald-600 font-medium italic">Rp : {formatRupiah(watch("denda_terlambat_per_menit"))} {watch("tipe_denda") === "tetap" ? "(Flat)" : "/ Menit"}</span>
+                                ) : null}
                             />
                         </div>
 
@@ -372,6 +360,9 @@ export default function EditShift() {
                                 register={register}
                                 error={errors.denda_pulang_awal_per_menit?.message}
                                 disabled={!watch("is_potong_gaji_pulang_awal")}
+                                helperText={watch("is_potong_gaji_pulang_awal") && watch("denda_pulang_awal_per_menit") > 0 ? (
+                                    <span className="text-xs text-emerald-600 font-medium italic">Rp : {formatRupiah(watch("denda_pulang_awal_per_menit"))} {watch("tipe_denda") === "tetap" ? "(Flat)" : "/ Menit"}</span>
+                                ) : null}
                             />
                         </div>
 
@@ -397,7 +388,7 @@ export default function EditShift() {
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     );
