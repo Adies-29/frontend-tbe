@@ -9,6 +9,7 @@ import { Input } from '../../../components/common/InputText';
 import Notif from '../../../components/common/Notif';
 import { apiFetchJson } from "../../../utils/apiFetch";
 import { formatMinutesToText } from "../../../utils/formatMinutes";
+import { formatRupiah } from "../../../utils/formatCurrency";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNotif } from '../../../hooks/useNotif';
 
@@ -314,7 +315,9 @@ export default function EditShift() {
                                 register={register}
                                 error={errors.denda_terlambat_per_menit?.message}
                                 disabled={!watch("is_potong_gaji_terlambat")}
-
+                                helperText={watch("is_potong_gaji_terlambat") && watch("denda_terlambat_per_menit") > 0 ? (
+                                    <span className="text-xs text-emerald-600 font-medium italic">Rp : {formatRupiah(watch("denda_terlambat_per_menit"))} {watch("tipe_denda") === "tetap" ? "(Flat)" : "/ Menit"}</span>
+                                ) : null}
                             />
                         </div>
 
@@ -357,6 +360,9 @@ export default function EditShift() {
                                 register={register}
                                 error={errors.denda_pulang_awal_per_menit?.message}
                                 disabled={!watch("is_potong_gaji_pulang_awal")}
+                                helperText={watch("is_potong_gaji_pulang_awal") && watch("denda_pulang_awal_per_menit") > 0 ? (
+                                    <span className="text-xs text-emerald-600 font-medium italic">Rp : {formatRupiah(watch("denda_pulang_awal_per_menit"))} {watch("tipe_denda") === "tetap" ? "(Flat)" : "/ Menit"}</span>
+                                ) : null}
                             />
                         </div>
 

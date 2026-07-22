@@ -144,12 +144,13 @@ export default function AddPegawai() {
             });
             return result;
         },
-        onSuccess: (data: any) => {
-            showNotif(`Sukses! Pegawai baru disimpan (ID: ${data.id})`, "success");
+        onSuccess: (res: any) => {
+            const newId = res?.data?.id ?? res?.id;
+            showNotif(`Sukses! Pegawai baru disimpan${newId ? ` (ID: ${newId})` : ''}`, "success");
             queryClient.invalidateQueries({ queryKey: ['pegawai'] });
             setTimeout(() => {
                 navigate("/dashboard/data-pegawai");
-            }, 2000)
+            }, 2000);
         },
         onError: (error: any) => {
             showNotif(error.message, "error");

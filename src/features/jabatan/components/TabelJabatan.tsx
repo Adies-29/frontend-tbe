@@ -185,10 +185,12 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
         {
             field: 'departemen_id',
             headerName: 'Departemen',
+            type: 'singleSelect',
             flex: 1,
             minWidth: 150,
             editable: true,
             valueOptions: departemenOptions,
+            valueGetter: (_, row) => row.departemen_id ?? row.departemen?.id ?? null,
             renderCell: (params) => {
                 let namaDept = params.row.departemen?.nama_departemen;
                 if (!namaDept && params.value) {
