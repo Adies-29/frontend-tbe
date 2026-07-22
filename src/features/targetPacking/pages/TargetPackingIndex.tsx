@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { apiFetch } from "../../../utils/apiFetch";
-import { Plus, Target } from "lucide-react";
+import { Plus, ListCheck } from "lucide-react";
 import Button from "../../../components/common/Button";
 import TabelMatrixPencapaian from "../components/TabelMatrixPencapaian";
 import MasterTargetTab from "../components/MasterTargetTab";
@@ -70,7 +70,7 @@ export default function TargetPackingIndex() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                            <Target size={28} className="text-indigo-600" /> Target Pegawai
+                            <ListCheck size={28} className="text-indigo-600" /> Target Pegawai
                         </h1>
                         <p className="text-sm text-gray-500 mt-1">Kelola pencapaian target harian dan harga satuan target.</p>
                     </div>

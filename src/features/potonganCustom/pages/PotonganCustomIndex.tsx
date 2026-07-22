@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PlusCircle, Loader2, MinusCircle } from 'lucide-react';
+import { PlusCircle, Loader2, Scissors } from 'lucide-react';
 import Button from '../../../components/common/Button';
 import Notif from '../../../components/common/Notif';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
@@ -34,7 +34,7 @@ export default function PotonganCustomIndex() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                            <MinusCircle size={28} className="text-rose-600" /> Potongan Custom
+                            <Scissors size={28} className="text-rose-600" /> Potongan Custom
                         </h1>
                         <p className="text-sm text-gray-500 mt-1">
                             Kelola dan berikan pemotongan gaji khusus secara mandiri ke pegawai.
