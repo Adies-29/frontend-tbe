@@ -1,7 +1,12 @@
 import TabelMatrixJadwal from "../../../../features/jadwalShift/components/TabelMatrixJadwal";
+import { useMatrixJadwal } from "../../hooks/useMatrixJadwal";
 
-export default function TabJadwal() {
+interface TabJadwalProps {
+    hookParams: ReturnType<typeof useMatrixJadwal>;
+}
+
+export default function TabJadwal({ hookParams }: TabJadwalProps) {
     return (
-        <TabelMatrixJadwal />
+        <TabelMatrixJadwal hookParams={hookParams} />
     );
 }
