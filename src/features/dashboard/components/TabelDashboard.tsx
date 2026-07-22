@@ -7,11 +7,10 @@ import {
 } from "@mui/x-data-grid";
 import type { AbsensiData } from "../../../types";
 import dayjs from "dayjs";
-import { useAuthStore } from "../../../store/useAuthStore";
 import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMediaQuery, useTheme } from "@mui/material";
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import Notif from "../../../components/common/Notif";
 import { defaultDataGridSx } from "../../../components/common/dataGridStyles";
 import ButtonNuklir from "../../../components/common/ButtonNuklir";
@@ -34,7 +33,6 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     const [rowModesModel] = useState<GridRowModesModel>({});
     const [updatingId, setUpdatingId] = useState<string | number | null>(null);
     const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
-    const token = useAuthStore((state) => state.token);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -60,20 +58,14 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                 is_kerapian: newStatus
             };
 
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/kerapian`, {
+            await apiFetchJson('/api/kerapian', {
                 method: "PUT",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify(payload)
             });
 
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || "Gagal memperbarui status kerapihan");
-            }
             setRows((prevRows) =>
                 prevRows.map((r) =>
                     r.id === row.id ? { ...r, is_kerapian: newStatus } : r
@@ -91,7 +83,6 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
         } finally {
             setUpdatingId(null);
         }
-
     };
 
     const handleBukaPopUp = (id: string | number, nama: string) => {
@@ -416,7 +407,6 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                 isOpen={isNuklirOpen}
                 onClose={() => setIsNuklirOpen(false)}
                 voidTarget={targetNuklir}
-                token={token || ""}
                 onSuccess={() => {
                     if (onRefresh) onRefresh();
                 }}

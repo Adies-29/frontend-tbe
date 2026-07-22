@@ -8,9 +8,8 @@ import {
 
 } from "@mui/x-data-grid";
 import { Pencil, Trash2 } from "lucide-react";
-import { useAuthStore } from '../../../store/useAuthStore';
 import type { PegawaiData } from '../../../types';
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import Notif from '../../../components/common/Notif';
@@ -31,7 +30,6 @@ export default function TabelPegawai({ data: initialData }: TabelPegawaiProps) {
     // State untuk menyimpan data baris dan mode edit dari MUI DataGrid
     const [rows, setRows] = useState<PegawaiData[]>(initialData);
 
-    const token = useAuthStore((state) => state.token);
     const navigate = useNavigate();
 
     const theme = useTheme();
@@ -44,18 +42,12 @@ export default function TabelPegawai({ data: initialData }: TabelPegawaiProps) {
     const queryClient = useQueryClient();
     const deletePegawaiMutation = useMutation({
         mutationFn: async (idToDelete: import("@mui/x-data-grid").GridRowId) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${idToDelete}`, {
+            await apiFetchJson(`/api/v1/pegawai/${idToDelete}`, {
                 method: 'DELETE',
                 headers: {
-                    'Content-type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-type': 'application/json'
                 }
             });
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || "Gagal Hapus data dari server");
-            }
             return idToDelete;
         },
         onSuccess: (deleteId) => {

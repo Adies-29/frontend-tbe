@@ -9,9 +9,8 @@ import {
     type GridRowModel
 } from '@mui/x-data-grid';
 import { Pencil, Trash2, Save, X } from 'lucide-react';
-import { useAuthStore } from '../../../store/useAuthStore';
 import type { JabatanData, DepartemenOption } from '../../../types';
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import Notif from '../../../components/common/Notif';
@@ -27,7 +26,6 @@ interface TabelJabatanProps {
 export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     const [rows, setRows] = useState(initialData);
     const [rowModesModel, setRowModesModel] = useState<GridRowModel>({});
-    const token = useAuthStore((state) => state.token);
 
     const [showPopUp, setShowPopUp] = useState(false);
     const [hapusId, setHapusId] = useState<GridRowId | null>(null);
@@ -46,17 +44,10 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     const { data: departemenOptions = [] } = useQuery({
         queryKey: ['masterDepartemen'],
         queryFn: async () => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, {
-                headers: { "Authorization": `Bearer ${token}` } 
-            });
-            const result = await response.json();
-            
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || "Gagal memuat daftar departemen");
-            }
+            const result = await apiFetchJson('/api/v1/departemen');
             
             // Format data langsung sesuai kebutuhan MUI DataGrid
-            return result.data.map((dept: DepartemenOption) => ({
+            return (result.data || []).map((dept: DepartemenOption) => ({
                 value: dept.id,
                 label: dept.nama_departemen
             }));
@@ -95,23 +86,18 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
 
     const deleteJabatanMutation = useMutation({
         mutationFn: async (idToDelete: GridRowId) => {
-            const response = await apiFetch (`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${idToDelete}`, {
+            await apiFetchJson(`/api/v1/jabatan/${idToDelete}`, {
                 method: 'DELETE',
                 headers: {
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
             });
-            const result = await response.json();
-            
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || "Gagal menghapus jabatan")
-            }
+
             return idToDelete;
         },
-        onSuccess: (deleteId) => {
-            setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(deleteId)));
-            showNotif("Data jabatan berhasil dihapus", "success");
+        onSuccess: (idToDelete) => {
+            setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(idToDelete)));
+            showNotif(`Data jabatan berhasil dihapus (ID: ${idToDelete})`, "success");
             queryClient.invalidateQueries({ queryKey: ['jabatan_pegawai']});
         },
         onError: (error) => {
@@ -131,22 +117,17 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     };
 
     const editJabatanMutation = useMutation({
-        mutationFn: async (newRow: GridRowModel) =>{
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${newRow.id}`, {
+        mutationFn: async (newRow: GridRowModel) => {
+            await apiFetchJson(`/api/v1/jabatan/${newRow.id}`, {
                 method: "PUT",
                 headers: {
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     nama_jabatan: newRow.nama_jabatan,
                     departemen_id: Number(newRow.departemen_id)
                 }),
             });
-            const result = await response.json();
-            if (!response.ok || !result.success){
-                throw new Error(result.message || "Gagal memperbarui jabatan")
-            }
             return newRow;
         },
         onSuccess: () => {

@@ -5,8 +5,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuthStore } from "../../../store/useAuthStore";
-import { apiFetch } from "../../../utils/apiFetch";
-import { getSafeErrorMessage } from "../../../utils/errorHandler";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import { Input } from "../../../components/common/InputText";
 import { InputPassword } from "../../../components/common/InputPassword";
 import Button from "../../../components/common/Button";
@@ -47,7 +46,7 @@ export default function Login() {
         setIsLoading(true);
         try {
             // Tembak API Login yang ada di backend
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/login`, {
+            const result = await apiFetchJson('/api/login', {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -58,24 +57,14 @@ export default function Login() {
                 }),
             });
 
-            const result = await response.json();
-
-            // Jika status 200 OK dan dari backend mengirim success: true
-            if (response.ok && result.success) {
-                // Simpan token JWT ke Zustand (dan LocalStorage)
-                login(data.username, result.token, result.role || "admin");
+            // Simpan token JWT ke Zustand (dan LocalStorage)
+                login(data.username, result.token, result.role || "guest");
 
                 showNotif("Login berhasil", "success");
                 setTimeout(() => {
                     navigate("/dashboard");
                 }, 2000);
-            } else {
-                // Tampilkan pesan error dari backend (misal: "Username salah")
-                const errorMessage = result.message || (response.status === 401 ? "Username atau password salah." : getSafeErrorMessage(response.status));
-                showNotif(errorMessage, "error");
-            }
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             showNotif("Terjadi kesalahan saat login. Silakan coba lagi.", "error");
         } finally {

@@ -1,42 +1,9 @@
-import { useEffect, useState } from "react";
 import { useLocation, matchPath } from "react-router-dom";
-
 import { useAuthStore } from "../../store/useAuthStore";
-import { apiFetch } from "../../utils/apiFetch";
 import DateTime from "../common/DateTime";
 
 export default function Header() {
-    // --- LOGIKA SHIFT ---
-    const [_currentShift, setCurrentShift] = useState("");
-    const [_isLoading, setIsLoading] = useState(true);
-    const token = useAuthStore((state) => state.token);
     const user = useAuthStore((state) => state.user);
-
-    useEffect(() => {
-        const fetchShiftData = async () => {
-            try {
-                setIsLoading(true);
-                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, {
-                    method: "GET",
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Content-Type": "application/json"
-                    }
-                });
-                if (!response.ok) throw new Error("Backend tidak merespons");
-
-                const data = await response.json();
-                setCurrentShift(data.shift);
-            } catch (error) {
-                console.error("Gagal mengambil data shift:", error);
-                setCurrentShift("Shift 1");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchShiftData();
-    }, []);
 
     // --- LOGIKA NAVIGASI DINAMIS ---
     const location = useLocation();

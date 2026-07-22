@@ -6,8 +6,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
-import { useAuthStore } from "../../../store/useAuthStore";
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import Button from "../../../components/common/Button";
 import Notif from "../../../components/common/Notif";
 import { Input } from "../../../components/common/InputText";
@@ -28,7 +27,6 @@ interface ModalInputAbsensiProps {
 }
 
 export default function ModalInputAbsensi({ isOpen, onClose, onSuccess }: ModalInputAbsensiProps) {
-    const token = useAuthStore((state) => state.token);
     const [pegawaiList, setPegawaiList] = useState<{ id: string; nama?: string; nama_lengkap?: string; pin_mesin?: string }[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
@@ -54,16 +52,8 @@ export default function ModalInputAbsensi({ isOpen, onClose, onSuccess }: ModalI
         if (isOpen) {
             const fetchPegawai = async () => {
                 try {
-                    const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`
-                        }
-                    });
-                    const result = await response.json();
-                    if (response.ok && result.success) {
-                        setPegawaiList(result.data);
-                    }
+                    const result = await apiFetchJson('/api/v1/pegawai');
+                    setPegawaiList(result.data || []);
                 } catch (error) {
                     console.error("Gagal mengambil data pegawai:", error);
                 }
@@ -77,7 +67,7 @@ export default function ModalInputAbsensi({ isOpen, onClose, onSuccess }: ModalI
                 jam_pulang: ""
             });
         }
-    }, [isOpen, token, reset]);
+    }, [isOpen, reset]);
 
     if (!isOpen) return null;
 
@@ -91,24 +81,16 @@ export default function ModalInputAbsensi({ isOpen, onClose, onSuccess }: ModalI
                 ...data,
                 pin_mesin: selectedPegawai?.pin_mesin || ""
             };
-            console.log(JSON.stringify(payload))
 
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/absen/manual`, {
+            const result = await apiFetchJson('/api/v1/absen/manual', {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify(payload)
             });
 
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || "Gagal menyimpan absensi manual");
-            }
-
-            showNotif(`Absensi manual ${result.data?.nama_pegawai} berhasil disimpan`, "success");
+            showNotif(`Absensi manual ${result.data?.nama_pegawai || 'pegawai'} berhasil disimpan`, "success");
 
             setTimeout(() => {
                 onClose();

@@ -49,7 +49,14 @@ function PageLoader() {
   );
 }
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // Data dianggap segar selama 5 menit
+      refetchOnWindowFocus: false, // Menghindari hit API berulang saat pindah tab browser
+    },
+  },
+});
 
 function App() {
   return (

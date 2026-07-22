@@ -5,9 +5,8 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '../../../components/common/InputText';
-import { useAuthStore } from '../../../store/useAuthStore';
 import Notif from '../../../components/common/Notif';
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useNotif } from '../../../hooks/useNotif';
 
@@ -26,7 +25,6 @@ interface DepartemenItem {
 export default function AddJabatan() {
     const navigate = useNavigate();
 
-    const token = useAuthStore((state) => state.token)
     const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
     const queryClient = useQueryClient();
 
@@ -45,38 +43,23 @@ export default function AddJabatan() {
     } = useQuery({
         queryKey: ['masterDepartemen'],
         queryFn: async () => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await response.json();
-            if (!response.ok || !result.success) {
-                throw new Error("Gagal Mengambil data Departemen")
-            }
-            return result.data as DepartemenItem[];
+            const result = await apiFetchJson('/api/v1/departemen');
+            return (result.data || []) as DepartemenItem[];
         }
     });
 
     const addJabatanMutation = useMutation({
-        mutationFn: async (data: FormData) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, {
+        mutationFn: async (data: FormData) => 
+            await apiFetchJson('/api/v1/jabatan', {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     nama_jabatan: data.nama_jabatan,
                     departemen_id: parseInt(data.departemen_id)
                 }),
-            });
-
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || "Gagal menyimpan data");
-            }
-            return result;
-        },
+            }), 
         onSuccess: (result) => {
             const namaJab = result.data?.nama_jabatan || "";
             showNotif(`Jabatan ${namaJab} berhasil disimpan!`.trim(), "success");

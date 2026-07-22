@@ -40,8 +40,8 @@ export default function FloatingHelpButton() {
 
             <button
                 onClick={toggleHelpDrawer}
-                aria-label=""
-                title=""
+                aria-label="Buka Pusat Bantuan"
+                title="Buka Pusat Bantuan"
                 className={`
                     w-14 h-14 rounded-full
                     bg-linear-to-br from-blue-600 to-indigo-700

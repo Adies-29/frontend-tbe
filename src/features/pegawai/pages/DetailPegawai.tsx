@@ -11,34 +11,23 @@ import {
 } from "lucide-react";
 
 import { useNavigate, useParams } from "react-router-dom";
-import { useAuthStore } from "../../../store/useAuthStore";
 import type { PegawaiData } from "../../../types";
 import Button from "../../../components/common/Button";
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import { useQuery } from "@tanstack/react-query";
-
-
 
 export default function DetailPegawai() {
     const navigate = useNavigate();
     const { id } = useParams();
-    const token = useAuthStore((state) => state.token);
 
     const { data: pegawai, isLoading, error } = useQuery({
         queryKey: ['pegawaiDetail', id],
         queryFn: async () => {
             if (!id) throw new Error("ID Pegawai tidak valid");
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${id}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || "Gagal mengambil data pegawai dari server");
-            }
+            const result = await apiFetchJson(`/api/v1/pegawai/${id}`);
             return result.data as PegawaiData; 
         },
-        enabled: !!id 
+        enabled: !!id
     });
     const errorMsg = error ? error.message : "";
 

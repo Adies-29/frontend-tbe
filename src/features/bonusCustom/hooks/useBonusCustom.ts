@@ -1,10 +1,8 @@
-import { useAuthStore } from '../../../store/useAuthStore';
-import { apiFetch } from '../../../utils/apiFetch';
+import { apiFetchJson } from '../../../utils/apiFetch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNotif } from '../../../hooks/useNotif';
 
 export function useBonusCustom() {
-    const token = useAuthStore((state) => state.token);
     const queryClient = useQueryClient();
     const { notif, showNotif, closeNotif } = useNotif();
 
@@ -12,16 +10,11 @@ export function useBonusCustom() {
     // 1. FETCH DATA PEGAWAI (Untuk Dropdown Form)
     // ==========================================
     const { data: listPegawai = [], isLoading: isLoadingPegawai } = useQuery({
-        queryKey: ['pegawaiListBonus'],
+        queryKey: ['pegawai'],
         queryFn: async () => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error("Gagal mengambil data pegawai");
+            const result = await apiFetchJson('/api/v1/pegawai');
             return result.data || [];
-        },
-        enabled: !!token
+        }
     });
 
     // ==========================================
@@ -30,12 +23,8 @@ export function useBonusCustom() {
     const { data: listBonus = [], isLoading: isLoadingBonus } = useQuery({
         queryKey: ['bonusCustomList'],
         queryFn: async () => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/bonus-custom`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error("Gagal mengambil data bonus custom");
-            
+            const result = await apiFetchJson('/api/v1/bonus-custom');
+
             // Flatten data
             return (result.data || []).map((item: any) => ({
                 id: String(item.id),
@@ -45,8 +34,7 @@ export function useBonusCustom() {
                 keterangan: item.keterangan,
                 nominal: item.nominal
             }));
-        },
-        enabled: !!token
+        }
     });
 
     // ==========================================
@@ -62,24 +50,18 @@ export function useBonusCustom() {
             for (const id of payload.pegawai_ids) {
                 for (const tgl of dates) {
                     promises.push(
-                        (async () => {
-                            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/bonus-custom`, {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "Authorization": `Bearer ${token}`
-                                },
-                                body: JSON.stringify({
-                                    pegawai_id: id,
-                                    tanggal_diberikan: tgl,
-                                    keterangan: payload.keterangan,
-                                    nominal: payload.nominal
-                                })
-                            });
-                            const result = await response.json();
-                            if (!response.ok || !result.success) throw new Error(result.message || "Gagal menambah bonus.");
-                            return result;
-                        })()
+                        apiFetchJson('/api/v1/bonus-custom', {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                pegawai_id: id,
+                                tanggal_diberikan: tgl,
+                                keterangan: payload.keterangan,
+                                nominal: payload.nominal
+                            })
+                        })
                     );
                 }
             }
@@ -90,8 +72,8 @@ export function useBonusCustom() {
             queryClient.invalidateQueries({ queryKey: ['bonusCustomList'] });
             queryClient.invalidateQueries({ queryKey: ['rekapGaji'] });
         },
-        onError: (error: any) => {
-            showNotif(error.message || "Terjadi kesalahan.", "error");
+        onError: (error: Error) => {
+            showNotif(error.message, "error");
         }
     });
 
@@ -99,12 +81,11 @@ export function useBonusCustom() {
     // 4. MUTASI: UPDATE BONUS
     // ==========================================
     const updateBonusMutation = useMutation({
-        mutationFn: async (payload: { id: string; pegawai_id: string; tanggal_diberikan: string; keterangan: string; nominal: number }) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/bonus-custom/${payload.id}`, {
+        mutationFn: (payload: { id: string; pegawai_id: string; tanggal_diberikan: string; keterangan: string; nominal: number }) =>
+            apiFetchJson(`/api/v1/bonus-custom/${payload.id}`, {
                 method: "PUT",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     pegawai_id: payload.pegawai_id,
@@ -112,18 +93,14 @@ export function useBonusCustom() {
                     keterangan: payload.keterangan,
                     nominal: payload.nominal
                 })
-            });
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error(result.message || "Gagal memperbarui bonus.");
-            return result;
-        },
+            }),
         onSuccess: () => {
             showNotif("Sukses memperbarui data bonus!", "success");
             queryClient.invalidateQueries({ queryKey: ['bonusCustomList'] });
             queryClient.invalidateQueries({ queryKey: ['rekapGaji'] });
         },
-        onError: (error: any) => {
-            showNotif(error.message || "Gagal memperbarui.", "error");
+        onError: (error: Error) => {
+            showNotif(error.message, "error");
         }
     });
 
@@ -131,22 +108,17 @@ export function useBonusCustom() {
     // 5. MUTASI: HAPUS BONUS
     // ==========================================
     const deleteBonusMutation = useMutation({
-        mutationFn: async (id: string) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/bonus-custom/${id}`, {
-                method: "DELETE",
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error(result.message || "Gagal menghapus bonus.");
-            return result;
-        },
-        onSuccess: (result) => {
-            showNotif(`Sukses! ${result.message}`, "success");
+        mutationFn: (id: string) =>
+            apiFetchJson(`/api/v1/bonus-custom/${id}`, {
+                method: "DELETE"
+            }),
+        onSuccess: (result: any) => {
+            showNotif(result?.message || "Sukses menghapus data bonus!", "success");
             queryClient.invalidateQueries({ queryKey: ['bonusCustomList'] });
             queryClient.invalidateQueries({ queryKey: ['rekapGaji'] });
         },
-        onError: (error: any) => {
-            showNotif(error.message || "Gagal menghapus.", "error");
+        onError: (error: Error) => {
+            showNotif(error.message, "error");
         }
     });
 
@@ -159,15 +131,11 @@ export function useBonusCustom() {
     // ==========================================
     const batchDeleteMutation = useMutation({
         mutationFn: async (ids: string[]) => {
-            const promises = ids.map(async (id) => {
-                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/bonus-custom/${id}`, {
-                    method: "DELETE",
-                    headers: { "Authorization": `Bearer ${token}` }
-                });
-                const result = await response.json();
-                if (!response.ok || !result.success) throw new Error(result.message || "Gagal menghapus bonus.");
-                return result;
-            });
+            const promises = ids.map((id) =>
+                apiFetchJson(`/api/v1/bonus-custom/${id}`, {
+                    method: "DELETE"
+                })
+            );
             return await Promise.all(promises);
         },
         onSuccess: (results) => {
@@ -175,8 +143,8 @@ export function useBonusCustom() {
             queryClient.invalidateQueries({ queryKey: ['bonusCustomList'] });
             queryClient.invalidateQueries({ queryKey: ['rekapGaji'] });
         },
-        onError: (error: any) => {
-            showNotif(error.message || "Gagal menghapus bonus batch.", "error");
+        onError: (error: Error) => {
+            showNotif(error.message, "error");
         }
     });
 

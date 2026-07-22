@@ -1,25 +1,18 @@
 import { useState } from 'react';
 import { Loader2, Rows2, Plus } from 'lucide-react';
-import { apiFetch } from '../../../utils/apiFetch';
-import { useAuthStore } from '../../../store/useAuthStore';
+import { apiFetchJson } from '../../../utils/apiFetch';
 import FormMasterTarget from './FormMasterTarget';
 import { useQuery } from '@tanstack/react-query';
 import Button from '../../../components/common/Button';
 
 export default function MasterTargetTab() {
-    const token = useAuthStore((state) => state.token);
     const [selectedJabatanId, setSelectedJabatanId] = useState<string>('');
     const [isAdding, setIsAdding] = useState(false);
 
     const jabatanQuery = useQuery({
-        queryKey: ['jabatanList'],
+        queryKey: ['jabatan'],
         queryFn: async () => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error("Gagal memuat daftar jabatan");
-            
+            const data = await apiFetchJson('/api/v1/jabatan');
             return data.data || [];
         }
     });

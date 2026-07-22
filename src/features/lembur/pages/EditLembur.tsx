@@ -8,7 +8,8 @@ import Notif from "../../../components/common/Notif";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
+import { formatRupiah } from "../../../utils/formatCurrency";
 import { formatMinutesToText } from "../../../utils/formatMinutes";
 import { Input } from "../../../components/common/InputText";
 import { useNotif } from '../../../hooks/useNotif';
@@ -30,11 +31,10 @@ export default function EditLembur() {
     const navigate = useNavigate();
 
     const [searchParams] = useSearchParams();
-    const token = useAuthStore((state) => state.token);
     const userToken = useAuthStore((state) => state.user);
     const queryClient = useQueryClient();
 
-    const idPegwai = searchParams.get("pegawai_id") || "";
+    const idPegawai = searchParams.get("pegawai_id") || "";
     const namaPegawai = searchParams.get("nama") || "";
 
     const {
@@ -47,7 +47,7 @@ export default function EditLembur() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         resolver: zodResolver(lemburSchema) as any,
         defaultValues: {
-            pegawai_id: idPegwai,
+            pegawai_id: idPegawai,
             tanggal: searchParams.get("tanggal") || "",
             alasan_lembur: ""
         }
@@ -67,28 +67,22 @@ export default function EditLembur() {
     const tgl = searchParams.get("tanggal");
 
     const lemburQuery = useQuery({
-        queryKey: ['lemburDetail', idPegwai, tgl],
+        queryKey: ['lemburDetail', idPegawai, tgl],
         queryFn: async () => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/?pegawai_id=${idPegwai}&tanggal=${tgl}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await response.json();
-            if (!response.ok || !result.success || !result.data || result.data.length === 0) {
+            const result = await apiFetchJson(`/api/v1/lembur/?pegawai_id=${idPegawai}&tanggal=${tgl}`);
+            if (!result.data || result.data.length === 0) {
                 throw new Error("Data tidak ditemukan");
             }
             return result.data[0];
         },
-        enabled: !!idPegwai && !!tgl
+        enabled: !!idPegawai && !!tgl
     });
 
     // Fetch data pegawai untuk mendapatkan info jabatan
     const pegawaiQuery = useQuery({
-        queryKey: ['pegawaiList'],
+        queryKey: ['pegawai'],
         queryFn: async () => {
-            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await res.json();
+            const result = await apiFetchJson('/api/v1/pegawai');
             return result.data || [];
         }
     });
@@ -121,32 +115,28 @@ export default function EditLembur() {
 
     // Set selectedPegawai dari data pegawai
     useEffect(() => {
-        if (idPegwai && pegawaiQuery.data) {
+        if (idPegawai && pegawaiQuery.data) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const found = (pegawaiQuery.data as any[]).find((p: any) => String(p.id) === String(idPegwai));
+            const found = (pegawaiQuery.data as any[]).find((p: any) => String(p.id) === String(idPegawai));
             if (found) setSelectedPegawai(found);
         }
-    }, [idPegwai, pegawaiQuery.data]);
+    }, [idPegawai, pegawaiQuery.data]);
 
     const editLemburMutation = useMutation({
-
         mutationFn: async (payload: any) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/spl`, {
+            const result = await apiFetchJson('/api/v1/lembur/spl', {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify(payload)
             });
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error("Gagal menyimpan ke database.");
             return result;
         },
         onSuccess: () => {
             showNotif(`Sukses! Data lembur berhasil diperbarui. ${tgl}`, "success");
             queryClient.invalidateQueries({ queryKey: ['lemburList'] });
-            queryClient.invalidateQueries({ queryKey: ['lemburDetail', idPegwai, tgl] });
+            queryClient.invalidateQueries({ queryKey: ['lemburDetail', idPegawai, tgl] });
             setTimeout(() => {
                 navigate("/dashboard/lembur");
             }, 2000);
@@ -297,11 +287,11 @@ export default function EditLembur() {
                                     <Banknote size={14} />
                                     Upah lembur sesuai jabatan:{" "}
                                     <strong>
-                                        Rp {Number(
+                                        {formatRupiah(
                                             tipeHitungLembur === 'flat'
                                                 ? (selectedPegawai.jabatan.upah_lembur_flat || selectedPegawai.jabatan.upah_lembur_per_jam)
                                                 : selectedPegawai.jabatan.upah_lembur_per_jam
-                                        ).toLocaleString('id-ID')}
+                                        )}
                                         {tipeHitungLembur === 'per_jam' ? '/jam' : ' (Flat)'}
                                     </strong>
                                 </p>
@@ -329,8 +319,8 @@ export default function EditLembur() {
                             />
                             {customUpahError && <p className="text-xs text-red-500 mt-1">{customUpahError}</p>}
                             {customUpahValue && Number(customUpahValue) > 0 && (
-                                <p className="text-xs text-blue-600 mt-1 font-medium italic">
-                                    Rp {Number(customUpahValue).toLocaleString('id-ID')}
+                                <p className="text-xs text-emerald-600 mt-1 font-medium italic">
+                                    {formatRupiah(customUpahValue)}
                                     {tipeHitungLembur === 'per_jam' ? '/jam' : ' (Flat)'}
                                 </p>
                             )}

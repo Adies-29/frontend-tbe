@@ -16,9 +16,19 @@ export interface GuidancePageConfig {
     icon: string;        // Emoji icon
     tier: 1 | 2 | 3;    // 1 = Full Tour, 2 = Tooltip/Hotspot, 3 = Deskripsi Singkat
     pathPattern: string; // Regex pattern untuk mencocokkan URL halaman
+    keywords?: string[]; // Keywords untuk pencarian kontekstual terpusat
     tourSteps: DriveStep[];
     faqs: GuidanceFaq[];
 }
+
+// ============================================================
+// KONFIGURASI KONTAK BANTUAN SUPPORT WHATSAPP
+// ============================================================
+export const HELP_CENTER_SUPPORT_CONFIG = {
+    //  GANTI NOMOR WHATSAPP DI SINI (Gunakan kode negara 62 tanpa tanda + atau spasi)
+    whatsappNumber: import.meta.env.VITE_WHATSAPP_NUMBER || '62882007730579',
+    messageText: 'Halo Admin Support Tiga Berlian, saya butuh bantuan mengenai aplikasi HRIS.',
+};
 
 // ============================================================
 // KONFIGURASI PANDUAN UNTUK SEMUA FITUR
@@ -479,6 +489,56 @@ export const guidancePages: GuidancePageConfig[] = [
             {
                 question: 'Bagaimana cara menentukan tanggal bonus yang benar?',
                 answer: 'Tanggal Diberikan menentukan bonus masuk ke periode gaji minggu/bulan ke berapa. Jika Anda ingin bonus masuk di gaji bulan Juli, pilih tanggal di bulan Juli.',
+            },
+        ],
+    },
+
+    // ✂️ POTONGAN CUSTOM
+    {
+        id: 'potongan-custom',
+        title: 'Potongan Custom',
+        description: 'Kelola potongan khusus (denda custom, sanksi, atau pemotongan lain) di luar potongan standar.',
+        icon: '✂️',
+        tier: 1,
+        pathPattern: '/dashboard/potongan-custom',
+        keywords: ['potongan', 'denda', 'potongan custom', 'sanksi', 'kasbon', 'pemotongan'],
+        tourSteps: [
+            {
+                element: '[data-tour="potongan-header"]',
+                popover: {
+                    title: '✂️ Potongan Custom',
+                    description: 'Halaman ini digunakan untuk mencatat <b>potongan khusus</b> di luar denda keterlambatan dan kasbon standar (misal: denda pelanggaran, ganti rugi barang rusak, atau sanksi disiplin).',
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="potongan-form"]',
+                popover: {
+                    title: '📝 Form Buat Potongan Baru',
+                    description: 'Isi formulir ini untuk memberikan potongan: pilih <b>Pegawai</b>, tentukan <b>Tanggal Diberikan</b> (menentukan periode gaji), isi <b>Keterangan/Nama Potongan</b> dan <b>Nominal</b>. Klik <b>Simpan Potongan</b> untuk menyimpan.',
+                    side: 'right',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="potongan-table"]',
+                popover: {
+                    title: '📊 Riwayat Pemotongan Gaji',
+                    description: 'Tabel ini menampilkan <b>semua potongan custom</b> yang pernah diberikan. Anda bisa melihat detail nama pegawai, keterangan, nominal, tanggal, dan menghapus potongan jika diperlukan.',
+                    side: 'left',
+                    align: 'start',
+                },
+            },
+        ],
+        faqs: [
+            {
+                question: 'Apakah potongan custom otomatis memotong slip gaji?',
+                answer: 'Ya, potongan custom yang telah dicatat akan otomatis mengurangi total gaji bersih pegawai pada slip gaji periode bersangkutan.',
+            },
+            {
+                question: 'Apa bedanya potongan custom dengan denda keterlambatan?',
+                answer: 'Denda keterlambatan dihitung otomatis oleh sistem berdasarkan scan absensi & aturan shift. Potongan custom diinput secara manual untuk kasus khusus seperti sanksi atau ganti rugi.',
             },
         ],
     },

@@ -47,8 +47,8 @@ export const InputSelect = <T extends FieldValues> ({
                 </option>
                 
                 {/* Melakukan mapping/looping data options dari luar */}
-                {options.map((opt, index) => (
-                    <option key={index} value={opt.value} className="text-black">
+                {options.map((opt) => (
+                    <option key={opt.value} value={opt.value} className="text-black">
                         {opt.label}
                     </option>
                 ))}

@@ -11,8 +11,7 @@ import {
 } from "@mui/x-data-grid";
 import { Pencil, Trash2, Clock } from "lucide-react";
 import type { JadwalShiftData } from '../../../types';
-import { useAuthStore } from '../../../store/useAuthStore';
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import Notif from '../../../components/common/Notif';
@@ -29,7 +28,6 @@ export default function TabelJadwalShift({ data: initialData, onRefresh }: Tabel
     const [rows, setRows] = useState<JadwalShiftData[]>(initialData);
     const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
 
-    const token = useAuthStore((state) => state.token);
     const navigate = useNavigate();
 
     const [showPopUp, setShowPopUp] = useState(false);
@@ -47,18 +45,13 @@ export default function TabelJadwalShift({ data: initialData, onRefresh }: Tabel
 
     const deleteShiftMutation = useMutation({
         mutationFn: async (idToDelete: GridRowId) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${idToDelete}`, {
+            await apiFetchJson(`/api/v1/shifts/${idToDelete}`, {
                 method: "DELETE",
                 headers: {
-                    "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json"
                 }
             });
-            const result = await response.json();
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || "Gagal menghapus shift");
-            }
-            return result;
+            return idToDelete;
         },
         // data ini otomatis membaca id yang berhasil dihapus
         onSuccess: (deletedId) => {
@@ -66,7 +59,7 @@ export default function TabelJadwalShift({ data: initialData, onRefresh }: Tabel
             showNotif("Data jadwal shift berhasil dihapus", "success");
             setTimeout(() => {
                 onRefresh(); // Pakai onRefresh bawaan komponen saja!
-            }, 2000);
+            }, 1000);
         },
         onError: (error) => {
             showErrorNotif(error);
@@ -86,19 +79,13 @@ export default function TabelJadwalShift({ data: initialData, onRefresh }: Tabel
     const editShiftMutation = useMutation({
         mutationFn: async (newRow: GridRowModel) => {
             const { kode_shift, jam_masuk, jam_pulang } = newRow as JadwalShiftData;
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts/${newRow.id}`, {
+            await apiFetchJson(`/api/v1/shifts/${newRow.id}`, {
                 method: "PUT",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ kode_shift, jam_masuk, jam_pulang }),
             });
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || "Server Error");
-            }
             return newRow as JadwalShiftData;
         },
         onSuccess: (updatedRow) => {

@@ -6,9 +6,8 @@ import { z } from 'zod';
 
 import Button from '../../../components/common/Button';
 import { Input } from '../../../components/common/InputText';
-import { useAuthStore } from '../../../store/useAuthStore';
 import Notif from '../../../components/common/Notif';
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import { formatMinutesToText } from "../../../utils/formatMinutes";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNotif } from '../../../hooks/useNotif';
@@ -42,7 +41,6 @@ type FormData = z.infer<typeof schema>;
 
 export default function AddShift() {
     const navigate = useNavigate();
-    const token = useAuthStore((state) => state.token);
     const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
 
     const queryClient = useQueryClient();
@@ -55,6 +53,9 @@ export default function AddShift() {
     } = useForm<FormData>({
         resolver: zodResolver(schema) as any ,
         defaultValues: {
+            kode_shift: "",
+            jam_masuk: "",
+            jam_pulang: "",
             lintas_hari: false,
             batas_toleransi_menit: 0,
             batas_maksimal_lembur_menit: 0,
@@ -72,20 +73,13 @@ export default function AddShift() {
 
     const addShiftMutation = useMutation({
         mutationFn: async (finallyPayload: any) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, {
+            const result = await apiFetchJson('/api/v1/shifts', {
                 method: "POST",
                 headers: {
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify(finallyPayload)
             });
-
-            const result = await response.json();
-
-            if(!response.ok || !result.success) {
-                throw new Error(result.message || "Gagal menyimpan data shift");
-            }
             return result;
         },
         onSuccess: (result) => {
@@ -93,13 +87,13 @@ export default function AddShift() {
             showNotif(`Shift ${kode} berhasil disimpan!`.trim(), "success");
             queryClient.invalidateQueries({ queryKey: ['shifts'] });
             setTimeout(() => {
-                navigate("/dashboard/jadwal-shift", {state: {activeTab: 'shift'}});
+                navigate("/dashboard/jadwal-shift", { state: { activeTab: 'shift' } });
             }, 1500);
         },
         onError: (error: any) => {
             showErrorNotif(error);
         }
-    })
+    });
 
 
     const onSubmit = async (data: FormData) => {

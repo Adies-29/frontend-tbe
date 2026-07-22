@@ -7,10 +7,10 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '../../../components/common/InputText';
-import { useAuthStore } from '../../../store/useAuthStore';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import Notif from '../../../components/common/Notif';
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
+import { formatRupiah } from "../../../utils/formatCurrency";
 import { useNotif } from '../../../hooks/useNotif';
 
 // 1. UPDATE SCHEMA: Tambahkan tipe_penggajian dan gaji_pokok_bulanan
@@ -33,7 +33,6 @@ type FormData = z.infer<typeof schema>;
 export default function AturGajiJabatan() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const token = useAuthStore((state) => (state.token));
     const queryClient = useQueryClient();
 
     const [jabatanInfo, setJabatanInfo] = useState({ nama_jabatan: "Memuat...", departemen: "..." });
@@ -71,14 +70,10 @@ export default function AturGajiJabatan() {
     const gajiQuery = useQuery({
         queryKey: ['gajiJabatan', id],
         queryFn: async () => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${id}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error("Gagal memuat konfigurasi Gaji Jabatan");
+            const result = await apiFetchJson(`/api/v1/jabatan/${id}`);
             return result.data;
         },
-        enabled: !!id && !!token
+        enabled: !!id
     });
 
     useEffect(() => {
@@ -107,16 +102,14 @@ export default function AturGajiJabatan() {
 
     const saveMutation = useMutation({
         mutationFn: async (payloadKiriman: any) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan/${id}`, {
+            const result = await apiFetchJson(`/api/v1/jabatan/${id}`, {
                 method: "PUT",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify(payloadKiriman)
             });
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error("Gagal menyimpan ke database");
+            
             return result;
         },
         onSuccess: () => {
@@ -166,7 +159,7 @@ export default function AturGajiJabatan() {
         <div className="flex flex-col gap-6 w-full relative min-h-125">
             {gajiQuery.isLoading && (
                 <div className="absolute inset-0 z-50 bg-white/60 flex items-center justify-center rounded-xl backdrop-blur-sm">
-                    <Loader2 className="animate-spin text-blue-600" size={40} />
+                    <Loader2 className="animate-spin text-emerald-600" size={40} />
                 </div>
             )}
 
@@ -227,6 +220,10 @@ export default function AturGajiJabatan() {
                                     placeholder="Misal: 5000000"
                                     register={register}
                                     error={errors.gaji_pokok_bulanan?.message}
+                                    helperText={watch("gaji_pokok_bulanan") > 0 ? (
+                                        <span className="text-xs text-emerald-600 font-medium italic">{formatRupiah(watch("gaji_pokok_bulanan"))}</span>
+                                    ) : null}
+                                    
                                 />
                             ) : (
                                 <Input
@@ -236,6 +233,9 @@ export default function AturGajiJabatan() {
                                     placeholder="Misal: 150000"
                                     register={register}
                                     error={errors.upah_per_kehadiran?.message}
+                                    helperText={watch("upah_per_kehadiran") > 0 ? (
+                                        <span className="text-xs text-emerald-600 font-medium italic">{formatRupiah(watch("upah_per_kehadiran"))}</span>
+                                    ) : null}
                                 />
                             )}
 
@@ -246,6 +246,9 @@ export default function AturGajiJabatan() {
                                 placeholder="Masukkan upah lembur per jam"
                                 register={register}
                                 error={errors.upah_lembur_per_jam?.message}
+                                helperText={watch("upah_lembur_per_jam") > 0 ? (
+                                    <span className="text-xs text-emerald-600 font-medium italic">{formatRupiah(watch("upah_lembur_per_jam"))}</span>
+                                ) : null}
                             />
                             <Input
                                 label="Upah Lembur Flat / Borongan (Rp)"
@@ -254,6 +257,9 @@ export default function AturGajiJabatan() {
                                 placeholder="Masukkan upah lembur flat"
                                 register={register}
                                 error={errors.upah_lembur_flat?.message}
+                                helperText={watch("upah_lembur_flat") > 0 ? (
+                                    <span className="text-xs text-emerald-600 font-medium italic">{formatRupiah(watch("upah_lembur_flat"))}</span>
+                                ) : null}
                             />
                             <Input
                                 label="Bonus Lembur Tahunan (Rp)"
@@ -262,6 +268,9 @@ export default function AturGajiJabatan() {
                                 placeholder="Masukkan bonus tahunan"
                                 register={register}
                                 error={errors.bonus_lembur_tahunan?.message}
+                                helperText={watch("bonus_lembur_tahunan") > 0 ? (
+                                    <span className="text-xs text-emerald-600 font-medium italic">{formatRupiah(watch("bonus_lembur_tahunan"))}</span>
+                                ) : null}
                             />
                         </section>
 
@@ -279,6 +288,9 @@ export default function AturGajiJabatan() {
                                     placeholder="Rp"
                                     register={register}
                                     error={errors.bonus_disiplin_harian?.message}
+                                    helperText={watch("bonus_disiplin_harian") > 0 ? (
+                                        <span className="text-xs text-emerald-600 font-medium italic">{formatRupiah(watch("bonus_disiplin_harian"))}</span>
+                                    ) : null}
                                 />
                                 <Input
                                     label="Kerapian Harian (Rp)"
@@ -287,6 +299,9 @@ export default function AturGajiJabatan() {
                                     placeholder="Rp"
                                     register={register}
                                     error={errors.bonus_kerapian_harian?.message}
+                                    helperText={watch("bonus_kerapian_harian") > 0 ? (
+                                        <span className="text-xs text-emerald-600 font-medium italic">{formatRupiah(watch("bonus_kerapian_harian"))}</span>
+                                    ) : null}
                                 />
                             </div>
 
@@ -298,6 +313,9 @@ export default function AturGajiJabatan() {
                                     placeholder="Rp"
                                     register={register}
                                     error={errors.bonus_minggu_5_hari?.message}
+                                    helperText={watch("bonus_minggu_5_hari") > 0 ? (
+                                        <span className="text-xs text-emerald-600 font-medium italic">{formatRupiah(watch("bonus_minggu_5_hari"))}</span>
+                                    ) : null}
                                 />
                                 <Input
                                     label="Bonus Full (6 Hari)"
@@ -306,6 +324,9 @@ export default function AturGajiJabatan() {
                                     placeholder="Rp"
                                     register={register}
                                     error={errors.bonus_minggu_6_hari?.message}
+                                    helperText={watch("bonus_minggu_6_hari") > 0 ? (
+                                        <span className="text-xs text-emerald-600 font-medium italic">{formatRupiah(watch("bonus_minggu_6_hari"))}</span>
+                                    ) : null}
                                 />
                                 <Input
                                     label="Bonus Harian"
@@ -314,6 +335,9 @@ export default function AturGajiJabatan() {
                                     placeholder="Rp"
                                     register={register}
                                     error={errors.bonus_minggu_harian?.message}
+                                    helperText={watch("bonus_minggu_harian") > 0 ? (
+                                        <span className="text-xs text-emerald-600 font-medium italic">{formatRupiah(watch("bonus_minggu_harian"))}</span>
+                                    ) : null}
                                 />
                             </div>
                         </section>

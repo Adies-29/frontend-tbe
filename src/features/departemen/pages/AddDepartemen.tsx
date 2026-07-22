@@ -5,9 +5,8 @@ import Button from "../../../components/common/Button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "../../../components/common/InputText";
-import { useAuthStore } from "../../../store/useAuthStore";
 import Notif from "../../../components/common/Notif";
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNotif } from '../../../hooks/useNotif';
 
@@ -20,7 +19,6 @@ type FormData = z.infer<typeof schema>;
 
 export default function AddDepartemen() {
     const navigate = useNavigate();
-    const token = useAuthStore((state) => state.token)
     const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
     const queryClient = useQueryClient();
 
@@ -33,25 +31,16 @@ export default function AddDepartemen() {
     });
 
     const addDeptMutation = useMutation({
-        mutationFn: async(data: FormData) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, {
+        mutationFn: (data: FormData) =>
+            apiFetchJson('/api/v1/departemen', {
                 method: "POST",
                 headers: {
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     nama_departemen: data.nama
                 })
-            });
-
-            const result = await response.json();
-
-            if(!response.ok || !result.success){
-                throw new Error(result.message || "Gagal menyimpan data");
-            }
-            return result;
-        },
+            }),
         onSuccess: (result) => {
             const namaDept = result.data?.nama_departemen || "";
             showNotif(`Data departemen ${namaDept} berhasil disimpan!`.trim(), "success");

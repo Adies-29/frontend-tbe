@@ -3,46 +3,36 @@ import Button from "../../../components/common/Button";
 import TabelDepartemen from "../../../features/departemen/components/TabelDepartemen";
 import { Loader2 } from "lucide-react";
 import type { DepartemenData, DepartemenOption, JabatanOption } from "../../../types";
-import { useAuthStore } from "../../../store/useAuthStore";
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import Notif from "../../../components/common/Notif";
 import { useQuery } from "@tanstack/react-query";
 import { useNotif } from "../../../hooks/useNotif";
 
 export default function DepartemenIndex() {
     const navigate = useNavigate();
-    const token = useAuthStore((state) => state.token)
     const { notif, showErrorNotif, closeNotif } = useNotif();
 
     const fetchDepartemen = async (): Promise<DepartemenData[]> => {
         try {
-            const [resDept, resJabatan] = await Promise.all([
-                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
-                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
-            ])
+            const [resultDept, resultJabatan] = await Promise.all([
+                apiFetchJson('/api/v1/departemen'),
+                apiFetchJson('/api/v1/jabatan')
+            ]);
 
-            const resultDept = await resDept.json();
-            const resultJabatan = await resJabatan.json();
+            const listDept: DepartemenOption[] = resultDept.data || [];
+            const listJabatan: JabatanOption[] = resultJabatan.data || [];
 
-            if (!resJabatan.ok || !resDept.ok) {
-                throw new Error("Gagal mengambil data dari server");
-            }
+            return listDept.map((dept: DepartemenOption) => {
+                const jumlah = listJabatan.filter((jab: JabatanOption) => {
+                    return String(jab.departemen_id) === String(dept.id);
+                }).length;
 
-            if (resDept.ok && resJabatan.ok) {
-
-                const mappedData: DepartemenData[] = resultDept.data.map((dept: DepartemenOption) => {
-                    const jumlah = resultJabatan.data.filter((jab: JabatanOption) => {
-                        return String(jab.departemen_id) === String(dept.id);
-                    }).length
-                    return {
-                        id: dept.id,
-                        nama_departemen: dept.nama_departemen,
-                        jumlah_jabatan: jumlah
-                    };
-                });
-                return (mappedData);
-            }
-            return [];
+                return {
+                    id: dept.id,
+                    nama_departemen: dept.nama_departemen,
+                    jumlah_jabatan: jumlah
+                };
+            });
         } catch (error) {
             console.error("Error fetching data departemen & jabatan:", error);
             showErrorNotif(error);
@@ -57,8 +47,7 @@ export default function DepartemenIndex() {
         refetch
     } = useQuery ({
         queryKey: ['departemen'],
-        queryFn: fetchDepartemen,
-        enabled: !!token
+        queryFn: fetchDepartemen
     })
    
     const totalDepartemen = dataDepartemen.length;

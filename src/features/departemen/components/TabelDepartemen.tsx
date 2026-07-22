@@ -10,8 +10,7 @@ import {
 } from '@mui/x-data-grid';
 import { Pencil, Trash2, Save, X} from 'lucide-react';
 import type { DepartemenData } from '../../../types';
-import { useAuthStore } from '../../../store/useAuthStore';
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import Notif from '../../../components/common/Notif';
@@ -28,7 +27,6 @@ interface DepartemenTableProps {
 export default function DepartemenTable({ data: initialData = [] }: DepartemenTableProps) {
     const [rows, setRows] = useState<DepartemenData[]>(initialData);
     const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
-    const token = useAuthStore((state) => state.token)
     const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
     const [showPopUp, setShowPopUp] = useState(false);
     const [hapusId, setHapusId] = useState<GridRowId | null>(null);
@@ -65,28 +63,15 @@ export default function DepartemenTable({ data: initialData = [] }: DepartemenTa
 
     const deleteDeptMutation = useMutation({
         mutationFn: async (idToDelete: GridRowId) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen/${idToDelete}`, {
-                method: "DELETE",
-                headers:{
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`
-                },
-
+            await apiFetchJson(`/api/v1/departemen/${idToDelete}`, {
+                method: "DELETE"
             });
-
-            const result = await response.json();
-
-            if(!response.ok || !result.success){
-                throw new Error(result.message || "Gagal menghapus data departemen");
-
-            }
             return idToDelete;
         },
         onSuccess: (deleteId) => {
             setRows((prevRows) => prevRows.filter((row) => String(row.id) !== String(deleteId)));
             showNotif(`Data departemen berhasil dihapus (ID: ${deleteId})`, "success");
-            queryClient.invalidateQueries({queryKey: ["departemen"]});
-
+            queryClient.invalidateQueries({ queryKey: ["departemen"] });
         },
         onError: (error) => {
             console.error("Gagal menghapus departemen :", error);
@@ -96,42 +81,33 @@ export default function DepartemenTable({ data: initialData = [] }: DepartemenTa
             setShowPopUp(false);
             setHapusId(null);
         }
-
     });
 
-    const hapus = () =>{
+    const hapus = () => {
         if (hapusId) {
-            deleteDeptMutation.mutate(hapusId)
+            deleteDeptMutation.mutate(hapusId);
         }
-    }
+    };
 
     // Fungsi untuk PINDAH HALAMAN lihat karyawan
 
-    const editDeptMuttion = useMutation({
-        mutationFn: async (newRow: GridRowModel) =>{
-            const response = await  apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen/${newRow.id}`,{
+    const editDeptMutation = useMutation({
+        mutationFn: (newRow: GridRowModel) =>
+            apiFetchJson(`/api/v1/departemen/${newRow.id}`, {
                 method: "PUT",
                 headers: {
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     nama_departemen: newRow.nama_departemen
                 })
-
-            });
-            const result = await response.json();
-            if(!response.ok || !result.success){
-                throw new Error(result.message || "Gagal memperbarui departemen");
-            }
-            return result;
-        },
+            }),
         onSuccess: () => {
             showNotif(`Data departemen berhasil diperbarui`, "success");
-            queryClient.invalidateQueries({queryKey: ["departemen"]});
+            queryClient.invalidateQueries({ queryKey: ["departemen"] });
         },
         onError: (error) => {
-            console.error("Gagal memperbarui departemen : ",error);
+            console.error("Gagal memperbarui departemen : ", error);
             showErrorNotif(error);
         }
     });
@@ -142,7 +118,7 @@ export default function DepartemenTable({ data: initialData = [] }: DepartemenTa
         }
 
         try {
-            await editDeptMuttion.mutateAsync(newRow);
+            await editDeptMutation.mutateAsync(newRow);
             const updatedRow = {...newRow} as DepartemenData;
             setRows((prevRows) => prevRows.map((row) => (row.id === newRow.id ? updatedRow : row)));
             return updatedRow;
