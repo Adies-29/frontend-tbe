@@ -112,68 +112,68 @@ export default function ModalKelolaJadwalMassal({
     }, [isOpen, initialTab]);
 
     // ==========================================
-    // STATE & HELPER FILTER PEGAWAI TARGET (SHARED)
+    // STATE & HELPER FILTER PEGAWAI TARGET (SHARED - UNIFIED TO MATCH BONUS FILTER)
     // ==========================================
-    const [searchTargetQuery, setSearchTargetQuery] = useState("");
+    const [formFilterDept, setFormFilterDept] = useState<string>('');
+    const [formFilterJabatan, setFormFilterJabatan] = useState<string>('');
+    const [formSearchQuery, setFormSearchQuery] = useState<string>('');
+
+    // Reset filter local ketika modal dibuka
+    useEffect(() => {
+        if (isOpen) {
+            setFormFilterDept('');
+            setFormFilterJabatan('');
+            setFormSearchQuery('');
+            setSelectedPegawaiIds([]); // Reset pilihan pegawai
+        }
+    }, [isOpen]);
 
     const getDeptName = (p: any) => p.departemen?.nama_departemen || p.jabatan?.departemen?.nama_departemen || 'Umum';
     const getJabName = (p: any) => p.jabatan?.nama_jabatan || p.jabatan || 'Tanpa Jabatan';
 
-    const uniqueDepartemen = Array.from(new Set(listPegawai.map(getDeptName)));
-    const pInSelectedDept = listPegawai.filter(p => getDeptName(p) === filterLevel2);
-    const uniqueJabatanInDept = Array.from(new Set(pInSelectedDept.map(getJabName)));
+    // Ambil daftar departemen unik
+    const formUniqueDepts = React.useMemo(() => {
+        const depts: string[] = listPegawai
+            .map(getDeptName)
+            .filter((dept): dept is string => !!dept);
+        return Array.from(new Set(depts));
+    }, [listPegawai]);
 
-    let displayListTarget: DisplayItem[] = [];
+    // Ambil daftar jabatan unik berdasarkan departemen terpilih
+    const formUniqueJabs = React.useMemo(() => {
+        const jabs: string[] = listPegawai
+            .filter((p: any) => !formFilterDept || getDeptName(p) === formFilterDept)
+            .map(getJabName)
+            .filter((jab): jab is string => !!jab);
+        return Array.from(new Set(jabs));
+    }, [listPegawai, formFilterDept]);
 
-    if (filterLevel1 === 'all_karyawan') {
-        displayListTarget = listPegawai.map(p => ({
-            id: p.id, label: p.nama, subLabel: getJabName(p), pegawaiIds: [p.id]
-        }));
-    } else if (filterLevel1 === 'filter_departemen') {
-        if (filterLevel2 === '') {
-            uniqueDepartemen.forEach(deptName => {
-                const pInDept = listPegawai.filter(p => getDeptName(p) === deptName);
-                displayListTarget.push({ id: deptName as string, label: deptName as string, subLabel: `${pInDept.length} Pegawai`, pegawaiIds: pInDept.map(p => p.id) });
+    // Filter list pegawai target
+    const formFilteredPegawai = React.useMemo(() => {
+        return listPegawai.filter((p: any) => {
+            const matchSearch = p.nama.toLowerCase().includes(formSearchQuery.toLowerCase());
+            const matchDept = !formFilterDept || getDeptName(p) === formFilterDept;
+            const matchJab = !formFilterJabatan || getJabName(p) === formFilterJabatan;
+            return matchSearch && matchDept && matchJab;
+        });
+    }, [listPegawai, formSearchQuery, formFilterDept, formFilterJabatan]);
+
+    const isAllFilteredSelected = React.useMemo(() => {
+        return formFilteredPegawai.length > 0 && formFilteredPegawai.every((p: any) => selectedPegawaiIds.includes(p.id));
+    }, [formFilteredPegawai, selectedPegawaiIds]);
+
+    const handleToggleSelectAllFiltered = () => {
+        const filteredIds = formFilteredPegawai.map((p: any) => p.id);
+        if (isAllFilteredSelected) {
+            setSelectedPegawaiIds(prev => prev.filter(id => !filteredIds.includes(id)));
+        } else {
+            setSelectedPegawaiIds(prev => {
+                const next = [...prev];
+                filteredIds.forEach((id: number) => {
+                    if (!next.includes(id)) next.push(id);
+                });
+                return next;
             });
-        } else if (filterLevel3 === '') {
-            uniqueJabatanInDept.forEach(jabName => {
-                const pInJab = pInSelectedDept.filter(p => getJabName(p) === jabName);
-                displayListTarget.push({ id: jabName as string, label: jabName as string, subLabel: `${pInJab.length} Pegawai`, pegawaiIds: pInJab.map(p => p.id) });
-            });
-        } else {
-            const pFinal = pInSelectedDept.filter(p => getJabName(p) === filterLevel3);
-            displayListTarget.push(...pFinal.map(p => ({
-                id: p.id, label: p.nama, subLabel: p.nik || '-', pegawaiIds: [p.id]
-            })));
-        }
-    }
-
-    if (searchTargetQuery.trim() !== '') {
-        const query = searchTargetQuery.toLowerCase();
-        displayListTarget = displayListTarget.filter(item =>
-            String(item.label).toLowerCase().includes(query) ||
-            String(item.subLabel).toLowerCase().includes(query)
-        );
-    }
-
-    const isItemSelectedTarget = (itemIds: number[]) => itemIds.length > 0 && itemIds.every(id => selectedPegawaiIds.includes(id));
-
-    const handleToggleItemTarget = (itemIds: number[]) => {
-        if (isItemSelectedTarget(itemIds)) {
-            setSelectedPegawaiIds(prev => prev.filter(id => !itemIds.includes(id)));
-        } else {
-            setSelectedPegawaiIds(prev => Array.from(new Set([...prev, ...itemIds])));
-        }
-    };
-
-    const visiblePegawaiIdsTarget = Array.from(new Set(displayListTarget.flatMap(item => item.pegawaiIds)));
-    const isAllVisibleSelectedTarget = visiblePegawaiIdsTarget.length > 0 && visiblePegawaiIdsTarget.every(id => selectedPegawaiIds.includes(id));
-
-    const handleSelectAllVisibleTarget = () => {
-        if (isAllVisibleSelectedTarget) {
-            setSelectedPegawaiIds(prev => prev.filter(id => !visiblePegawaiIdsTarget.includes(id)));
-        } else {
-            setSelectedPegawaiIds(prev => Array.from(new Set([...prev, ...visiblePegawaiIdsTarget])));
         }
     };
 
@@ -299,102 +299,101 @@ export default function ModalKelolaJadwalMassal({
     if (!isOpen) return null;
 
     const renderTargetPegawaiPanel = () => (
-        <div className="flex flex-col gap-2 bg-gray-50/80 p-3.5 rounded-xl border border-gray-200 h-full">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+        <div className="flex flex-col gap-3 bg-gray-50/80 p-3.5 rounded-xl border border-gray-200 h-full min-h-0">
+            <div className="flex items-center justify-between pb-1 border-b border-gray-200 shrink-0">
                 <label className="text-xs font-extrabold text-gray-800 uppercase tracking-wide flex items-center gap-1.5">
                     <Users size={15} className="text-blue-600" />
                     Pilih Pegawai Target
                 </label>
-                <span className="text-[11px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">
-                    {selectedPegawaiIds.length} Terpilih
+                <span className="text-xs font-extrabold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-200">
+                    Terpilih: {selectedPegawaiIds.length} Pegawai
                 </span>
             </div>
             
-            <div className="flex flex-col gap-2 mt-1">
-                <select 
-                    value={filterLevel1} 
-                    onChange={(e) => {
-                        setFilterLevel1(e.target.value as 'all_karyawan' | 'filter_departemen');
-                        setFilterLevel2("");
-                        setFilterLevel3("");
-                    }}
-                    className="border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white font-medium shadow-2xs focus:border-blue-500"
-                >
-                    <option value="all_karyawan">Semua Pegawai</option>
-                    <option value="filter_departemen">Filter Departemen</option>
-                </select>
-
-                {filterLevel1 === 'filter_departemen' && (
-                    <select 
-                        value={filterLevel2} 
+            {/* FILTERS & SEARCH */}
+            <div className="flex flex-col gap-2 shrink-0">
+                <div className="grid grid-cols-2 gap-2">
+                    <select
+                        value={formFilterDept}
                         onChange={(e) => {
-                            setFilterLevel2(e.target.value);
-                            setFilterLevel3("");
-                        }} 
-                        className="border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white font-medium shadow-2xs focus:border-blue-500"
+                            setFormFilterDept(e.target.value);
+                            setFormFilterJabatan('');
+                        }}
+                        className="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none text-[11px] shadow-2xs font-medium"
                     >
-                        <option value="">-- Pilih Departemen --</option>
-                        {uniqueDepartemen.map(d => <option key={d as string} value={d as string}>{d as string}</option>)}
+                        <option value="">Semua Departemen</option>
+                        {formUniqueDepts.map((dept, idx) => (
+                            <option key={idx} value={dept}>{dept}</option>
+                        ))}
                     </select>
-                )}
 
-                {filterLevel1 === 'filter_departemen' && filterLevel2 !== '' && (
-                    <select 
-                        value={filterLevel3} 
-                        onChange={(e) => setFilterLevel3(e.target.value)} 
-                        className="border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white font-medium shadow-2xs focus:border-blue-500"
+                    <select
+                        value={formFilterJabatan}
+                        onChange={(e) => setFormFilterJabatan(e.target.value)}
+                        disabled={!formFilterDept}
+                        className={`w-full border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none text-[11px] shadow-2xs font-medium ${!formFilterDept ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
                     >
-                        <option value="">-- Pilih Jabatan --</option>
-                        {uniqueJabatanInDept.map(j => <option key={j as string} value={j as string}>{j as string}</option>)}
+                        <option value="">Semua Jabatan</option>
+                        {formUniqueJabs.map((jab, idx) => (
+                            <option key={idx} value={jab}>{jab}</option>
+                        ))}
                     </select>
-                )}
-            </div>
-
-            {/* SEARCH PEGAWAI */}
-            <div className="relative mt-0.5">
-                <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-                    <Search size={14} className="text-gray-400" />
                 </div>
-                <input
-                    type="text"
-                    placeholder="Cari nama pegawai..."
-                    value={searchTargetQuery}
-                    onChange={(e) => setSearchTargetQuery(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg pl-8 pr-3 py-1.5 text-xs outline-none focus:border-blue-500 shadow-2xs bg-white"
-                />
-            </div>
 
-            <div className="border border-gray-300 bg-white rounded-xl flex flex-col mt-1 shadow-2xs overflow-hidden flex-1 min-h-0">
-                <label className="flex items-center gap-2 p-2.5 border-b border-gray-200 bg-blue-50/70 hover:bg-blue-50 cursor-pointer text-xs font-extrabold text-gray-800 transition-colors shrink-0">
-                    <input 
-                        type="checkbox" 
-                        checked={isAllVisibleSelectedTarget}
-                        onChange={handleSelectAllVisibleTarget}
-                        className="w-4 h-4 text-blue-600 rounded border-gray-300"
+                <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                    <input
+                        type="text"
+                        placeholder="Cari nama pegawai..."
+                        value={formSearchQuery}
+                        onChange={(e) => setFormSearchQuery(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg pl-8 pr-2.5 py-1.5 focus:outline-none text-xs bg-white shadow-2xs"
                     />
-                    Pilih Semua ({visiblePegawaiIdsTarget.length} Pegawai)
-                </label>
-
-                <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1 custom-scrollbar min-h-0">
-                    {displayListTarget.length === 0 ? (
-                        <p className="text-xs text-gray-400 text-center py-6">Data tidak ditemukan.</p>
-                    ) : (
-                        displayListTarget.map(item => (
-                            <label key={item.id} className="flex items-center gap-2 p-2 hover:bg-blue-50 cursor-pointer rounded-lg text-xs transition-colors border border-transparent hover:border-blue-100">
-                                <input 
-                                    type="checkbox" 
-                                    checked={isItemSelectedTarget(item.pegawaiIds)}
-                                    onChange={() => handleToggleItemTarget(item.pegawaiIds)}
-                                    className="w-4 h-4 text-blue-600 rounded border-gray-300"
-                                />
-                                <span className="text-gray-800 font-semibold">{item.label}</span>
-                                <span className="text-[10px] bg-gray-100 px-2 py-0.5 rounded-md text-gray-500 ml-auto border border-gray-200 whitespace-nowrap font-medium">
-                                    {item.subLabel}
-                                </span>
-                            </label>
-                        ))
-                    )}
                 </div>
+            </div>
+
+            {/* CHECKLIST BOX */}
+            <div className="border border-gray-300 rounded-xl p-2 bg-white flex flex-col gap-1 w-full flex-1 overflow-y-auto custom-scrollbar shadow-2xs min-h-0">
+                {formFilteredPegawai.map((p) => {
+                    const isChecked = selectedPegawaiIds.includes(p.id);
+                    return (
+                        <label key={p.id} className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer hover:bg-blue-50/60 p-2 rounded-lg transition-colors border border-transparent hover:border-blue-100 select-none">
+                            <input 
+                                type="checkbox" 
+                                checked={isChecked}
+                                onChange={(e) => {
+                                    if (e.target.checked) {
+                                        setSelectedPegawaiIds(prev => [...prev, p.id]);
+                                    } else {
+                                        setSelectedPegawaiIds(prev => prev.filter(id => id !== p.id));
+                                    }
+                                }}
+                                className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer"
+                            />
+                            <div className="flex flex-col">
+                                <span className="font-bold text-gray-800">{p.nama}</span>
+                                <span className="text-[10px] text-gray-400 mt-0.5 font-medium">
+                                    {getDeptName(p)} &middot; {getJabName(p)}
+                                </span>
+                            </div>
+                        </label>
+                    );
+                })}
+                {formFilteredPegawai.length === 0 && (
+                    <span className="text-xs text-gray-400 italic text-center my-auto py-8">Pegawai tidak ditemukan.</span>
+                )}
+            </div>
+
+            {/* QUICK SELECT BUTTON */}
+            <div className="flex flex-wrap gap-2 justify-between items-center w-full shrink-0 pt-0.5">
+                <Button
+                    type="button"
+                    onClick={handleToggleSelectAllFiltered}
+                    disabled={formFilteredPegawai.length === 0}
+                    label={isAllFilteredSelected ? "Batal Pilih Terfilter" : "Pilih Semua Terfilter"}
+                    variant={isAllFilteredSelected ? "danger" : "info"}
+                    className="px-2 py-1 text-[9px] font-bold rounded-lg shadow-2xs cursor-pointer"
+                />
             </div>
         </div>
     );
