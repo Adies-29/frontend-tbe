@@ -209,8 +209,8 @@ export default function TabelBonusCustom({
         <div className="flex flex-col w-full bg-white relative rounded-b-xl">
             {/* Filter Toolbar */}
             <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/70 flex flex-col gap-4">
-                {/* Baris Atas: Search Input */}
-                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                {/* Baris Atas: Search */}
+                <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
                     {/* Search Input */}
                     <div className="relative flex-1 min-w-[240px] max-w-md">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -232,15 +232,16 @@ export default function TabelBonusCustom({
                     </div>
                 </div>
 
-                {/* Baris Bawah: Filter Departemen, Jabatan & Tanggal */}
-                <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-start sm:items-center pt-1 border-t border-slate-200/80">
-                    <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+                {/* Baris Bawah: Filter Departemen & Jabatan + Date Filters */}
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between pt-1">
+                    {/* Left: Departemen & Jabatan */}
+                    <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
                         {/* Select Dept */}
                         <div className="relative flex-1 sm:flex-none">
                             <select
                                 value={filterDepartemen}
                                 onChange={handleDepartemenChange}
-                                className="w-full sm:min-w-[150px] border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all cursor-pointer"
+                                className="w-full sm:min-w-[160px] border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all cursor-pointer"
                             >
                                 <option value="">Semua Departemen</option>
                                 {uniqueDepartemenList.map((dept, idx) => (
@@ -255,7 +256,7 @@ export default function TabelBonusCustom({
                                 value={filterJabatan}
                                 onChange={(e) => setFilterJabatan(e.target.value)}
                                 disabled={!filterDepartemen}
-                                className={`w-full sm:min-w-[150px] border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all ${!filterDepartemen
+                                className={`w-full sm:min-w-[160px] border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all ${!filterDepartemen
                                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
                                     : 'bg-white text-slate-700 cursor-pointer'
                                     }`}
@@ -269,10 +270,8 @@ export default function TabelBonusCustom({
                         </div>
                     </div>
 
-                    <div className="hidden sm:block h-6 w-px bg-slate-300 mx-1"></div>
-
-                    {/* Period Switcher & Date Controls */}
-                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                    {/* Right: Date Controls */}
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap md:justify-end">
                         {/* Segmented Control */}
                         <div className="bg-slate-200/80 p-1 rounded-xl flex items-center gap-1 shadow-inner">
                             <button
@@ -381,6 +380,7 @@ export default function TabelBonusCustom({
                     </div>
                 </div>
             </div>
+
 
             {/* Matrix Table */}
             <div className="overflow-x-auto w-full relative max-h-[500px] rounded-b-xl scrollbar-thin">
