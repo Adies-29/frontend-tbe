@@ -251,6 +251,8 @@ export function useRekapGaji() {
         });
     };
 
+    const [isModalPreviewOpen, setIsModalPreviewOpen] = useState(false);
+
     const handleCetakSemuaSlip = () => {
         const dataLunas = rekapGajiData.filter(
             (item: any) => item.status === 'Lunas' || item.status?.toLowerCase() === 'lunas'
@@ -259,7 +261,7 @@ export function useRekapGaji() {
             showNotif("Tidak ada data gaji berstatus Lunas yang dapat dicetak!", "error");
             return;
         }
-        window.print();
+        setIsModalPreviewOpen(true);
     };
 
     const handleFilter = () => {
@@ -288,6 +290,8 @@ export function useRekapGaji() {
         isLoadingRekap,
         isGenerating: generateGajiMutation.isPending,
         isPelunasanPending: pelunasanGajiMutation.isPending,
+        isModalPreviewOpen,
+        setIsModalPreviewOpen,
         summaryCards,
         notif,
         closeNotif,

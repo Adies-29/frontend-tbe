@@ -1,4 +1,4 @@
-import { Trash2, Search, Pencil,  Users, RotateCcw } from 'lucide-react';
+import { Trash2, Search, Pencil, Users, RotateCcw } from 'lucide-react';
 import { useState, useMemo, startTransition } from 'react';
 import { getCurrentWeek } from '../../../utils/dateHelpers';
 import PeriodSwitcher from '../../../components/common/PeriodSwitcher';
@@ -266,11 +266,10 @@ export default function TabelBonusCustom({
                                 value={filterJabatan}
                                 onChange={(e) => setFilterJabatan(e.target.value)}
                                 disabled={!filterDepartemen}
-                                className={`w-full sm:min-w-[160px] border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all ${
-                                    !filterDepartemen
-                                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
-                                        : 'bg-white text-slate-700 cursor-pointer'
-                                }`}
+                                className={`w-full sm:min-w-[160px] border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all ${!filterDepartemen
+                                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
+                                    : 'bg-white text-slate-700 cursor-pointer'
+                                    }`}
                                 title={!filterDepartemen ? "Pilih Departemen terlebih dahulu" : "Filter Jabatan"}
                             >
                                 <option value="">{filterDepartemen ? "Semua Jabatan" : "Pilih Departemen Dulu"}</option>
@@ -367,8 +366,8 @@ export default function TabelBonusCustom({
                                         {/* Date Cells */}
                                         {formattedDays.map((item, idx) => {
                                             // Match by either pegawai_id or name
-                                            const bonusesOnDay = bonusesMap[String(pegawai.id)]?.[item.tglKey] || 
-                                                                  bonusesMap[pegawai.nama]?.[item.tglKey] || [];
+                                            const bonusesOnDay = bonusesMap[String(pegawai.id)]?.[item.tglKey] ||
+                                                bonusesMap[pegawai.nama]?.[item.tglKey] || [];
 
                                             let cellBg = item.isSunday ? 'bg-rose-50/20' : '';
                                             if (bonusesOnDay.length > 0) {
@@ -378,15 +377,15 @@ export default function TabelBonusCustom({
                                             return (
                                                 <td
                                                     key={idx}
-                                                    className={`p-2 border-r border-slate-100 relative group transition-colors hover:bg-slate-100/80 min-w-[110px] vertical-top ${cellBg}`}
+                                                    className={`p-2 border-r border-slate-100 relative group hover:z-[100] transition-colors hover:bg-slate-100/80 min-w-[110px] vertical-top ${cellBg}`}
                                                 >
                                                     <div className="w-full min-h-[44px] flex flex-col gap-1.5 items-center justify-center relative">
                                                         {bonusesOnDay.length === 1 ? (
                                                             (() => {
                                                                 const bonus = bonusesOnDay[0];
                                                                 return (
-                                                                    <div 
-                                                                        key={bonus.id} 
+                                                                    <div
+                                                                        key={bonus.id}
                                                                         className="relative group/bonus bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg p-1.5 shadow-2xs transition-all w-full flex flex-col gap-1 select-none"
                                                                     >
                                                                         {/* Main Nominal & Action Bar */}
@@ -394,7 +393,7 @@ export default function TabelBonusCustom({
                                                                             <span className="font-extrabold text-[11px] text-emerald-700 tracking-tight">
                                                                                 Rp{bonus.nominal.toLocaleString('id-ID')}
                                                                             </span>
-                                                                            
+
                                                                             <div className="flex items-center gap-1 opacity-90 group-hover/bonus:opacity-100 transition-opacity">
                                                                                 {onEdit && (
                                                                                     <button
@@ -432,9 +431,8 @@ export default function TabelBonusCustom({
 
                                                                         {/* Rich Tooltip Popover on Hover */}
                                                                         {bonus.keterangan && (
-                                                                            <div className={`absolute left-1/2 -translate-x-1/2 hidden group-hover/bonus:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-48 z-40 pointer-events-none transition-all ${
-                                                                                index < 2 ? 'top-full mt-2' : 'bottom-full mb-2'
-                                                                            }`}>
+                                                                            <div className={`absolute left-1/2 -translate-x-1/2 hidden group-hover/bonus:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-48 z-40 pointer-events-none transition-all ${index < 2 ? 'top-full mt-2' : 'bottom-full mb-2'
+                                                                                }`}>
                                                                                 <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium pb-1 border-b border-slate-200">
                                                                                     <span>Detail Bonus</span>
                                                                                     <span>{bonus.tanggal_diberikan}</span>
@@ -471,9 +469,8 @@ export default function TabelBonusCustom({
                                                                         </div>
 
                                                                         {/* Popover Breakdown on Hover */}
-                                                                        <div className={`absolute left-1/2 -translate-x-1/2 hidden group-hover/cell:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-56 z-50 transition-all pointer-events-auto ${
-                                                                            index < 2 ? 'top-full mt-2' : 'bottom-full mb-2'
-                                                                        }`}>
+                                                                        <div className={`absolute left-1/2 -translate-x-1/2 hidden group-hover/cell:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-56 z-50 transition-all pointer-events-auto ${index < 2 ? 'top-full mt-2' : 'bottom-full mb-2'
+                                                                            }`}>
                                                                             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold pb-1.5 border-b border-slate-200">
                                                                                 <span>{bonusesOnDay.length} Bonus ({item.tglKey})</span>
                                                                                 <span className="text-emerald-700 font-black">Total: Rp{totalNominal.toLocaleString('id-ID')}</span>

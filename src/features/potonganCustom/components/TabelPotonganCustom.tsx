@@ -506,7 +506,9 @@ export const TabelPotonganCustom = ({ data = [], listPegawai = [], onDelete, onE
 
                                                                         {/* Rich Tooltip Popover on Hover */}
                                                                         {potongan.keterangan && (
-                                                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/potongan:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-48 z-40 pointer-events-none transition-all">
+                                                                            <div className={`absolute left-1/2 -translate-x-1/2 hidden group-hover/potongan:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-48 z-40 pointer-events-none transition-all ${
+                                                                                index < 2 ? 'top-full mt-2' : 'bottom-full mb-2'
+                                                                            }`}>
                                                                                 <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium pb-1 border-b border-slate-200">
                                                                                     <span>Detail Potongan</span>
                                                                                     <span>{potongan.tanggal_diberikan}</span>
@@ -543,7 +545,9 @@ export const TabelPotonganCustom = ({ data = [], listPegawai = [], onDelete, onE
                                                                         </div>
 
                                                                         {/* Popover Breakdown on Hover */}
-                                                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/cell:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-56 z-50 transition-all pointer-events-auto">
+                                                                        <div className={`absolute left-1/2 -translate-x-1/2 hidden group-hover/cell:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-56 z-50 transition-all pointer-events-auto ${
+                                                                            index < 2 ? 'top-full mt-2' : 'bottom-full mb-2'
+                                                                        }`}>
                                                                             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold pb-1.5 border-b border-slate-200">
                                                                                 <span>{deductionsOnDay.length} Potongan ({dateKey})</span>
                                                                                 <span className="text-rose-700 font-black">Total: -Rp{totalNominal.toLocaleString('id-ID')}</span>

@@ -6,6 +6,7 @@ import Notif from '../../../../components/common/Notif';
 import { TabelRekapGaji, type RekapGajiData } from '../../../../features/gajiTunjangan/components/TabelRekapGaji';
 import SlipGajiTemplate from '../../../../features/gajiTunjangan/components/SlipGajiTemplate';
 import ModalRincianGaji from '../../../../features/gajiTunjangan/components/ModalRincianGaji';
+import ModalPreviewSlipGaji from '../../../../features/gajiTunjangan/components/ModalPreviewSlipGaji';
 import { useRekapGaji } from '../../hooks/useRekapGaji';
 import PeriodSwitcher from '../../../../components/common/PeriodSwitcher';
 import { formatRupiah } from '../../../../utils/formatCurrency';
@@ -19,6 +20,8 @@ export default function TabRekapGaji() {
         isLoadingRekap,
         isErrorRekap,
         isGenerating,
+        isModalPreviewOpen,
+        setIsModalPreviewOpen,
         summaryCards,
         notif,
         handleGenerateGaji,
@@ -205,6 +208,14 @@ export default function TabRekapGaji() {
                 rincianData={modalDetail.rincianData}
             />
 
+            <ModalPreviewSlipGaji 
+                isOpen={isModalPreviewOpen}
+                onClose={() => setIsModalPreviewOpen(false)}
+                data={rekapGajiData}
+                filterValue={filterValue}
+                periode={periode}
+            />
+
             <Notif 
                 show={notif.show} 
                 message={notif.message} 
@@ -214,4 +225,5 @@ export default function TabRekapGaji() {
         </div>
     );
 }
+
 
