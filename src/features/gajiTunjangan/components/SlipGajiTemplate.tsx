@@ -1,7 +1,7 @@
 
 
 export interface DetailHarian {
-    hari_tanggal: string; 
+    hari_tanggal: string;
     gaji_kehadiran?: number;
     t_absensi?: number;
     t_kerapian?: number;
@@ -20,26 +20,26 @@ export interface RekapGajiLengkap {
     jabatan: string;
     shift?: string;
     tipe_penggajian: 'Harian' | 'Target' | 'Bulanan';
-    periode_tanggal?: string; 
-    detail_harian?: DetailHarian[]; 
+    periode_tanggal?: string;
+    detail_harian?: DetailHarian[];
     status: string; // <-- Menangkap status 'Pending' atau 'Lunas'
-    
+
     // JSON Data
     rincian_bonus: any;
     rincian_potongan: any;
     informasi_tabungan: any;
-    
+
     // Summary
     gaji_dasar: number;
-    total_kotor: number; 
+    total_kotor: number;
     potongan_bon: number;
     denda_sistem: number;
-    total_upah: number; 
+    total_upah: number;
     sisa_hutang: number;
 }
 
 interface SlipGajiTemplateProps {
-    data: RekapGajiLengkap[] | any[]; 
+    data: RekapGajiLengkap[] | any[];
     filterValue: string;
 }
 
@@ -58,7 +58,7 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
     return (
         // Gunakan absolute dan z-index tinggi agar menimpa seluruh aplikasi saat print
         <div className="hidden print:block bg-white text-black font-sans absolute top-0 left-0 w-full z-99999 m-0 p-0">
-            
+
             {/* =====================================================================
                 CSS SAKTI UNTUK MENGATASI BUG CETAK 1 HALAMAN (OVERRIDE PARENT)
                 ===================================================================== */}
@@ -84,7 +84,7 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                 const isTarget = pegawai.tipe_penggajian === 'Target';
                 const rb = pegawai.rincian_bonus || {};
                 const rt = pegawai.informasi_tabungan || {};
-                
+
                 // Menarik array detail kasbon & potongan custom dari JSON
                 const detailKasbon = pegawai.rincian_potongan?.detail_kasbon || [];
                 const detailPotonganCustom = pegawai.rincian_potongan?.detail_potongan_custom || [];
@@ -93,7 +93,7 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
 
                 return (
                     <div key={pegawai.id} className={`slip-container w-full max-w-[18cm] mx-auto text-[10px] ${(index + 1) % 2 === 0 ? 'page-break' : ''}`}>
-                        
+
                         {/* 1. HEADER */}
                         <div className="flex justify-between items-start mb-2">
                             <table className="text-left font-semibold text-[11px]">
@@ -107,7 +107,7 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                             </table>
                             <div className="text-center">
                                 <h1 className="font-bold text-sm">Perusahaan Krupuk Mie</h1>
-                                <h2 className="font-black text-base tracking-wider">" KAS MUDA MUDI "</h2>
+                                <h2 className="font-black text-base tracking-wider">" Tiga Berlian Official "</h2>
                                 <p className="mt-1 leading-tight text-[10px]">
                                     Jl. Raya Belakang Yonif 407<br />
                                     Ds. Harjosari Lor RT 28 RW 06<br />
@@ -144,7 +144,7 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                                         <tr key={idx} className="border-b border-black">
                                             <td className="border-r border-black py-1">{idx + 1}</td>
                                             <td className="border-r border-black py-1 text-left px-1">{hari.hari_tanggal || '-'}</td>
-                                            
+
                                             {isTarget ? (
                                                 <>
                                                     <td className="border-r border-black py-1 uppercase truncate max-w-[100px] px-1">{hari.nama_target || '-'}</td>
@@ -154,7 +154,7 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                                             ) : (
                                                 <td className="border-r border-black py-1">{formatAngka(hari.gaji_kehadiran)}</td>
                                             )}
-                                            
+
                                             <td className="border-r border-black py-1">{formatAngka(hari.t_absensi)}</td>
                                             <td className="border-r border-black py-1">{formatAngka(hari.t_kerapian)}</td>
                                             <td className="border-r border-black py-1">{formatAngka(hari.lembur)}</td>
@@ -169,15 +169,15 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
 
                         {/* 3. FOOTER */}
                         <div className="flex justify-between items-start text-[11px]">
-                            
+
                             {/* Kiri: Info Tabungan & Hutang */}
                             <table className="border border-black text-left w-60">
                                 <tbody>
                                     <tr><td colSpan={2} className="py-1 px-2 border-b border-black bg-gray-100 font-bold text-center">INFORMASI KASBON & TABUNGAN</td></tr>
-                                    
+
                                     {/* TAMPILKAN SISA KASBON DINAMIS HANYA JIKA LUNAS & ADA DATANYA */}
                                     {isLunas && detailKasbon.map((bon: any, i: number) => (
-                                        <tr key={'sisa-'+i} className="border-b border-black">
+                                        <tr key={'sisa-' + i} className="border-b border-black">
                                             <td className="py-1 px-2 border-r border-black font-semibold text-red-700 leading-tight">
                                                 Sisa Bon ({bon.keterangan}):
                                             </td>
@@ -233,16 +233,16 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                                             <td className="py-0.5 px-2 align-middle">{formatAngka(rb.bonus_kerapian_harian)}</td>
                                         </tr>
                                     )}
-                                    
+
                                     {/* Pembatas Kotor & Potongan */}
                                     <tr><td colSpan={2} className="border-b border-black"></td></tr>
-                                    
+
                                     {/* --- [SUNTIKAN KODE UI BONUS CUSTOM] --- */}
                                     {rb.detail_bonus_custom && rb.detail_bonus_custom.length > 0 && (
                                         <>
                                             <tr><td colSpan={2} className="py-0.5 pr-2 border-r border-black font-semibold text-blue-800 text-left bg-gray-50 pl-1">Pendapatan Lain:</td></tr>
                                             {rb.detail_bonus_custom.map((b_custom: any, i: number) => (
-                                                <tr key={'bonus-'+i}>
+                                                <tr key={'bonus-' + i}>
                                                     <td className="py-0.5 pr-2 italic pl-2 text-left    ">- {b_custom.keterangan}</td>
                                                     <td className="py-0.5 px-2 align-middle">{formatAngka(b_custom.nominal)}</td>
                                                 </tr>
@@ -250,7 +250,7 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                                         </>
                                     )}
                                     {/* --------------------------------------- */}
-                                    
+
                                     {/* Pembatas Kotor & Potongan */}
                                     <tr><td colSpan={2} className="border-b border-black"></td></tr>
 
@@ -260,10 +260,10 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
                                             <td className="py-0.5 px-2 text-red-600 align-middle">-{formatAngka(pegawai.denda_sistem)}</td>
                                         </tr>
                                     )}
-                                    
+
                                     {/* TAMPILKAN POTONGAN BON DINAMIS HANYA JIKA LUNAS & ADA DATANYA */}
                                     {isLunas && detailKasbon.map((bon: any, i: number) => (
-                                        <tr key={'potongan-'+i} className="border-b border-black">
+                                        <tr key={'potongan-' + i} className="border-b border-black">
                                             <td className="py-0.5 pr-2 border-r border-black text-red-600 leading-tight">
                                                 Pot. Bon ({bon.keterangan})
                                             </td>
@@ -275,7 +275,7 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
 
                                     {/* TAMPILKAN POTONGAN CUSTOM DINAMIS */}
                                     {detailPotonganCustom.map((pot: any, i: number) => (
-                                        <tr key={'potongan-custom-'+i} className="border-b border-black">
+                                        <tr key={'potongan-custom-' + i} className="border-b border-black">
                                             <td className="py-0.5 pr-2 border-r border-black text-red-600 leading-tight">
                                                 Pot. Custom ({pot.keterangan})
                                             </td>
@@ -296,7 +296,7 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
 
                         {/* Garis Pemotong Kertas */}
                         <div className="mt-10 mb-2 border-t border-dashed border-gray-400 w-full relative">
-                             <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-white px-2 text-[8px] text-gray-400 italic">✂️ Gunting di sini ✂️</span>
+                            <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-white px-2 text-[8px] text-gray-400 italic">✂️ Gunting di sini ✂️</span>
                         </div>
                     </div>
                 );
