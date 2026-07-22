@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PlusCircle, Loader2 } from 'lucide-react';
+import { PlusCircle, Loader2, Gift } from 'lucide-react';
 import Button from '../../../components/common/Button';
 import Notif from '../../../components/common/Notif';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
@@ -32,22 +32,27 @@ export default function BonusCustomIndex() {
         <div className="flex flex-col gap-6 w-full animate-in fade-in duration-300">
             
             {/* HEADER */}
-            <div data-tour="bonus-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
-                <div>
-                    <h1 className="text-2xl font-black text-gray-800">Bonus Custom</h1>
-                    <p className="text-xs text-gray-500 font-medium mt-0.5">
-                        Kelola dan berikan bonus/reward khusus secara mandiri ke pegawai
-                    </p>
+            <section data-tour="bonus-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                            <Gift size={28} className="text-indigo-600" /> Bonus Custom
+                        </h1>
+                        <p className="text-sm text-gray-500 mt-1">
+                            Kelola dan berikan bonus/reward khusus secara mandiri ke pegawai.
+                        </p>
+                    </div>
+                    <div className="flex gap-3 items-center w-full md:w-auto">
+                        <Button
+                            label="Buat Bonus Baru"
+                            variant="primary"
+                            icon={<PlusCircle size={16} />}
+                            onClick={() => setIsModalOpen(true)}
+                            className="w-full md:w-auto font-bold text-xs shadow-md"
+                        />
+                    </div>
                 </div>
-
-                <Button
-                    label="Buat Bonus Baru"
-                    variant="primary"
-                    icon={<PlusCircle size={18} />}
-                    onClick={() => setIsModalOpen(true)}
-                    className="font-bold shadow-md"
-                />
-            </div>
+            </section>
 
             {/* TABEL RIWAYAT BONUS (FULL WIDTH) */}
             <div data-tour="bonus-table" className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col w-full">

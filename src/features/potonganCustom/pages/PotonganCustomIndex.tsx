@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PlusCircle, Loader2 } from 'lucide-react';
+import { PlusCircle, Loader2, MinusCircle } from 'lucide-react';
 import Button from '../../../components/common/Button';
 import Notif from '../../../components/common/Notif';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
@@ -30,22 +30,27 @@ export default function PotonganCustomIndex() {
         <div className="flex flex-col gap-6 w-full animate-in fade-in duration-300">
             
             {/* HEADER */}
-            <div data-tour="potongan-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
-                <div>
-                    <h1 className="text-2xl font-black text-gray-800">Potongan Custom</h1>
-                    <p className="text-xs text-gray-500 font-medium mt-0.5">
-                        Kelola dan berikan pemotongan gaji khusus secara mandiri ke pegawai
-                    </p>
+            <section data-tour="potongan-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                            <MinusCircle size={28} className="text-rose-600" /> Potongan Custom
+                        </h1>
+                        <p className="text-sm text-gray-500 mt-1">
+                            Kelola dan berikan pemotongan gaji khusus secara mandiri ke pegawai.
+                        </p>
+                    </div>
+                    <div className="flex gap-3 items-center w-full md:w-auto">
+                        <Button
+                            label="Buat Potongan Baru"
+                            variant="danger"
+                            icon={<PlusCircle size={16} />}
+                            onClick={() => setIsModalOpen(true)}
+                            className="w-full md:w-auto font-bold text-xs shadow-md"
+                        />
+                    </div>
                 </div>
-
-                <Button
-                    label="Buat Potongan Baru"
-                    variant="danger"
-                    icon={<PlusCircle size={18} />}
-                    onClick={() => setIsModalOpen(true)}
-                    className="font-bold shadow-md cursor-pointer"
-                />
-            </div>
+            </section>
 
             {/* TABEL RIWAYAT POTONGAN (FULL WIDTH) */}
             <div data-tour="potongan-table" className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col w-full">
