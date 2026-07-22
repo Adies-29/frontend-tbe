@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Wallet, FileText, User } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -6,13 +5,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Button from "../../../components/common/Button";
 import Notif from "../../../components/common/Notif";
-import { useAuthStore } from "../../../store/useAuthStore";
-import { apiFetch } from "../../../utils/apiFetch";
-import { getSafeErrorMessage } from "../../../utils/errorHandler";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import { Input } from "../../../components/common/InputText";
 import { TextArea } from "../../../components/common/TextArea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Autocomplete, TextField } from "@mui/material";
+import { formatNumberInput, parseCurrencyToNumber } from "../../../utils/formatCurrency";
+import { useNotif } from "../../../hooks/useNotif";
 
 // Schema validasi sesuai dengan kebutuhan backend
 const kasbonSchema = z.object({
@@ -27,12 +26,8 @@ type KasbonFormData = z.infer<typeof kasbonSchema>;
 
 export default function AddKasbon() {
     const navigate = useNavigate();
-    const token = useAuthStore((state) => state.token);
     const queryClient = useQueryClient();
-
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false, message: "", type: "success"
-    });
+    const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
 
     const {
         register,
@@ -44,9 +39,11 @@ export default function AddKasbon() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         resolver: zodResolver(kasbonSchema) as any,
         defaultValues: {
-            tanggal_pengajuan: new Date().toISOString().split('T')[0],
-            persentase_cicilan: 10,
-            nominal_pinjaman: ""
+            pegawai_id: "",
+            tanggal_pengajuan: new Date().toISOString().split("T")[0],
+            nominal_pinjaman: "",
+            persentase_cicilan: 20,
+            keterangan_pinjaman: ""
         }
     });
 
@@ -54,19 +51,15 @@ export default function AddKasbon() {
     const nominalRaw = watch("nominal_pinjaman");
     const tenorNum = watch("persentase_cicilan");
 
-    const nominalNum = parseInt(nominalRaw.replace(/[^0-9]/g, '')) || 0;
+    const nominalNum = parseCurrencyToNumber(nominalRaw);
     const cicilan = (nominalNum * tenorNum) / 100;
 
     // Load data pegawai menggunakan useQuery
     const pegawaiQuery = useQuery({
-        queryKey: ['pegawaiList'],
+        queryKey: ['pegawai'],
         queryFn: async () => {
-            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await res.json();
-            if (!res.ok) throw new Error("Gagal load pegawai");
-            return result.data || [];
+            const res = await apiFetchJson('/api/v1/pegawai');
+            return res.data || [];
         }
     });
 
@@ -74,34 +67,31 @@ export default function AddKasbon() {
     const addKasbonMutation = useMutation({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         mutationFn: async (payload: any) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/kasbon`, {
+            const result = await apiFetchJson('/api/v1/kasbon', {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify(payload)
             });
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error(result.message || getSafeErrorMessage(response.status));
             return result;
         },
         onSuccess: () => {
-            setNotif({ show: true, message: "Kasbon berhasil diajukan!", type: "success" });
+            showNotif("Kasbon berhasil diajukan!", "success");
             // Hapus cache kasbonList agar KasbonIndex langsung mereload data baru
             queryClient.invalidateQueries({ queryKey: ['kasbonList'] });
             setTimeout(() => navigate('/dashboard/kasbon'), 1500);
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Gagal menghubungi server", type: "error" });
+            showErrorNotif(error);
         }
     });
 
     const onSubmit = (data: KasbonFormData) => {
-        const cleanNominal = parseInt(data.nominal_pinjaman.replace(/[^0-9]/g, '')) || 0;
+        const cleanNominal = parseCurrencyToNumber(data.nominal_pinjaman);
         if (cleanNominal <= 0) {
-            setNotif({ show: true, message: "Nominal pinjaman tidak valid", type: "error" });
+            showNotif("Nominal pinjaman tidak valid", "error");
             return;
         }
 
@@ -118,19 +108,14 @@ export default function AddKasbon() {
 
     // Format input uang
     const handleNominalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/[^0-9]/g, '');
-        if (value) {
-            const formatted = new Intl.NumberFormat('id-ID').format(parseInt(value));
-            setValue("nominal_pinjaman", formatted, { shouldValidate: true });
-        } else {
-            setValue("nominal_pinjaman", "", { shouldValidate: true });
-        }
+        const formatted = formatNumberInput(e.target.value);
+        setValue("nominal_pinjaman", formatted, { shouldValidate: true });
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (
         <div className="flex flex-col gap-6 w-full p-2 max-w-4xl mx-auto">
-            <Notif show={notif.show} message={notif.message} type={notif.type} onClose={() => setNotif(prev => ({ ...prev, show: false }))} />
+            <Notif show={notif.show} message={notif.message} type={notif.type} onClose={closeNotif} />
 
             <div data-tour="add-kasbon-form" className="bg-white rounded-xl shadow-md p-4 md:p-8 border border-gray-100">
                 <div className="flex justify-between items-center mb-6 mt-2">

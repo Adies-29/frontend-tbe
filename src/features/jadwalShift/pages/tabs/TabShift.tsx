@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import TabelJadwalShift from "../../../../features/jadwalShift/components/TabelJadwalShif";
+import TabelJadwalShift from "../../components/TabelJadwalShift";
 import { useMasterShift } from "../../hooks/useMasterShift";
 
 

@@ -1,8 +1,8 @@
 
 import { NavLink, useNavigate } from "react-router-dom";
-import { useAuthStore } from "../store/useAuthStore";
+import { useAuthStore } from "../../store/useAuthStore";
 import { CalendarDays, ChevronLeft, Coffee, DollarSign, LaptopMinimal, Layers, LogOut,  Menu,  Rows2,  Users, X, ListCheck, Wallet, Gift, Scissors } from "lucide-react";
-import logoTbe from "../assets/r3a.png";
+import logoTbe from "../../assets/r3a.png";
 
 interface SidebarProps {
     isOpen: boolean;
@@ -19,7 +19,7 @@ export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: Sidebar
 
     const handleLogout = () => {
         logout();
-        navigate('/'); 
+        navigate('/');
     };
     const handleMenuClick = () => {
 
@@ -50,20 +50,20 @@ export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: Sidebar
             fixed top-0 left-0 h-screen transition-all duration-300 ease-in-out overflow-y-auto overflow-x-hidden
             ${isOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full md:w-20 md:translate-x-0"}
         `}>
-            
+
             {/* Bagian Atas */}
             <div>
                 {/* 3. Header Sidebar dengan Tombol Toggle Desktop */}
-                 <div className={`mb-10 flex items-center ${isOpen ? "justify-between px-2" : "justify-center flex-col gap-4"}`}>
-                    
+                <div className={`mb-10 flex items-center ${isOpen ? "justify-between px-2" : "justify-center flex-col gap-4"}`}>
+
                     {/* Teks Logo T-Be (Disembunyikan saat tertutup) */}
                     <div className={`transition-all duration-300 ${isOpen ? "opacity-100 block" : "hidden"}`}>
-                       <div className="flex justify-center items-center">
-                        <img 
-                            src={logoTbe}
-                            alt="T-Be Logo" 
-                            className="h-10 w-auto object-contain" 
-                        />
+                        <div className="flex justify-center items-center">
+                            <img
+                                src={logoTbe}
+                                alt="T-Be Logo"
+                                className="h-10 w-auto object-contain"
+                            />
                         </div>
                     </div>
 
@@ -91,26 +91,26 @@ export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: Sidebar
                             }
                             return true;
                         }).map((item, index) => {
-                            const Icon = item.icon; 
-                            
+                            const Icon = item.icon;
+
                             return (
                                 <li key={index}>
-                                    <NavLink 
-                                        to={item.path} 
-                                        end={item.isEnd} 
+                                    <NavLink
+                                        to={item.path}
+                                        end={item.isEnd}
                                         onClick={handleMenuClick}
                                         title={!isOpen ? item.title : ""}
-                                        className={({ isActive }) => 
+                                        className={({ isActive }) =>
                                             `transition-colors flex items-center p-3 rounded-md group
-                                            ${isActive 
-                                                ? "bg-white/20 text-yellow-300 font-bold border-l-4 border-yellow-300" 
+                                            ${isActive
+                                                ? "bg-white/20 text-yellow-300 font-bold border-l-4 border-yellow-300"
                                                 : "text-white hover:bg-white/10 hover:text-amber-200"
                                             }
-                                            ${!isOpen ? "justify-center" : "px-4"}` 
+                                            ${!isOpen ? "justify-center" : "px-4"}`
                                         }>
-                                   
-                                        <Icon size={20} className="shrink-0" /> 
-                                      
+
+                                        <Icon size={20} className="shrink-0" />
+
                                         <span className={`whitespace-nowrap transition-all duration-300 
                                             ${isOpen ? "opacity-100 w-auto ml-4" : "opacity-0 w-0 overflow-hidden ml-0"}`}>
                                             {item.title}
@@ -125,36 +125,36 @@ export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: Sidebar
 
             {/* Bagian Bawah */}
             <div className={`flex flex-col items-center mt-10 transition-all ${isOpen ? "gap-6" : "gap-4"}`}>
-                
+
                 {/* Tombol Logout */}
-                <button 
-                    type="button" 
+                <button
+                    type="button"
                     onClick={handleLogout}
                     title={!isOpen ? "Logout" : ""}
                     className={`flex items-center p-2 text-white font-semibold cursor-pointer hover:text-yellow-300 transition-colors w-full
                         ${isOpen ? "justify-center gap-3 border-b border-white/30 pb-4" : "justify-center"}`}
                 >
                     <LogOut size={24} strokeWidth={2.5} className="shrink-0" />
-                    
+
                     {/* Teks Logout (Disembunyikan saat tertutup) */}
                     <span className={`text-lg whitespace-nowrap transition-all duration-300 
                         ${isOpen ? "opacity-100 w-auto block" : "opacity-0 w-0 overflow-hidden hidden"}`}>
                         Logout
                     </span>
                 </button>
-                
+
                 {/* Copyright (Disembunyikan saat tertutup) */}
                 <div className={`w-full text-center transition-all duration-300 
                     ${isOpen ? "opacity-100 block" : "opacity-0 hidden"}`}>
                     <p className="text-[10px] md:text-[11px] font-light text-white/70 leading-tight">
-                        &copy; {currentYear} T-Be (tiga berlian)<br/>All Right Reserved
+                        &copy; {currentYear} T-Be (tiga berlian)<br />All Right Reserved
                     </p>
                     <p className="text-[10px] md:text-[11px] font-medium text-white/40 mt-1.5">
                         v{import.meta.env.PACKAGE_VERSION || "0.0.0"}
                     </p>
                 </div>
             </div>
-            
+
         </div>
     );
 }

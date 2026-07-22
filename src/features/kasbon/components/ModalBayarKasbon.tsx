@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Wallet, AlertCircle } from "lucide-react";
 import Button from "../../../components/common/Button";
+import { formatNumberInput, parseCurrencyToNumber, formatRupiah } from "../../../utils/formatCurrency";
 
 interface ModalBayarKasbonProps {
     isOpen: boolean;
@@ -29,19 +30,15 @@ export default function ModalBayarKasbon({ isOpen, onClose, kasbon, onSubmit, is
     if (!isOpen || !kasbon) return null;
 
     const handleNominalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/[^0-9]/g, '');
-        if (value) {
-            setNominal(new Intl.NumberFormat('id-ID').format(parseInt(value)));
-            setError("");
-        } else {
-            setNominal("");
-        }
+        const formatted = formatNumberInput(e.target.value);
+        setNominal(formatted);
+        if (formatted) setError("");
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
-        const cleanNominal = parseInt(nominal.replace(/[^0-9]/g, '')) || 0;
+        const cleanNominal = parseCurrencyToNumber(nominal);
         const sisaPinjaman = kasbon.sisa_pinjaman || 0;
 
         if (cleanNominal <= 0) {
@@ -50,7 +47,7 @@ export default function ModalBayarKasbon({ isOpen, onClose, kasbon, onSubmit, is
         }
 
         if (cleanNominal > sisaPinjaman) {
-            setError(`Nominal tidak boleh melebihi sisa pinjaman (Rp ${new Intl.NumberFormat('id-ID').format(sisaPinjaman)})`);
+            setError(`Nominal tidak boleh melebihi sisa pinjaman (${formatRupiah(sisaPinjaman)})`);
             return;
         }
 

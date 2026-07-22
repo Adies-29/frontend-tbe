@@ -77,11 +77,11 @@ export interface KaryawanDetail {
 }
 
 export interface DepartemenData {
-    id: string;
+    id: number | string;
     nama_departemen: string;
-    jumlah_jabatan?: string; // dari index
-    total_pegawai?: number; // dari tabel
-    karyawan?: KaryawanDetail[]; // dari tabel
+    jumlah_jabatan?: number;
+    total_pegawai?: number;
+    karyawan?: KaryawanDetail[];
 }
 
 export interface JadwalShiftData {

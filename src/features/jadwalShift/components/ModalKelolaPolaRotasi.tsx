@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import Button from '../../../components/common/Button';
-import { apiFetch } from '../../../utils/apiFetch';
-import { useAuthStore } from '../../../store/useAuthStore';
+import { apiFetchJson } from '../../../utils/apiFetch';
 
 interface Shift {
   id: string | number;
@@ -28,7 +27,7 @@ interface ModalKelolaPolaRotasiProps {
   isOpen: boolean;
   onClose: () => void;
   shifts: Shift[];
-  token: string;
+  token?: string;
   onSuccess?: () => void;
 }
 
@@ -36,11 +35,8 @@ export const ModalKelolaPolaRotasi: React.FC<ModalKelolaPolaRotasiProps> = ({
   isOpen,
   onClose,
   shifts,
-  token,
   onSuccess
 }) => {
-  const storeToken = useAuthStore((state) => state.token);
-  const activeToken = token || storeToken;
   const [polaList, setPolaList] = useState<PolaRotasi[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -65,14 +61,8 @@ export const ModalKelolaPolaRotasi: React.FC<ModalKelolaPolaRotasiProps> = ({
   const fetchPolaList = async () => {
     setLoading(true);
     try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-      const res = await apiFetch(`${baseUrl}/api/v1/pola-rotasi`, {
-        headers: { Authorization: `Bearer ${activeToken}` }
-      });
-      const json = await res.json();
-      if (json.success) {
-        setPolaList(json.data || []);
-      }
+      const res = await apiFetchJson('/api/v1/pola-rotasi');
+      setPolaList(res.data || []);
     } catch (err: any) {
       console.error('Error fetching pola rotasi:', err.message);
     } finally {
@@ -132,12 +122,10 @@ export const ModalKelolaPolaRotasi: React.FC<ModalKelolaPolaRotasiProps> = ({
 
     setLoading(true);
     try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-      const res = await apiFetch(`${baseUrl}/api/v1/pola-rotasi`, {
+      await apiFetchJson('/api/v1/pola-rotasi', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${activeToken}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           nama_pola: namaPola,
@@ -147,17 +135,12 @@ export const ModalKelolaPolaRotasi: React.FC<ModalKelolaPolaRotasiProps> = ({
         })
       });
 
-      const json = await res.json();
-      if (json.success) {
-        setSuccessMsg('Pola rotasi shift berhasil dibuat!');
-        fetchPolaList();
-        setMode('list');
-        if (onSuccess) onSuccess();
-      } else {
-        setErrorMsg(json.message || 'Gagal menyimpan pola rotasi.');
-      }
+      setSuccessMsg('Pola rotasi shift berhasil dibuat!');
+      fetchPolaList();
+      setMode('list');
+      if (onSuccess) onSuccess();
     } catch (err: any) {
-      setErrorMsg('Terjadi kesalahan jaringan.');
+      setErrorMsg(err.message || 'Terjadi kesalahan jaringan.');
     } finally {
       setLoading(false);
     }
@@ -167,16 +150,11 @@ export const ModalKelolaPolaRotasi: React.FC<ModalKelolaPolaRotasiProps> = ({
     if (!confirm('Apakah Anda yakin ingin menghapus pola rotasi ini?')) return;
 
     try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-      const res = await apiFetch(`${baseUrl}/api/v1/pola-rotasi/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${activeToken}` }
+      await apiFetchJson(`/api/v1/pola-rotasi/${id}`, {
+        method: 'DELETE'
       });
-      const json = await res.json();
-      if (json.success) {
-        fetchPolaList();
-        if (onSuccess) onSuccess();
-      }
+      fetchPolaList();
+      if (onSuccess) onSuccess();
     } catch (err: any) {
       console.error('Gagal menghapus pola rotasi:', err);
     }
@@ -214,14 +192,14 @@ export const ModalKelolaPolaRotasi: React.FC<ModalKelolaPolaRotasiProps> = ({
 
           {errorMsg && (
             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs font-semibold">
-              <AlertCircle size={16} className="flex-shrink-0" />
+              <AlertCircle size={16} className="shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
             <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-xs font-semibold">
-              <CheckCircle size={16} className="flex-shrink-0" />
+              <CheckCircle size={16} className="shrink-0" />
               <span>{successMsg}</span>
             </div>
           )}

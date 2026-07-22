@@ -1,11 +1,7 @@
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { Box } from '@mui/material';
 import { Info } from 'lucide-react';
-
-// Pindahkan fungsi formatRupiah ke sini agar komponen ini mandiri
-const formatRupiah = (angka: number) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
-};
+import { formatRupiah } from '../../../utils/formatCurrency';
 
 // Ubah nama interface dari PayrollData ke RekapGajiData
 export interface RekapGajiData {

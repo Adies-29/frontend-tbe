@@ -1,6 +1,5 @@
 import { Clock, Plus } from "lucide-react";
-import { useAuthStore } from "../../../store/useAuthStore";
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import TabelLembur from "../../../features/lembur/components/TabelLembur";
 import type { LemburData } from "../../../types";
 import { useQuery } from "@tanstack/react-query";
@@ -8,27 +7,15 @@ import Button from "../../../components/common/Button";
 import { useNavigate } from "react-router-dom";
 
 export default function LemburIndex() {
-    const token = useAuthStore((state) => state.token);
     const navigate = useNavigate();
 
     const lemburQuery = useQuery({
         queryKey: ['lemburList'],
         queryFn: async () => {
-            const [responseLembur, responsePegawai] = await Promise.all([
-                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/future`, {
-                    headers: { "Authorization": `Bearer ${token}` }
-                }),
-                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
-                    headers: { "Authorization": `Bearer ${token}` }
-                })
+            const [resultLembur, resultPegawai] = await Promise.all([
+                apiFetchJson('/api/v1/lembur/future'),
+                apiFetchJson('/api/v1/pegawai').catch(() => ({ data: [] }))
             ]);
-
-            const resultLembur = await responseLembur.json();
-            const resultPegawai = responsePegawai.ok ? await responsePegawai.json() : { data: [] };
-
-            if (!responseLembur.ok || !resultLembur.success) {
-                throw new Error("Gagal mengambil data lembur");
-            }
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const pegawaiMap = new Map((resultPegawai.data || []).map((p: any) => [String(p.id), p.nama]));
