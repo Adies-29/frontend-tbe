@@ -230,57 +230,49 @@ export default function ModalPreviewSlipGaji({
         return Object.entries(groups).map(([keterangan, total]) => ({ keterangan, total }));
     };
 
-    // Handle PDF Export using html-to-image (toCanvas) & jsPDF for ALL selected employees (2-3 slips per A4 page)
+    // Helper to chunk array
+    const chunkArray = <T,>(arr: T[], size: number): T[][] => {
+        const chunked: T[][] = [];
+        for (let i = 0; i < arr.length; i += size) {
+            chunked.push(arr.slice(i, i + size));
+        }
+        return chunked;
+    };
+
+    // Handle PDF Export using html-to-image (toCanvas) & jsPDF for ALL selected employees (4 slips per A4 Landscape page in a 2x2 grid)
     const handleExportPdf = async () => {
         if (selectedEmployees.length === 0) return;
         setIsExportingPdf(true);
         try {
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
-            const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
+            const pdf = new jsPDF('l', 'mm', 'a4');
+            const chunks = chunkArray(selectedEmployees, 4);
 
-            let currentY = 5; // starting y position in mm on current page
+            for (let c = 0; c < chunks.length; c++) {
+                if (c > 0) pdf.addPage();
+                const chunk = chunks[c];
 
-            for (let i = 0; i < selectedEmployees.length; i++) {
-                const emp = selectedEmployees[i];
-                const cardElem = document.getElementById(`export-pdf-card-${emp.id}`);
-                if (!cardElem) continue;
+                for (let i = 0; i < chunk.length; i++) {
+                    const emp = chunk[i];
+                    const cardElem = document.getElementById(`export-pdf-card-${emp.id}`);
+                    if (!cardElem) continue;
 
-                // Render image canvas with html-to-image
-                const canvas = await toCanvas(cardElem, {
-                    backgroundColor: '#ffffff',
-                    pixelRatio: 2,
-                    cacheBust: true
-                });
+                    const canvas = await toCanvas(cardElem, {
+                        backgroundColor: '#ffffff',
+                        pixelRatio: 2,
+                        cacheBust: true
+                    });
 
-                const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                const imgWidth = canvas.width;
-                const imgHeight = canvas.height;
+                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                    
+                    const col = i % 2;
+                    const row = Math.floor(i / 2);
+                    
+                    const imgX = col === 0 ? 6 : 150;
+                    const imgY = row === 0 ? 6 : 106;
+                    const renderW = 141;
+                    const renderH = 98;
 
-                // Scale image to fit 200mm width (with 5mm margins left and right)
-                const renderW = 200;
-                const renderH = (imgHeight * renderW) / imgWidth;
-                const imgX = (pdfWidth - renderW) / 2;
-
-                // If adding this slip exceeds the page height, create a new A4 page
-                if (currentY > 5 && currentY + renderH > pdfHeight - 5) {
-                    pdf.addPage();
-                    currentY = 5;
-                }
-
-                pdf.addImage(imgData, 'JPEG', imgX, currentY, renderW, renderH);
-
-                currentY += renderH;
-
-                // Add a dashed separator line between slips on the same page
-                if (i < selectedEmployees.length - 1 && currentY + 15 < pdfHeight) {
-                    pdf.setDrawColor(180, 180, 180);
-                    pdf.setLineDashPattern([2, 2], 0);
-                    pdf.line(5, currentY + 3, pdfWidth - 5, currentY + 3);
-                    pdf.setLineDashPattern([], 0);
-                    currentY += 6;
-                } else {
-                    currentY += 4;
+                    pdf.addImage(imgData, 'JPEG', imgX, imgY, renderW, renderH);
                 }
             }
 
@@ -751,23 +743,23 @@ export default function ModalPreviewSlipGaji({
                         <div
                             key={pegawai.id}
                             id={`export-pdf-card-${pegawai.id}`}
-                            className="bg-white p-4 w-[21cm] text-[10px] font-sans text-slate-900 space-y-3"
+                            className="bg-white p-3.5 w-[140mm] h-[97mm] text-[7.5px] font-sans text-slate-900 flex flex-col justify-between overflow-hidden border border-dashed border-slate-300"
                         >
                             {/* HEADER SLIP GAJI */}
-                            <div className="flex justify-between items-start border-b-2 border-slate-900 pb-2">
-                                <table className="text-left font-semibold text-[10px]">
+                            <div className="flex justify-between items-start border-b-2 border-slate-900 pb-1.5">
+                                <table className="text-left font-bold text-[7.5px] leading-tight">
                                     <tbody>
-                                        <tr><td className="w-20 pb-0.5 text-slate-600">Nama Pegawai</td><td className="pb-0.5 font-extrabold text-slate-900">: {pegawai.nama}</td></tr>
-                                        <tr><td className="pb-0.5 text-slate-600">Jabatan / Shift</td><td className="pb-0.5 font-bold text-slate-800">: {pegawai.jabatan} {pegawai.shift ? `(${pegawai.shift})` : ''}</td></tr>
-                                        <tr><td className="pb-0.5 text-slate-600">Tipe Penggajian</td><td className="pb-0.5 font-bold text-slate-800">: {pegawai.tipe_penggajian}</td></tr>
-                                        <tr><td className="pb-0.5 text-slate-600">Periode Tanggal</td><td className="pb-0.5 font-bold text-slate-800">: {pegawai.periode_tanggal || filterValue}</td></tr>
+                                        <tr><td className="w-14 pb-0.5 text-slate-500 font-medium">Nama Pegawai</td><td className="pb-0.5 font-extrabold text-slate-900">: {pegawai.nama}</td></tr>
+                                        <tr><td className="pb-0.5 text-slate-500 font-medium">Jabatan / Shift</td><td className="pb-0.5 font-bold text-slate-800">: {pegawai.jabatan} {pegawai.shift ? `(${pegawai.shift})` : ''}</td></tr>
+                                        <tr><td className="pb-0.5 text-slate-500 font-medium">Tipe Penggajian</td><td className="pb-0.5 font-bold text-slate-800">: {pegawai.tipe_penggajian}</td></tr>
+                                        <tr><td className="pb-0.5 text-slate-500 font-medium">Periode Tanggal</td><td className="pb-0.5 font-bold text-slate-800">: {pegawai.periode_tanggal || filterValue}</td></tr>
                                     </tbody>
                                 </table>
 
                                 <div className="text-right">
-                                    <h1 className="font-extrabold text-sm text-slate-900 uppercase tracking-wider">Perusahaan Krupuk Mie</h1>
-                                    <h2 className="font-black text-base text-emerald-700 tracking-widest">" Tiga Berlian Official "</h2>
-                                    <p className="mt-0.5 leading-tight text-[9px] text-slate-500 font-medium">
+                                    <h1 className="font-extrabold text-[8.5px] text-slate-900 uppercase leading-none">Perusahaan Krupuk Mie</h1>
+                                    <h2 className="font-black text-[10px] text-emerald-800 tracking-wider leading-tight">" Tiga Berlian Official "</h2>
+                                    <p className="mt-0.5 leading-tight text-[6px] text-slate-500 font-medium">
                                         Jl. Raya Belakang Yonif 407 &middot; Ds. Harjosari Lor RT 28 RW 06<br />
                                         Kec. Adiwerna Kab. Tegal &middot; Telp. 095743404555
                                     </p>
@@ -776,29 +768,29 @@ export default function ModalPreviewSlipGaji({
 
                             {/* 1. RINCIAN ABSENSI & UPAH HARIAN */}
                             <div>
-                                <h4 className="font-extrabold text-[10px] text-slate-800 uppercase mb-1 border-b border-slate-300 pb-0.5">
+                                <h4 className="font-extrabold text-[7.5px] text-slate-800 uppercase mb-0.5 border-b border-slate-350 pb-0.2">
                                     1. Rincian Absensi & Upah Harian
                                 </h4>
-                                <table className="w-full border-collapse border border-slate-900 text-center text-[9px]">
+                                <table className="w-full border-collapse border border-slate-900 text-center text-[7.5px] leading-tight">
                                     <thead className="border-b border-slate-900 bg-slate-100 font-bold">
                                         <tr>
-                                            <th className="border-r border-slate-900 py-1 w-6">No</th>
-                                            <th className="border-r border-slate-900 py-1 w-20">Hari / Tgl</th>
+                                            <th className="border-r border-slate-900 py-0.5 w-5">No</th>
+                                            <th className="border-r border-slate-900 py-0.5 w-16">Hari / Tgl</th>
                                             {pegawai.tipe_penggajian === 'Target' ? (
                                                 <>
-                                                    <th className="border-r border-slate-900 py-1">Pekerjaan Target</th>
-                                                    <th className="border-r border-slate-900 py-1 w-14">Harga</th>
-                                                    <th className="border-r border-slate-900 py-1 w-12">Capaian</th>
+                                                    <th className="border-r border-slate-900 py-0.5">Pekerjaan Target</th>
+                                                    <th className="border-r border-slate-900 py-0.5 w-12">Harga</th>
+                                                    <th className="border-r border-slate-900 py-0.5 w-10">Capaian</th>
                                                 </>
                                             ) : (
-                                                <th className="border-r border-slate-900 py-1 w-16">Upah Pokok</th>
+                                                <th className="border-r border-slate-900 py-0.5 w-14">Upah Pokok</th>
                                             )}
-                                            <th className="border-r border-slate-900 py-1 w-14">T. Disiplin</th>
-                                            <th className="border-r border-slate-900 py-1 w-14">T. Kerapian</th>
-                                            <th className="border-r border-slate-900 py-1 w-14">U. Lembur</th>
-                                            <th className="border-r border-slate-900 py-1 w-16 bg-emerald-50/70 text-emerald-900">Bonus Custom</th>
-                                            <th className="border-r border-slate-900 py-1 w-16 bg-rose-50/70 text-rose-900">Pot. Custom</th>
-                                            <th className="py-1 w-20 text-right px-1.5">Total Harian</th>
+                                            <th className="border-r border-slate-900 py-0.5 w-10">T. Disiplin</th>
+                                            <th className="border-r border-slate-900 py-0.5 w-10">T. Kerapian</th>
+                                            <th className="border-r border-slate-900 py-0.5 w-10">U. Lembur</th>
+                                            <th className="border-r border-slate-900 py-0.5 w-14 bg-emerald-50/70 text-emerald-900">Bonus Custom</th>
+                                            <th className="border-r border-slate-900 py-0.5 w-14 bg-rose-50/70 text-rose-900">Pot. Custom</th>
+                                            <th className="py-0.5 w-16 text-right px-1.5">Total Harian</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -809,108 +801,108 @@ export default function ModalPreviewSlipGaji({
 
                                                 return (
                                                     <tr key={idx} className="border-b border-slate-200">
-                                                        <td className="border-r border-slate-900 py-0.5 font-medium text-slate-500">{idx + 1}</td>
-                                                        <td className="border-r border-slate-900 py-0.5 text-left px-1.5 font-semibold">{hari.hari_tanggal || '-'}</td>
+                                                        <td className="border-r border-slate-900 py-0.2 font-medium text-slate-500">{idx + 1}</td>
+                                                        <td className="border-r border-slate-900 py-0.2 text-left px-1 font-semibold">{hari.hari_tanggal || '-'}</td>
                                                         {pegawai.tipe_penggajian === 'Target' ? (
                                                             <>
-                                                                <td className="border-r border-slate-900 py-0.5 text-left px-1.5 italic truncate max-w-[120px]">{hari.nama_target || '-'}</td>
-                                                                <td className="border-r border-slate-900 py-0.5 text-right px-1.5">{formatAngka(hari.harga_satuan)}</td>
-                                                                <td className="border-r border-slate-900 py-0.5 font-bold">{formatAngka(hari.capaian)}</td>
+                                                                <td className="border-r border-slate-900 py-0.2 text-left px-1 italic truncate max-w-[80px]">{hari.nama_target || '-'}</td>
+                                                                <td className="border-r border-slate-900 py-0.2 text-right px-1">{formatAngka(hari.harga_satuan)}</td>
+                                                                <td className="border-r border-slate-900 py-0.2 font-bold">{formatAngka(hari.capaian)}</td>
                                                             </>
                                                         ) : (
-                                                            <td className="border-r border-slate-900 py-0.5 text-right px-1.5">{formatAngka(hari.gaji_kehadiran)}</td>
+                                                            <td className="border-r border-slate-900 py-0.2 text-right px-1">{formatAngka(hari.gaji_kehadiran)}</td>
                                                         )}
-                                                        <td className="border-r border-slate-900 py-0.5 text-right px-1.5">{formatAngka(hari.t_absensi)}</td>
-                                                        <td className="border-r border-slate-900 py-0.5 text-right px-1.5">{formatAngka(hari.t_kerapian)}</td>
-                                                        <td className="border-r border-slate-900 py-0.5 text-right px-1.5">{formatAngka(hari.lembur)}</td>
-                                                        <td className="border-r border-slate-900 py-0.5 text-right px-1.5 font-bold text-emerald-700 bg-emerald-50/30">
+                                                        <td className="border-r border-slate-900 py-0.2 text-right px-1">{formatAngka(hari.t_absensi)}</td>
+                                                        <td className="border-r border-slate-900 py-0.2 text-right px-1">{formatAngka(hari.t_kerapian)}</td>
+                                                        <td className="border-r border-slate-900 py-0.2 text-right px-1">{formatAngka(hari.lembur)}</td>
+                                                        <td className="border-r border-slate-900 py-0.2 text-right px-1 font-bold text-emerald-700 bg-emerald-50/30">
                                                             {bCustom > 0 ? `+${formatAngka(bCustom)}` : '-'}
                                                         </td>
-                                                        <td className="border-r border-slate-900 py-0.5 text-right px-1.5 font-bold text-rose-600 bg-rose-50/30">
+                                                        <td className="border-r border-slate-900 py-0.2 text-right px-1 font-bold text-rose-600 bg-rose-50/30">
                                                             {pCustom > 0 ? `-${formatAngka(pCustom)}` : '-'}
                                                         </td>
-                                                        <td className="py-0.5 font-extrabold text-right px-1.5 text-slate-900">{formatAngka(hari.total_harian)}</td>
+                                                        <td className="py-0.2 font-extrabold text-right px-1.5 text-slate-900">{formatAngka(hari.total_harian)}</td>
                                                     </tr>
                                                 );
                                             })
                                         ) : (
-                                            <tr><td colSpan={pegawai.tipe_penggajian === 'Target' ? 11 : 9} className="py-3 text-slate-400 italic">Data absensi harian tidak tersedia</td></tr>
+                                            <tr><td colSpan={pegawai.tipe_penggajian === 'Target' ? 11 : 9} className="py-2 text-slate-400 italic">Data absensi harian tidak tersedia</td></tr>
                                         )}
                                     </tbody>
                                 </table>
                             </div>
 
                             {/* 2 & 3. RINCIAN AKUMULASI PENDAPATAN & POTONGAN */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="border border-slate-900 p-2 rounded-md bg-slate-50/50">
-                                    <h5 className="font-bold text-[10px] text-slate-800 uppercase mb-1 border-b border-slate-300 pb-0.5">
+                            <div className="grid grid-cols-2 gap-3 leading-tight">
+                                <div className="border border-slate-900 p-1.5 rounded-md bg-slate-50/50">
+                                    <h5 className="font-bold text-[7.5px] text-slate-800 uppercase mb-0.5 border-b border-slate-300 pb-0.2">
                                         2. Informasi Kasbon & Tabungan
                                     </h5>
-                                    <table className="w-full text-[9px]">
+                                    <table className="w-full text-[7.5px]">
                                         <tbody className="divide-y divide-slate-200">
                                             {pegawai.rincian_potongan?.detail_kasbon?.map((bon: any, i: number) => (
                                                 <tr key={i}>
-                                                    <td className="py-0.5 text-slate-600 font-medium">Sisa Kasbon ({bon.keterangan}):</td>
-                                                    <td className="py-0.5 text-right font-bold text-rose-600">{formatRupiah(bon.sisa_pinjaman_terkini)}</td>
+                                                    <td className="py-0.2 text-slate-650 font-medium">Sisa Kasbon ({bon.keterangan}):</td>
+                                                    <td className="py-0.2 text-right font-bold text-rose-600">{formatRupiah(bon.sisa_pinjaman_terkini)}</td>
                                                 </tr>
                                             ))}
                                             <tr>
-                                                <td className="py-0.5 text-slate-600 font-medium">Tabungan Lembur Tahunan:</td>
-                                                <td className="py-0.5 text-right font-bold text-slate-800">{formatRupiah(pegawai.informasi_tabungan?.tabungan_lembur_tahunan_terkumpul)}</td>
+                                                <td className="py-0.2 text-slate-650 font-medium">Tabungan Lembur Tahunan:</td>
+                                                <td className="py-0.2 text-right font-bold text-slate-800">{formatRupiah(pegawai.informasi_tabungan?.tabungan_lembur_tahunan_terkumpul)}</td>
                                             </tr>
                                             <tr>
-                                                <td className="py-0.5 text-slate-600 font-medium">Tabungan Loyalitas:</td>
-                                                <td className="py-0.5 text-right font-bold text-slate-800">{formatRupiah(pegawai.informasi_tabungan?.tabungan_loyalitas_akumulasi)}</td>
+                                                <td className="py-0.2 text-slate-650 font-medium">Tabungan Loyalitas:</td>
+                                                <td className="py-0.2 text-right font-bold text-slate-800">{formatRupiah(pegawai.informasi_tabungan?.tabungan_loyalitas_akumulasi)}</td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
 
-                                <div className="border border-slate-900 p-2 rounded-md bg-slate-50/50">
-                                    <h5 className="font-bold text-[10px] text-slate-800 uppercase mb-1 border-b border-slate-300 pb-0.5">
+                                <div className="border border-slate-900 p-1.5 rounded-md bg-slate-50/50">
+                                    <h5 className="font-bold text-[7.5px] text-slate-800 uppercase mb-0.5 border-b border-slate-300 pb-0.2">
                                         3. Rincian Komponen Gaji
                                     </h5>
-                                    <table className="w-full text-[9px]">
+                                    <table className="w-full text-[7.5px]">
                                         <tbody className="divide-y divide-slate-200">
                                             <tr>
-                                                <td className="py-0.5 text-slate-600 font-medium">Jumlah Upah Dasar:</td>
-                                                <td className="py-0.5 text-right font-bold text-slate-800">{formatRupiah(pegawai.gaji_dasar)}</td>
+                                                <td className="py-0.2 text-slate-650 font-medium">Jumlah Gaji Pokok:</td>
+                                                <td className="py-0.2 text-right font-bold text-slate-800">{formatRupiah(pegawai.gaji_dasar)}</td>
                                             </tr>
                                             {pegawai.rincian_bonus?.bonus_kehadiran_mingguan > 0 && (
                                                 <tr>
-                                                    <td className="py-0.5 text-slate-600 font-medium">Bonus Mingguan Full:</td>
-                                                    <td className="py-0.5 text-right font-bold text-emerald-600">+{formatRupiah(pegawai.rincian_bonus?.bonus_kehadiran_mingguan)}</td>
+                                                    <td className="py-0.2 text-slate-650 font-medium">Bonus Mingguan Full:</td>
+                                                    <td className="py-0.2 text-right font-bold text-emerald-600">+{formatRupiah(pegawai.rincian_bonus?.bonus_kehadiran_mingguan)}</td>
                                                 </tr>
                                             )}
                                             {pegawai.rincian_bonus?.uang_lembur_akumulasi > 0 && (
                                                 <tr>
-                                                    <td className="py-0.5 text-slate-600 font-medium">Total Lembur:</td>
-                                                    <td className="py-0.5 text-right font-bold text-emerald-600">+{formatRupiah(pegawai.rincian_bonus?.uang_lembur_akumulasi)}</td>
+                                                    <td className="py-0.2 text-slate-650 font-medium">Total Lembur:</td>
+                                                    <td className="py-0.2 text-right font-bold text-emerald-600">+{formatRupiah(pegawai.rincian_bonus?.uang_lembur_akumulasi)}</td>
                                                 </tr>
                                             )}
                                             {getGroupedBonusCustom(pegawai).map((bGroup, i) => (
                                                 <tr key={'bg-' + i}>
-                                                    <td className="py-0.5 text-emerald-700 font-semibold italic">Bonus ({bGroup.keterangan}):</td>
-                                                    <td className="py-0.5 text-right font-extrabold text-emerald-600">+{formatRupiah(bGroup.total)}</td>
+                                                    <td className="py-0.2 text-emerald-700 font-semibold italic">Bonus ({bGroup.keterangan}):</td>
+                                                    <td className="py-0.2 text-right font-extrabold text-emerald-600">+{formatRupiah(bGroup.total)}</td>
                                                 </tr>
                                             ))}
 
                                             {pegawai.denda_sistem > 0 && (
                                                 <tr>
-                                                    <td className="py-0.5 text-rose-600 font-medium">Denda / Telat / Alpha:</td>
-                                                    <td className="py-0.5 text-right font-bold text-rose-600">-{formatRupiah(pegawai.denda_sistem)}</td>
+                                                    <td className="py-0.2 text-rose-650 font-medium">Denda / Telat / Alpha:</td>
+                                                    <td className="py-0.2 text-right font-bold text-rose-600">-{formatRupiah(pegawai.denda_sistem)}</td>
                                                 </tr>
                                             )}
                                             {pegawai.rincian_potongan?.detail_kasbon?.map((bon: any, i: number) => (
                                                 <tr key={'bon-' + i}>
-                                                    <td className="py-0.5 text-rose-600 font-medium">Pot. Kasbon ({bon.keterangan}):</td>
-                                                    <td className="py-0.5 text-right font-bold text-rose-600">-{formatRupiah(bon.nominal_potongan)}</td>
+                                                    <td className="py-0.2 text-rose-650 font-medium">Pot. Kasbon ({bon.keterangan}):</td>
+                                                    <td className="py-0.2 text-right font-bold text-rose-600">-{formatRupiah(bon.nominal_potongan)}</td>
                                                 </tr>
                                             ))}
                                             {getGroupedPotonganCustom(pegawai).map((pGroup, i) => (
                                                 <tr key={'pg-' + i}>
-                                                    <td className="py-0.5 text-rose-700 font-semibold italic">Pot. Custom ({pGroup.keterangan}):</td>
-                                                    <td className="py-0.5 text-right font-extrabold text-rose-600">-{formatRupiah(pGroup.total)}</td>
+                                                    <td className="py-0.2 text-rose-750 font-semibold italic">Pot. Custom ({pGroup.keterangan}):</td>
+                                                    <td className="py-0.2 text-right font-extrabold text-rose-600">-{formatRupiah(pGroup.total)}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -919,12 +911,12 @@ export default function ModalPreviewSlipGaji({
                             </div>
 
                             {/* 4. TOTAL UPAH BERSIH */}
-                            <div className="bg-slate-900 text-white p-2.5 rounded-lg flex justify-between items-center shadow-xs">
+                            <div className="bg-slate-900 text-white p-1.5 rounded-lg flex justify-between items-center shadow-xs shrink-0">
                                 <div>
-                                    <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">TOTAL UPAH BERSIH (TAKE-HOME PAY)</span>
-                                    <span className="text-[10px] text-slate-300 font-semibold">Status: <strong className={pegawai.status?.toLowerCase() === 'lunas' ? 'text-emerald-400' : 'text-amber-400'}>{pegawai.status}</strong></span>
+                                    <span className="text-[7.5px] uppercase font-bold text-slate-400 block tracking-wider leading-none">TOTAL UPAH BERSIH</span>
+                                    <span className="text-[7.5px] text-slate-300 font-semibold mt-0.5 leading-none">Status: <strong className={pegawai.status?.toLowerCase() === 'lunas' ? 'text-emerald-400' : 'text-amber-400'}>{pegawai.status}</strong></span>
                                 </div>
-                                <div className="text-base font-black text-emerald-400">
+                                <div className="text-[12px] font-black text-emerald-400 leading-none">
                                     {formatRupiah(pegawai.total_upah)}
                                 </div>
                             </div>
