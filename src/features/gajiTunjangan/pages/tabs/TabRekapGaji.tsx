@@ -8,6 +8,7 @@ import dayjs, { Dayjs } from 'dayjs';
 
 import Button from '../../../../components/common/Button';
 import Notif from '../../../../components/common/Notif';
+import ConfirmPopUp from '../../../../components/common/ConfirmPopUp';
 import { TabelRekapGaji, type RekapGajiData } from '../../../../features/gajiTunjangan/components/TabelRekapGaji';
 import SlipGajiTemplate from '../../../../features/gajiTunjangan/components/SlipGajiTemplate';
 import ModalRincianGaji from '../../../../features/gajiTunjangan/components/ModalRincianGaji';
@@ -36,7 +37,16 @@ export default function TabRekapGaji() {
         handlePelunasanGaji,
         handleCetakSemuaSlip,
         handlePeriodeChange,
-        closeNotif
+        closeNotif,
+
+        // PopUp Confirm States & Functions
+        showConfirmGenerate,
+        setShowConfirmGenerate,
+        labelPeriode,
+        confirmGenerateGaji,
+        showConfirmLunas,
+        setShowConfirmLunas,
+        confirmPelunasanGaji
     } = useRekapGaji();
 
     const [searchQuery, setSearchQuery] = useState("");
@@ -305,6 +315,28 @@ export default function TabRekapGaji() {
                 message={notif.message} 
                 type={notif.type} 
                 onClose={closeNotif} 
+            />
+
+            {/* Custom PopUp Konfirmasi Generate Gaji */}
+            <ConfirmPopUp 
+                isOpen={showConfirmGenerate}
+                onClose={() => setShowConfirmGenerate(false)}
+                onConfirm={confirmGenerateGaji}
+                title="Generate Gaji Periode Ini?"
+                message={`Apakah Anda yakin ingin menghitung dan menerbitkan gaji untuk periode ${labelPeriode}?`}
+                confirmText="Ya, Generate"
+                variant="primary"
+            />
+
+            {/* Custom PopUp Konfirmasi Pelunasan Gaji */}
+            <ConfirmPopUp 
+                isOpen={showConfirmLunas}
+                onClose={() => setShowConfirmLunas(false)}
+                onConfirm={confirmPelunasanGaji}
+                title="Tandai Sebagai Lunas?"
+                message="Apakah Anda yakin ingin menandai gaji ini sebagai Lunas? (Tindakan ini akan mengunci slip gaji dan memotong saldo kasbon pegawai secara permanen jika ada)."
+                confirmText="Ya, Lunasi"
+                variant="warning"
             />
         </div>
     );
