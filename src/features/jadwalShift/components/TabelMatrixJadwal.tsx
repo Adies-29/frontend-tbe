@@ -349,7 +349,10 @@ export default function TabelMatrixJadwal() {
                 setMassalShiftId={hookParams.setMassalShiftId}
                 isSaving={hookParams.isSaving}
                 handleProsesGenerateMassal={hookParams.handleProsesGenerateMassal}
-                onSuccess={hookParams.handleFilter}
+                onSuccess={() => {
+                    hookParams.refetchJadwal();
+                    hookParams.handleFilter();
+                }}
             />
 
             <Notif
