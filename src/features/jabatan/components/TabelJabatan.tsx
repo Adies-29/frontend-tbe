@@ -47,8 +47,13 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     // Compute unique departments from initialData to prevent list disappearing when filtered
     const uniqueDepartemenList = useMemo(() => {
         const depts = initialData
-            .map((j) => j.departemen?.nama_departemen)
-            .filter((d): d is string => !!d);
+            .map((j) => {
+                if (typeof j.departemen === 'object' && j.departemen !== null) {
+                    return j.departemen.nama_departemen;
+                }
+                return j.departemen;
+            })
+            .filter((d): d is string => !!d && d !== "Tanpa Departemen");
         return Array.from(new Set(depts));
     }, [initialData]);
 
@@ -58,7 +63,10 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
             const q = searchQuery.toLowerCase().trim();
             const matchesSearch = !q || (item.nama_jabatan && item.nama_jabatan.toLowerCase().includes(q));
 
-            const matchesDept = !filterDepartemen || item.departemen?.nama_departemen === filterDepartemen;
+            const deptName = typeof item.departemen === 'object' && item.departemen !== null
+                ? item.departemen.nama_departemen
+                : item.departemen;
+            const matchesDept = !filterDepartemen || deptName === filterDepartemen;
 
             return matchesSearch && matchesDept;
         });
