@@ -21,13 +21,10 @@ const formatRupiah = (angka: number) => {
 };
 
 interface TabRekapGajiProps {
-    rekapGajiParams?: ReturnType<typeof useRekapGaji>;
+    hookParams: ReturnType<typeof useRekapGaji>;
 }
 
-export default function TabRekapGaji({ rekapGajiParams }: TabRekapGajiProps) {
-    const localParams = useRekapGaji();
-    const params = rekapGajiParams || localParams;
-
+export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
     const {
         periode,
         filterValue,
@@ -54,11 +51,12 @@ export default function TabRekapGaji({ rekapGajiParams }: TabRekapGajiProps) {
         showConfirmLunas,
         setShowConfirmLunas,
         confirmPelunasanGaji
-    } = params;
+    } = hookParams;
 
     const [searchQuery, setSearchQuery] = useState("");
     const [filterDepartemen, setFilterDepartemen] = useState("");
     const [filterJabatan, setFilterJabatan] = useState("");
+
     const [modalDetail, setModalDetail] = useState<{
         isOpen: boolean;
         type: 'bonus' | 'potongan';
@@ -78,52 +76,33 @@ export default function TabRekapGaji({ rekapGajiParams }: TabRekapGajiProps) {
         rincianData: null
     });
 
-    // Get unique departments from rekapGajiData
+    // Calculate unique departments & positions from rekapGajiData
     const uniqueDepartemenList = useMemo(() => {
-        const depts = rekapGajiData.map((item: any) => 
-            item.pegawai?.jabatan?.departemen?.nama_departemen || item.departemen
-        );
-        return Array.from(new Set(depts)).filter((d): d is string => !!d && d !== "-");
+        const depts = rekapGajiData
+            .map((p: any) => p.departemen)
+            .filter((dept): dept is string => !!dept && dept !== "-");
+        return Array.from(new Set(depts));
     }, [rekapGajiData]);
 
-    // Get unique positions from rekapGajiData, optionally filtered by selected department
     const uniqueJabatanList = useMemo(() => {
         const jabs = rekapGajiData
-            .filter((item: any) => {
-                if (!filterDepartemen) return true;
-                const deptName = item.pegawai?.jabatan?.departemen?.nama_departemen || item.departemen;
-                return deptName === filterDepartemen;
-            })
-            .map((item: any) => item.pegawai?.jabatan?.nama_jabatan || item.jabatan);
-        return Array.from(new Set(jabs)).filter((j): j is string => !!j && j !== "-");
+            .filter((p: any) => !filterDepartemen || p.departemen === filterDepartemen)
+            .map((p: any) => p.jabatan)
+            .filter((jab): jab is string => !!jab && jab !== "-");
+        return Array.from(new Set(jabs));
     }, [rekapGajiData, filterDepartemen]);
 
-    // Filter rekapGajiData berdasarkan pencarian nama atau jabatan pegawai, serta departemen & jabatan
+    // Filter rekapGajiData berdasarkan pencarian nama atau jabatan pegawai, departemen, dan jabatan
     const filteredRekapGajiData = useMemo(() => {
-        let result = rekapGajiData;
-
-        // Filter Departemen
-        if (filterDepartemen) {
-            result = result.filter((item: any) => {
-                const deptName = item.pegawai?.jabatan?.departemen?.nama_departemen || item.departemen;
-                return deptName === filterDepartemen;
-            });
-        }
-
-        // Filter Jabatan
-        if (filterJabatan) {
-            result = result.filter((item: any) => {
-                const jabName = item.pegawai?.jabatan?.nama_jabatan || item.jabatan;
-                return jabName === filterJabatan;
-            });
-        }
-
-        if (!searchQuery.trim()) return result;
-        const q = searchQuery.toLowerCase();
-        return result.filter((item: any) =>
-            (item.nama && item.nama.toLowerCase().includes(q)) ||
-            (item.jabatan && item.jabatan.toLowerCase().includes(q))
-        );
+        return rekapGajiData.filter((item: any) => {
+            const q = searchQuery.toLowerCase();
+            const matchSearch = !searchQuery.trim() || 
+                (item.nama && item.nama.toLowerCase().includes(q)) ||
+                (item.jabatan && item.jabatan.toLowerCase().includes(q));
+            const matchDept = !filterDepartemen || item.departemen === filterDepartemen;
+            const matchJab = !filterJabatan || item.jabatan === filterJabatan;
+            return matchSearch && matchDept && matchJab;
+        });
     }, [rekapGajiData, searchQuery, filterDepartemen, filterJabatan]);
 
     const handleShowDetail = (row: RekapGajiData, type: 'bonus' | 'potongan') => {
@@ -185,60 +164,81 @@ export default function TabRekapGaji({ rekapGajiParams }: TabRekapGajiProps) {
             {/* TABEL DATA GAJI */}
             <section className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col print:hidden">
                 <div className="p-4 sm:p-5 border-b border-gray-200 bg-gray-50/70 flex flex-col gap-4">
-                    {/* Baris Atas: Judul & Cetak Slip Gaji */}
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                        <div>
-                            <h2 className="text-lg font-bold text-gray-800">Rincian Gaji Pegawai</h2>
-                            <p className="text-xs text-gray-500 font-medium mt-0.5">
-                                Rekapitulasi penghitungan gaji dasar, tunjangan, dan potongan pegawai
-                            </p>
-                        </div>
-
-                        <Button 
-                            label="Cetak Slip Gaji" 
-                            variant="info" 
-                            icon={<Printer size={16} />} 
-                            onClick={handleCetakSemuaSlip} 
-                            className="w-full sm:w-auto font-bold shadow-2xs"
-                        />
-                    </div>
-
-                    {/* Baris 1: Search */}
-                    <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 pt-1">
-                        {/* Search Pegawai */}
-                        <div className="relative min-w-[240px] max-w-md w-full lg:w-auto">
-                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                            <input 
-                                type="text" 
-                                placeholder="Cari nama / jabatan..." 
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full border border-slate-300 rounded-xl pl-10 pr-8 py-1.5 bg-white text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all"
+                    
+                    {/* Baris 1: Search & Cetak Slip Gaji */}
+                    <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+                            {/* Search Input */}
+                            <div className="relative flex-1 min-w-[240px] max-w-md">
+                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                <input
+                                    type="text"
+                                    placeholder="Cari nama / jabatan..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full border border-slate-300 rounded-xl pl-10 pr-9 py-2 bg-white text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                                    >
+                                        &times;
+                                    </button>
+                                )}
+                            </div>
+                            
+                            {/* Button Cetak Slip Gaji */}
+                            <Button 
+                                label="Cetak Slip Gaji" 
+                                variant="info" 
+                                icon={<Printer size={16} />} 
+                                onClick={handleCetakSemuaSlip} 
+                                className="w-full sm:w-auto font-bold shadow-2xs text-xs py-2 px-4 rounded-xl cursor-pointer"
                             />
-                            {searchQuery && (
-                                <button
-                                    onClick={() => setSearchQuery('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
-                                >
-                                    &times;
-                                </button>
-                            )}
                         </div>
                     </div>
 
-                    {/* Baris 2: Filter Tanggal di Kiri & Filter Pegawai di Kanan */}
+                    {/* Baris 2: Filter Pegawai (Left) + Filter Tanggal (Right) */}
                     <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between pt-2 border-t border-gray-200/80">
-                        {/* Left (Ujung Sisi Kiri): Filter Tanggal */}
-                        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                            {/* Segmented Control Periode Filter */}
+                        {/* Left: Filter Pegawai (Departemen & Jabatan) */}
+                        <div className="flex gap-2 w-full md:w-auto items-center">
+                            <select
+                                value={filterDepartemen}
+                                onChange={(e) => {
+                                    setFilterDepartemen(e.target.value);
+                                    setFilterJabatan('');
+                                }}
+                                className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer flex-1 md:flex-none md:max-w-[150px] truncate"
+                            >
+                                <option value="">Semua Dept</option>
+                                {uniqueDepartemenList.map((dept, idx) => (
+                                    <option key={idx} value={dept}>{dept}</option>
+                                ))}
+                            </select>
+
+                            <select
+                                value={filterJabatan}
+                                onChange={(e) => setFilterJabatan(e.target.value)}
+                                disabled={!filterDepartemen}
+                                className={`border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold shadow-2xs cursor-pointer flex-1 md:flex-none md:max-w-[150px] truncate outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 ${!filterDepartemen ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200' : 'bg-white text-slate-700'}`}
+                                title={!filterDepartemen ? "Pilih Departemen terlebih dahulu" : "Filter berdasarkan Jabatan"}
+                            >
+                                <option value="">Semua Jabatan</option>
+                                {uniqueJabatanList.map((jab, idx) => (
+                                    <option key={idx} value={jab}>{jab}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Right: Filter Tanggal (Periode & Picker) */}
+                        <div className="flex gap-2 w-full md:w-auto items-center flex-wrap sm:flex-nowrap md:justify-end">
                             <div className="bg-slate-200/80 p-1 rounded-xl flex items-center gap-1 shadow-inner">
                                 <button
                                     type="button"
                                     onClick={() => handlePeriodeChange('minggu')}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                                        periode === 'minggu'
-                                            ? 'bg-white text-slate-800 shadow-xs'
-                                            : 'text-slate-600 hover:text-slate-900'
+                                        periode === 'minggu' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
                                     Mingguan
@@ -247,9 +247,7 @@ export default function TabRekapGaji({ rekapGajiParams }: TabRekapGajiProps) {
                                     type="button"
                                     onClick={() => handlePeriodeChange('bulan')}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                                        periode === 'bulan'
-                                            ? 'bg-white text-slate-800 shadow-xs'
-                                            : 'text-slate-600 hover:text-slate-900'
+                                        periode === 'bulan' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
                                     Bulanan
@@ -258,9 +256,7 @@ export default function TabRekapGaji({ rekapGajiParams }: TabRekapGajiProps) {
                                     type="button"
                                     onClick={() => handlePeriodeChange('tahun')}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                                        periode === 'tahun'
-                                            ? 'bg-white text-slate-800 shadow-xs'
-                                            : 'text-slate-600 hover:text-slate-900'
+                                        periode === 'tahun' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
                                     Tahunan
@@ -288,23 +284,12 @@ export default function TabRekapGaji({ rekapGajiParams }: TabRekapGajiProps) {
                                                             fontWeight: 600,
                                                             height: '35px',
                                                             color: '#334155',
-                                                            '& fieldset': {
-                                                                borderColor: '#cbd5e1',
-                                                            },
-                                                            '&:hover fieldset': {
-                                                                borderColor: '#94a3b8',
-                                                            },
-                                                            '&.Mui-focused fieldset': {
-                                                                borderColor: '#ef4444',
-                                                            },
+                                                            '& fieldset': { borderColor: '#cbd5e1' },
+                                                            '&:hover fieldset': { borderColor: '#94a3b8' },
+                                                            '&.Mui-focused fieldset': { borderColor: '#ef4444' },
                                                         },
-                                                        '& .MuiOutlinedInput-input': {
-                                                            padding: '6px 12px',
-                                                        },
-                                                        '& .MuiIconButton-root': {
-                                                            padding: '4px',
-                                                            color: '#64748b'
-                                                        }
+                                                        '& .MuiOutlinedInput-input': { padding: '6px 12px' },
+                                                        '& .MuiIconButton-root': { padding: '4px', color: '#64748b' }
                                                     }
                                                 }
                                             }}
@@ -312,36 +297,6 @@ export default function TabRekapGaji({ rekapGajiParams }: TabRekapGajiProps) {
                                     </LocalizationProvider>
                                 )}
                             </div>
-                        </div>
-
-                        {/* Right (Sisi Kanan / Bawah Search): Filter Pegawai */}
-                        <div className="flex gap-2 w-full md:w-auto items-center md:justify-end">
-                            <select
-                                value={filterDepartemen}
-                                onChange={(e) => {
-                                    setFilterDepartemen(e.target.value);
-                                    setFilterJabatan('');
-                                }}
-                                className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer flex-1 md:flex-none md:max-w-[150px] truncate"
-                            >
-                                <option value="">Semua Dept</option>
-                                {uniqueDepartemenList.map((dept, idx) => (
-                                    <option key={idx} value={dept}>{dept}</option>
-                                ))}
-                            </select>
-
-                            <select
-                                value={filterJabatan}
-                                onChange={(e) => setFilterJabatan(e.target.value)}
-                                disabled={!filterDepartemen}
-                                className={`border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold shadow-2xs cursor-pointer flex-1 md:flex-none md:max-w-[150px] truncate outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 ${!filterDepartemen ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200' : 'bg-white text-slate-700'}`}
-                                title={!filterDepartemen ? "Pilih Departemen terlebih dahulu" : "Filter berdasarkan Jabatan"}
-                            >
-                                <option value="">{filterJabatan ? "Semua Jabatan" : "Semua Jabatan"}</option>
-                                {uniqueJabatanList.map((jab, idx) => (
-                                    <option key={idx} value={jab}>{jab}</option>
-                                ))}
-                            </select>
 
                             {(searchQuery || filterDepartemen || filterJabatan) && (
                                 <button

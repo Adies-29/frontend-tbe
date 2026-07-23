@@ -166,6 +166,7 @@ export function useRekapGaji() {
                         id: String(item.id),
                         nama: item.pegawai?.nama || "Tanpa Nama",
                         jabatan: item.pegawai?.jabatan?.nama_jabatan || "-",
+                        departemen: item.pegawai?.jabatan?.departemen?.nama_departemen || "-",
                         shift: "-", 
                         tipe_penggajian: item.pegawai?.jabatan?.tipe_penggajian || 'Bulanan',
                         periode_tanggal: formatPeriodeGaji(item.tanggal_awal_periode, item.tanggal_akhir_periode, filterValue),

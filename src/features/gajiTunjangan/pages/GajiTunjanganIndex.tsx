@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ReceiptText, Briefcase, PlayCircle, Loader2 } from 'lucide-react';
+import { ReceiptText, Briefcase, Loader2, PlayCircle } from 'lucide-react';
+import Button from '../../../components/common/Button';
 import TabRekapGaji from './tabs/TabRekapGaji';
 import TabMasterGaji from './tabs/TabMasterGaji';
-import Button from '../../../components/common/Button';
 import { useRekapGaji } from '../hooks/useRekapGaji';
 
 export default function GajiTunjanganIndex() {
@@ -11,8 +11,7 @@ export default function GajiTunjanganIndex() {
     
     // State Navigasi
     const [activeTab, setActiveTab] = useState<'rekap' | 'master'>(location.state?.tab || 'rekap');
-    
-    // Instantiate rekapGaji hook at index level to show action button in header
+
     const rekapGajiParams = useRekapGaji();
 
     return (
@@ -27,8 +26,9 @@ export default function GajiTunjanganIndex() {
                         </h1>
                         <p className="text-sm text-gray-500 mt-1">Kelola rekapitulasi gaji pegawai dan atur master nominal gaji berdasarkan jabatan.</p>
                     </div>
+                    {/* Tombol aksi dinamis berdasarkan Tab yang aktif */}
                     {activeTab === 'rekap' && (
-                        <div className="flex gap-3 items-center w-full md:w-auto">
+                        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
                             {(rekapGajiParams.periode === "bulan" || rekapGajiParams.periode === "minggu") && (
                                 <Button 
                                     label={rekapGajiParams.isGenerating ? "Memproses..." : "Generate Gaji"} 
@@ -37,7 +37,7 @@ export default function GajiTunjanganIndex() {
                                     onClick={rekapGajiParams.handleGenerateGaji} 
                                     isLoading={rekapGajiParams.isGenerating}
                                     disabled={!rekapGajiParams.filterValue}
-                                    className="w-full md:w-auto font-bold text-xs shadow-md cursor-pointer"
+                                    className="w-full sm:w-auto rounded-xl active:scale-95 py-3 md:py-2 text-[15px] md:text-sm font-bold shadow-md cursor-pointer"
                                 />
                             )}
                         </div>
@@ -75,7 +75,7 @@ export default function GajiTunjanganIndex() {
 
             {/* RENDER KONTEN BERDASARKAN TAB AKTIF */}
             <div className="w-full min-h-[400px]">
-                {activeTab === 'rekap' ? <TabRekapGaji rekapGajiParams={rekapGajiParams} /> : <TabMasterGaji />}
+                {activeTab === 'rekap' ? <TabRekapGaji hookParams={rekapGajiParams} /> : <TabMasterGaji />}
             </div>
 
         </div>
