@@ -24,34 +24,8 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
 
     // Filter states
     const [searchQuery, setSearchQuery] = useState("");
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
-
-    // Client-side filtering logic
-    const filteredData = useMemo(() => {
-        return data.filter((item) => {
-            // 1. Search Query (Nama Pegawai)
-            const q = searchQuery.toLowerCase().trim();
-            const employeeName = item.pegawai?.nama || "";
-            const matchesSearch = !q || employeeName.toLowerCase().includes(q);
-
-            // 2. Date Range Filter (tanggal_pengajuan)
-            // By default, if date filters are empty, they are inactive (matchesDate = true)
-            let matchesDate = true;
-            if (item.tanggal_pengajuan) {
-                const itemDate = new Date(item.tanggal_pengajuan).toISOString().split('T')[0];
-                if (startDate && endDate) {
-                    matchesDate = itemDate >= startDate && itemDate <= endDate;
-                } else if (startDate) {
-                    matchesDate = itemDate >= startDate;
-                } else if (endDate) {
-                    matchesDate = itemDate <= endDate;
-                }
-            }
-
-            return matchesSearch && matchesDate;
-        });
-    }, [data, searchQuery, startDate, endDate]);
+    const [filterStartDate, setFilterStartDate] = useState("");
+    const [filterEndDate, setFilterEndDate] = useState("");
 
     const handleDeleteClick = (id: GridRowId) => () => {
         setHapusId(id);
@@ -229,18 +203,35 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
     ];
 
     // Urutkan data: yang Lunas taruh paling bawah
-    const sortedData = [...filteredData].sort((a, b) => {
-        if (a.status === 'Lunas' && b.status !== 'Lunas') return 1;
-        if (a.status !== 'Lunas' && b.status === 'Lunas') return -1;
-        
-        // Opsional: Urutkan berdasarkan tanggal terbaru jika statusnya sama
-        return new Date(b.tanggal_pengajuan).getTime() - new Date(a.tanggal_pengajuan).getTime();
-    });
+    const sortedData = useMemo(() => {
+        return [...data].sort((a, b) => {
+            if (a.status === 'Lunas' && b.status !== 'Lunas') return 1;
+            if (a.status !== 'Lunas' && b.status === 'Lunas') return -1;
+            return new Date(b.tanggal_pengajuan).getTime() - new Date(a.tanggal_pengajuan).getTime();
+        });
+    }, [data]);
+
+    // Client-side filtering logic
+    const filteredSortedData = useMemo(() => {
+        return sortedData.filter((item) => {
+            const q = searchQuery.toLowerCase().trim();
+            const matchesSearch = !q || (item.pegawai?.nama && item.pegawai.nama.toLowerCase().includes(q));
+
+            let matchesDate = true;
+            if (item.tanggal_pengajuan) {
+                const itemDate = item.tanggal_pengajuan.split("T")[0]; // YYYY-MM-DD
+                if (filterStartDate && itemDate < filterStartDate) matchesDate = false;
+                if (filterEndDate && itemDate > filterEndDate) matchesDate = false;
+            }
+
+            return matchesSearch && matchesDate;
+        });
+    }, [sortedData, searchQuery, filterStartDate, filterEndDate]);
 
     return (
-        <div className="w-full bg-white flex flex-col gap-4">
+        <div className="w-full flex flex-col gap-4">
             
-            {/* Control Bar: Search & Date Filters */}
+            {/* Control Bar: Search & Date Filter */}
             <div className="p-4 sm:p-5 border border-gray-200 bg-gray-50/70 rounded-xl flex flex-col gap-4">
                 
                 {/* Baris 1: Search */}
@@ -268,34 +259,29 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
 
                 {/* Baris 2: Date Filters */}
                 <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-start pt-2 border-t border-gray-200/80">
-                    <div className="flex flex-wrap gap-3 w-full md:w-auto items-center">
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-slate-500">Dari:</span>
-                            <input
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
-                            />
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-slate-500">Sampai:</span>
-                            <input
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
-                            />
-                        </div>
+                    <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
+                        <span className="text-xs font-semibold text-slate-600">Tanggal Pengajuan:</span>
+                        <input
+                            type="date"
+                            value={filterStartDate}
+                            onChange={(e) => setFilterStartDate(e.target.value)}
+                            className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
+                        />
+                        <span className="text-xs font-semibold text-slate-500">s/d</span>
+                        <input
+                            type="date"
+                            value={filterEndDate}
+                            onChange={(e) => setFilterEndDate(e.target.value)}
+                            className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
+                        />
 
                         {/* Reset Button */}
-                        {(searchQuery || startDate || endDate) && (
+                        {(searchQuery || filterStartDate || filterEndDate) && (
                             <button
                                 onClick={() => {
                                     setSearchQuery("");
-                                    setStartDate("");
-                                    setEndDate("");
+                                    setFilterStartDate("");
+                                    setFilterEndDate("");
                                 }}
                                 className="text-xs text-red-600 hover:text-red-700 font-bold px-2 py-1 transition-colors duration-150 cursor-pointer"
                             >
@@ -306,15 +292,18 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
                 </div>
             </div>
 
-            <div style={{ height: 500, width: '100%' }}>
-                <DataGrid
-                    rows={sortedData}
-                    columns={columns}
-                    loading={isLoading}
-                    disableRowSelectionOnClick
-                    sx={defaultDataGridSx}
-                />
-            </div>
+            <DataGrid
+                rows={filteredSortedData}
+                columns={columns}
+                loading={isLoading}
+                autoHeight
+                disableRowSelectionOnClick
+                sx={{
+                    ...defaultDataGridSx,
+                    minHeight: 300,
+                    width: '100%'
+                }}
+            />
 
             <ConfirmPopUp
                 isOpen={showPopUp}
