@@ -78,7 +78,7 @@ export default function ModalTambahBonusCustom({
     // Reset state when modal opens
     useEffect(() => {
         if (isOpen) {
-            const todayStr = new Date().toLocaleDateString('en-CA');
+            const todayStr = new Date().toISOString().split('T')[0];
             setSelectedPegawaiIds([]);
             setStartDate(todayStr);
             setEndDate(todayStr);

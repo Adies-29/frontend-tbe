@@ -44,6 +44,13 @@ export const TabelPotonganCustom = ({ data = [], listPegawai = [], onDelete, onE
 
     // Calculate filterStartDate and filterEndDate reactively based on period & input selection
     const { filterStartDate, filterEndDate } = useMemo(() => {
+        const formatYYYYMMDD = (d: Date) => {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        };
+
         if (!filterValue) {
             const currentDay = now.getDay();
             const diff = now.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
@@ -52,8 +59,8 @@ export const TabelPotonganCustom = ({ data = [], listPegawai = [], onDelete, onE
             const sunday = new Date(monday);
             sunday.setDate(monday.getDate() + 6);
             return {
-                filterStartDate: monday.toLocaleDateString('en-CA'),
-                filterEndDate: sunday.toLocaleDateString('en-CA')
+                filterStartDate: formatYYYYMMDD(monday),
+                filterEndDate: formatYYYYMMDD(sunday)
             };
         }
 
@@ -68,8 +75,8 @@ export const TabelPotonganCustom = ({ data = [], listPegawai = [], onDelete, onE
             endDate.setDate(startDate.getDate() + 6);
 
             return {
-                filterStartDate: startDate.toLocaleDateString('en-CA'),
-                filterEndDate: endDate.toLocaleDateString('en-CA')
+                filterStartDate: formatYYYYMMDD(startDate),
+                filterEndDate: formatYYYYMMDD(endDate)
             };
         } else if (periode === 'bulan') {
             const month = parseInt(filterValue.substring(5, 7));
@@ -77,30 +84,53 @@ export const TabelPotonganCustom = ({ data = [], listPegawai = [], onDelete, onE
             const endDate = new Date(year, month, 0);
 
             return {
-                filterStartDate: startDate.toLocaleDateString('en-CA'),
-                filterEndDate: endDate.toLocaleDateString('en-CA')
+                filterStartDate: formatYYYYMMDD(startDate),
+                filterEndDate: formatYYYYMMDD(endDate)
             };
         } else {
             const startDate = new Date(year, 0, 1);
             const endDate = new Date(year, 11, 31);
             return {
-                filterStartDate: startDate.toLocaleDateString('en-CA'),
-                filterEndDate: endDate.toLocaleDateString('en-CA')
+                filterStartDate: formatYYYYMMDD(startDate),
+                filterEndDate: formatYYYYMMDD(endDate)
             };
         }
     }, [periode, filterValue]);
 
-    // Calculate dates array
+    // Calculate dates array timezone-safely
     const daysArray = useMemo(() => {
         if (!filterStartDate || !filterEndDate) return [];
-        const dateArray = [];
-        const currentDate = new Date(filterStartDate);
-        const stopDate = new Date(filterEndDate);
+        const [sY, sM, sD] = filterStartDate.split('-').map(Number);
+        const [eY, eM, eD] = filterEndDate.split('-').map(Number);
+
+        const currentDate = new Date(Date.UTC(sY, sM - 1, sD));
+        const stopDate = new Date(Date.UTC(eY, eM - 1, eD));
+        const result = [];
+
         while (currentDate <= stopDate) {
-            dateArray.push(new Date(currentDate));
-            currentDate.setDate(currentDate.getDate() + 1);
+            const dayOfWeek = currentDate.getUTCDay();
+            const isSunday = dayOfWeek === 0;
+            const isSaturday = dayOfWeek === 6;
+            const dayNum = currentDate.getUTCDate();
+            const dayName = currentDate.toLocaleDateString('id-ID', { weekday: 'short', timeZone: 'UTC' });
+            const monthShort = currentDate.toLocaleDateString('id-ID', { month: 'short', timeZone: 'UTC' });
+            const y = currentDate.getUTCFullYear();
+            const m = String(currentDate.getUTCMonth() + 1).padStart(2, '0');
+            const d = String(dayNum).padStart(2, '0');
+            const tglKey = `${y}-${m}-${d}`;
+
+            result.push({
+                tglKey,
+                dayNum,
+                dayName,
+                monthShort,
+                isSunday,
+                isSaturday
+            });
+
+            currentDate.setUTCDate(currentDate.getUTCDate() + 1);
         }
-        return dateArray;
+        return result;
     }, [filterStartDate, filterEndDate]);
 
     // Map deductions: pegawaiId -> tanggal_diberikan -> PotonganCustomData[]
@@ -360,27 +390,24 @@ export const TabelPotonganCustom = ({ data = [], listPegawai = [], onDelete, onE
                                     <span>Nama Pegawai</span>
                                 </div>
                             </th>
-                            {daysArray.map((dateObj, idx) => {
-                                const isSunday = dateObj.getDay() === 0;
-                                const isSaturday = dateObj.getDay() === 6;
-                                const dayName = dateObj.toLocaleDateString('id-ID', { weekday: 'short' });
+                            {daysArray.map((item, idx) => {
                                 return (
                                     <th
                                         key={idx}
                                         scope="col"
                                         className={`px-3 py-2.5 border-r border-b border-slate-200 text-center min-w-[105px] transition-colors ${
-                                            isSunday ? 'bg-rose-50/70 text-rose-700' : isSaturday ? 'text-slate-700' : 'bg-slate-100 text-slate-700'
+                                            item.isSunday ? 'bg-rose-50/70 text-rose-700' : item.isSaturday ? 'text-slate-700' : 'bg-slate-100 text-slate-700'
                                         }`}
                                     >
                                         <div className="flex flex-col items-center justify-center">
-                                            <span className={`text-[10px] font-bold tracking-wider ${isSunday ? 'text-rose-500' : 'text-slate-400'}`}>
-                                                {dayName}
+                                            <span className={`text-[10px] font-bold tracking-wider ${item.isSunday ? 'text-rose-500' : 'text-slate-400'}`}>
+                                                {item.dayName}
                                             </span>
-                                            <span className={`text-sm font-black ${isSunday ? 'text-rose-600' : 'text-slate-800'}`}>
-                                                {dateObj.getDate()}
+                                            <span className={`text-sm font-black ${item.isSunday ? 'text-rose-600' : 'text-slate-800'}`}>
+                                                {item.dayNum}
                                             </span>
-                                            <span className={`text-[9px] font-medium ${isSunday ? 'text-rose-400' : 'text-slate-400'}`}>
-                                                {dateObj.toLocaleDateString('id-ID', { month: 'short' })}
+                                            <span className={`text-[9px] font-medium ${item.isSunday ? 'text-rose-400' : 'text-slate-400'}`}>
+                                                {item.monthShort}
                                             </span>
                                         </div>
                                     </th>
@@ -437,15 +464,12 @@ export const TabelPotonganCustom = ({ data = [], listPegawai = [], onDelete, onE
                                         </td>
 
                                         {/* Date Cells */}
-                                        {daysArray.map((dateObj, idx) => {
-                                            const isSunday = dateObj.getDay() === 0;
-                                            const dateKey = dateObj.toLocaleDateString('en-CA');
-                                            
+                                        {daysArray.map((item, idx) => {
                                             // Match by either pegawai_id or name
-                                            const deductionsOnDay = deductionsMap[String(pegawai.id)]?.[dateKey] || 
-                                                                    deductionsMap[pegawai.nama]?.[dateKey] || [];
-
-                                            let cellBg = isSunday ? 'bg-rose-50/20' : '';
+                                            const deductionsOnDay = deductionsMap[String(pegawai.id)]?.[item.tglKey] || 
+                                                                    deductionsMap[pegawai.nama]?.[item.tglKey] || [];
+                                            
+                                            let cellBg = item.isSunday ? 'bg-rose-50/20' : '';
                                             if (deductionsOnDay.length > 0) {
                                                 cellBg = 'bg-rose-50/30 hover:bg-rose-100/40';
                                             }

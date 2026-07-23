@@ -183,14 +183,14 @@ export default function ModalKelolaJadwalMassal({
     const [polaList, setPolaList] = useState<PolaRotasi[]>([]);
     const [selectedPolaId, setSelectedPolaId] = useState<string>('');
     const [tanggalMulaiPola, setTanggalMulaiPola] = useState<string>(
-        new Date().toLocaleDateString('en-CA')
+        new Date().toISOString().split('T')[0]
     );
     const [isSavingPola, setIsSavingPola] = useState(false);
     const [autoGenerateJadwal, setAutoGenerateJadwal] = useState(true);
     const [generateSampai, setGenerateSampai] = useState(() => {
         const d = new Date();
         d.setDate(d.getDate() + 30);
-        return d.toLocaleDateString('en-CA');
+        return d.toISOString().split('T')[0];
     });
     const [errorMsgPola, setErrorMsgPola] = useState('');
     const [successMsgPola, setSuccessMsgPola] = useState('');
