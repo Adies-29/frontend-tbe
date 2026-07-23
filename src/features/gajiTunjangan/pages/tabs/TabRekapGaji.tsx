@@ -65,23 +65,27 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
     const { data: deptData } = useQuery({
         queryKey: ['departemenList'],
         queryFn: async () => {
+            if (!token) return [];
             const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const json = await res.json();
             return json.success ? json.data : [];
-        }
+        },
+        enabled: !!token
     });
 
     const { data: jabatanData } = useQuery({
         queryKey: ['jabatanList'],
         queryFn: async () => {
+            if (!token) return [];
             const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const json = await res.json();
             return json.success ? json.data : [];
-        }
+        },
+        enabled: !!token
     });
 
     const [modalDetail, setModalDetail] = useState<{
@@ -132,7 +136,7 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
     const filteredRekapGajiData = useMemo(() => {
         return rekapGajiData.filter((item: any) => {
             const q = searchQuery.toLowerCase();
-            const matchSearch = !searchQuery.trim() || 
+            const matchSearch = !searchQuery.trim() ||
                 (item.nama && item.nama.toLowerCase().includes(q)) ||
                 (item.jabatan && item.jabatan.toLowerCase().includes(q));
             const matchDept = !filterDepartemen || item.departemen === filterDepartemen;
@@ -200,7 +204,7 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
             {/* TABEL DATA GAJI */}
             <section className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col print:hidden">
                 <div className="p-4 sm:p-5 border-b border-gray-200 bg-gray-50/70 flex flex-col gap-4">
-                    
+
                     {/* Baris 1: Search & Cetak Slip Gaji */}
                     <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
                         {/* Search Input */}
@@ -222,14 +226,14 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
                                 </button>
                             )}
                         </div>
-                        
+
                         {/* Button Cetak Slip Gaji */}
                         <div className="w-full md:w-auto shrink-0">
-                            <Button 
-                                label="Cetak Slip Gaji" 
-                                variant="info" 
-                                icon={<Printer size={16} />} 
-                                onClick={handleCetakSemuaSlip} 
+                            <Button
+                                label="Cetak Slip Gaji"
+                                variant="info"
+                                icon={<Printer size={16} />}
+                                onClick={handleCetakSemuaSlip}
                                 className="w-full md:w-auto font-bold shadow-2xs text-xs py-2 px-4 rounded-xl cursor-pointer animate-in fade-in duration-200"
                             />
                         </div>
@@ -247,7 +251,7 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
                                 }}
                                 className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer flex-1 md:flex-none md:w-48 truncate"
                             >
-                                <option value="">Semua Dept</option>
+                                <option value="">Semua Departemen</option>
                                 {uniqueDepartemenList.map((dept, idx) => (
                                     <option key={idx} value={dept}>{dept}</option>
                                 ))}
@@ -273,27 +277,24 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
                                 <button
                                     type="button"
                                     onClick={() => handlePeriodeChange('minggu')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                                        periode === 'minggu' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                                    }`}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${periode === 'minggu' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                                        }`}
                                 >
                                     Mingguan
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => handlePeriodeChange('bulan')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                                        periode === 'bulan' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                                    }`}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${periode === 'bulan' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                                        }`}
                                 >
                                     Bulanan
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => handlePeriodeChange('tahun')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                                        periode === 'tahun' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                                    }`}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${periode === 'tahun' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                                        }`}
                                 >
                                     Tahunan
                                 </button>
@@ -353,17 +354,17 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
                     </div>
                 </div>
 
-                <TabelRekapGaji 
+                <TabelRekapGaji
                     data={filteredRekapGajiData}
                     onPelunasan={handlePelunasanGaji}
                     onShowDetail={handleShowDetail}
                 />
 
             </section>
-            
+
             <SlipGajiTemplate data={rekapGajiData} filterValue={filterValue} />
 
-            <ModalRincianGaji 
+            <ModalRincianGaji
                 isOpen={modalDetail.isOpen}
                 onClose={handleCloseModalDetail}
                 type={modalDetail.type}
@@ -374,7 +375,7 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
                 rincianData={modalDetail.rincianData}
             />
 
-            <ModalPreviewSlipGaji 
+            <ModalPreviewSlipGaji
                 isOpen={isModalPreviewOpen}
                 onClose={() => setIsModalPreviewOpen(false)}
                 data={rekapGajiData}
@@ -382,15 +383,15 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
                 periode={periode}
             />
 
-            <Notif 
-                show={notif.show} 
-                message={notif.message} 
-                type={notif.type} 
-                onClose={closeNotif} 
+            <Notif
+                show={notif.show}
+                message={notif.message}
+                type={notif.type}
+                onClose={closeNotif}
             />
 
             {/* Custom PopUp Konfirmasi Generate Gaji */}
-            <ConfirmPopUp 
+            <ConfirmPopUp
                 isOpen={showConfirmGenerate}
                 onClose={() => setShowConfirmGenerate(false)}
                 onConfirm={confirmGenerateGaji}
@@ -401,7 +402,7 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
             />
 
             {/* Custom PopUp Konfirmasi Pelunasan Gaji */}
-            <ConfirmPopUp 
+            <ConfirmPopUp
                 isOpen={showConfirmLunas}
                 onClose={() => setShowConfirmLunas(false)}
                 onConfirm={confirmPelunasanGaji}
