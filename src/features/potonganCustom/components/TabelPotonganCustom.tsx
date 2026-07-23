@@ -574,7 +574,7 @@ export const TabelPotonganCustom = ({ data = [], listPegawai = [], onDelete, onE
                                                                             index < 2 ? 'top-full mt-2' : 'bottom-full mb-2'
                                                                         }`}>
                                                                             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold pb-1.5 border-b border-slate-200">
-                                                                                <span>{deductionsOnDay.length} Potongan ({dateKey})</span>
+                                                                                <span>{deductionsOnDay.length} Potongan ({item.tglKey})</span>
                                                                                 <span className="text-rose-700 font-black">Total: -Rp{totalNominal.toLocaleString('id-ID')}</span>
                                                                             </div>
                                                                             <div className="flex flex-col gap-1.5 mt-2 max-h-40 overflow-y-auto scrollbar-thin">
