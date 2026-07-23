@@ -391,6 +391,10 @@ export function useMatrixJadwal() {
 
     const isSaving = simpanHarianMutation.isPending || tukarShiftMutation.isPending || generateMassalMutation.isPending;
 
+    const refetchJadwal = () => {
+        queryClient.invalidateQueries({ queryKey: ['jadwalBulanan'] });
+    };
+
     return {
         // State Tanggal & Filter
         today: now, filterStartDate, setFilterStartDate, filterEndDate, setFilterEndDate,
@@ -413,6 +417,7 @@ export function useMatrixJadwal() {
         notif, closeNotif,
         // Handler & Flags
         isSaving,
-        handleCellClick, handleSimpanShiftHarian, handleProsesTukarShift, handleProsesGenerateMassal
+        handleCellClick, handleSimpanShiftHarian, handleProsesTukarShift, handleProsesGenerateMassal,
+        refetchJadwal
     };
 }

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
     DataGrid,
     type GridColDef,
@@ -7,7 +7,8 @@ import {
     type GridRowId
 
 } from "@mui/x-data-grid";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Search } from "lucide-react";
+import { useAuthStore } from '../../../store/useAuthStore';
 import type { PegawaiData } from '../../../types';
 import { apiFetchJson } from "../../../utils/apiFetch";
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
@@ -40,6 +41,43 @@ export default function TabelPegawai({ data: initialData }: TabelPegawaiProps) {
     const { notif, showNotif, closeNotif } = useNotif();
 
     const queryClient = useQueryClient();
+
+    // Filter states
+    const [searchQuery, setSearchQuery] = useState("");
+    const [filterDepartemen, setFilterDepartemen] = useState("");
+    const [filterJabatan, setFilterJabatan] = useState("");
+
+    // Compute unique lists from initialData to avoid disappearing when filtered
+    const uniqueDepartemenList = useMemo(() => {
+        const depts = initialData
+            .map((p) => p.jabatan?.departemen?.nama_departemen)
+            .filter((d): d is string => !!d);
+        return Array.from(new Set(depts));
+    }, [initialData]);
+
+    const uniqueJabatanList = useMemo(() => {
+        const jabs = initialData
+            .filter((p) => !filterDepartemen || p.jabatan?.departemen?.nama_departemen === filterDepartemen)
+            .map((p) => p.jabatan?.nama_jabatan)
+            .filter((j): j is string => !!j);
+        return Array.from(new Set(jabs));
+    }, [initialData, filterDepartemen]);
+
+    // Client-side filtering logic
+    const filteredRows = useMemo(() => {
+        return rows.filter((item) => {
+            const q = searchQuery.toLowerCase().trim();
+            const matchesSearch = !q || 
+                (item.nama && item.nama.toLowerCase().includes(q)) || 
+                (item.nik && item.nik.toLowerCase().includes(q)) ||
+                (item.jabatan?.nama_jabatan && item.jabatan.nama_jabatan.toLowerCase().includes(q));
+
+            const matchesDept = !filterDepartemen || item.jabatan?.departemen?.nama_departemen === filterDepartemen;
+            const matchesJab = !filterJabatan || item.jabatan?.nama_jabatan === filterJabatan;
+
+            return matchesSearch && matchesDept && matchesJab;
+        });
+    }, [rows, searchQuery, filterDepartemen, filterJabatan]);
     const deletePegawaiMutation = useMutation({
         mutationFn: async (idToDelete: import("@mui/x-data-grid").GridRowId) => {
             await apiFetchJson(`/api/v1/pegawai/${idToDelete}`, {
@@ -221,11 +259,85 @@ export default function TabelPegawai({ data: initialData }: TabelPegawaiProps) {
     ];
 
     return (
-        <div className="w-full bg-white">
+        <div className="w-full bg-white flex flex-col gap-4">
+            
+            {/* Control Bar: Search & Filters */}
+            <div className="p-4 sm:p-5 border border-gray-200 bg-gray-50/70 rounded-xl flex flex-col gap-4">
+                
+                {/* Baris 1: Search */}
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                    {/* Search Input */}
+                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Cari nama / jabatan / NIK..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full border border-slate-300 rounded-xl pl-10 pr-9 py-2 bg-white text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                            >
+                                &times;
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Baris 2: Filters */}
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-start pt-2 border-t border-gray-200/80">
+                    <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
+                        {/* Filter Departemen */}
+                        <select
+                            value={filterDepartemen}
+                            onChange={(e) => {
+                                setFilterDepartemen(e.target.value);
+                                setFilterJabatan('');
+                            }}
+                            className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer flex-1 md:flex-none md:w-48 truncate"
+                        >
+                            <option value="">Semua Departemen</option>
+                            {uniqueDepartemenList.map((dept, idx) => (
+                                <option key={idx} value={dept}>{dept}</option>
+                            ))}
+                        </select>
+
+                        {/* Filter Jabatan */}
+                        <select
+                            value={filterJabatan}
+                            onChange={(e) => setFilterJabatan(e.target.value)}
+                            disabled={!filterDepartemen}
+                            className={`border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold shadow-2xs cursor-pointer flex-1 md:flex-none md:w-48 truncate outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 ${!filterDepartemen ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200' : 'bg-white text-slate-700'}`}
+                        >
+                            <option value="">{filterDepartemen ? "Semua Jabatan" : "Pilih Departemen Dulu"}</option>
+                            {uniqueJabatanList.map((jab, idx) => (
+                                <option key={idx} value={jab}>{jab}</option>
+                            ))}
+                        </select>
+
+                        {/* Reset Button */}
+                        {(searchQuery || filterDepartemen || filterJabatan) && (
+                            <button
+                                onClick={() => {
+                                    setSearchQuery("");
+                                    setFilterDepartemen("");
+                                    setFilterJabatan("");
+                                }}
+                                className="text-xs text-red-600 hover:text-red-700 font-bold px-2 py-1 transition-colors duration-150 cursor-pointer"
+                            >
+                                Reset Filter
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
             <DataGrid
-                showToolbar
                 autoHeight
-                rows={rows}
+                rows={filteredRows}
                 columns={columns}
                 initialState={{
                     pagination: {

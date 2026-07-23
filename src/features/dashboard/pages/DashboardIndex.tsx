@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { Loader2, PlusCircle } from "lucide-react";
+import { Loader2, PlusCircle, LaptopMinimal } from "lucide-react";
 import type { AbsensiData, DashboardKaryawanResponse } from "../../../types";
 import { apiFetchJson } from "../../../utils/apiFetch";
 import TabelDashboard from "../components/TabelDashboard";
 import ModalInputAbsensi from "../components/ModalInputAbsensi";
+import Button from "../../../components/common/Button";
 
 
 export default function DashboardIndex() {
@@ -115,11 +116,31 @@ export default function DashboardIndex() {
     const totalHadir = summary.hadir_tepat_waktu + summary.terlambat;
 
     return (
-        <div className="flex flex-col gap-4 md:gap-6 w-full">
+        <div className="flex flex-col gap-6 w-full animate-in fade-in duration-300">
+            {/* HEADER */}
+            <section data-tour="dashboard-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                            <LaptopMinimal size={28} className="text-blue-600" /> Monitoring Aktivitas
+                        </h1>
+                        <p className="text-sm text-gray-500 mt-1">Pantau kehadiran, status kedatangan, dan aktivitas absensi pegawai secara real-time.</p>
+                    </div>
+                    <div className="w-full md:w-auto">
+                        <Button 
+                            variant="info"
+                            label="Input Manual" 
+                            icon={<PlusCircle size={16} />}
+                            onClick={() => setIsModalAbsenOpen(true)} 
+                            className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl font-bold shadow-md cursor-pointer"
+                            data-tour="btn-input-manual"
+                        />
+                    </div>
+                </div>
+            </section>
 
             {/* KOTAK STATISTIK */}
             <div data-tour="dashboard-stats" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 border-b-4 border-b-blue-500 p-4 flex flex-col items-center justify-center relative hover:-translate-y-1 transition-transform">
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Hadir</h3>
                     <p className="text-3xl font-extrabold text-gray-900 mt-1">{totalHadir}</p>
@@ -140,23 +161,8 @@ export default function DashboardIndex() {
                 </div>
             </div>
 
-
-            <section data-tour="dashboard-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-[400px]">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-4">
-                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                        Aktivitas Absensi Pegawai Hari Ini
-                    </h1>
-                    <div className="w-full md:w-auto">
-                        <button 
-                            data-tour="btn-input-manual"
-                            onClick={() => setIsModalAbsenOpen(true)}
-                            className="w-full md:w-auto active:scale-95 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 md:py-2.5 rounded-xl font-semibold text-[15px] md:text-sm flex items-center justify-center gap-2 transition-all duration-200 shadow-sm"
-                        >
-                            <PlusCircle size={18} /> Input Manual
-                        </button>
-                    </div>
-                </div>
-
+            {/* BAGIAN TABEL */}
+            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-[400px]">
                 <div data-tour="dashboard-table" className="w-full">
                     {isLoading ? (
                         <div className="flex items-center justify-center gap-2 text-sm text-blue-600 font-semibold my-8">

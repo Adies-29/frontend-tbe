@@ -85,7 +85,7 @@ export default function TabelMatrixPencapaian() {
 
             {/* TOOLBAR TIMELINE FLEKSIBEL */}
             <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/70 flex flex-col gap-4">
-                {/* Baris Atas: Search & Period Switcher */}
+                {/* Baris Atas: Search */}
                 <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
                     {/* Search Input */}
                     <div className="relative flex-1 min-w-[240px] max-w-md">
@@ -106,33 +106,12 @@ export default function TabelMatrixPencapaian() {
                             </button>
                         )}
                     </div>
-
-                    {/* Period Switcher & Date Controls */}
-                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                        <PeriodSwitcher
-                            periode={hookParams.periode}
-                            filterValue={hookParams.filterValue}
-                            onPeriodeChange={hookParams.handlePeriodeChange}
-                            onFilterValueChange={hookParams.setFilterValue}
-                        />
-
-                        {(hookParams.searchQuery || hookParams.filterDepartemen || hookParams.filterJabatan) && (
-                            <button
-                                type="button"
-                                onClick={hookParams.handleResetFilters}
-                                className="flex items-center gap-1 text-xs text-slate-500 hover:text-red-600 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-                                title="Reset semua filter"
-                            >
-                                <RotateCcw size={13} />
-                                <span className="hidden sm:inline">Reset</span>
-                            </button>
-                        )}
-                    </div>
                 </div>
 
-                {/* Baris Bawah: Filter Departemen & Jabatan */}
-                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between pt-1">
-                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                {/* Baris Bawah: Filter Departemen & Jabatan + Date Filters */}
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between pt-1">
+                    {/* Left: Departemen & Jabatan */}
+                    <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
                         {/* Select Dept */}
                         <div className="relative flex-1 sm:flex-none">
                             <select
@@ -169,6 +148,28 @@ export default function TabelMatrixPencapaian() {
                                 ))}
                             </select>
                         </div>
+                    </div>
+
+                    {/* Period Switcher & Date Controls */}
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                        <PeriodSwitcher
+                            periode={hookParams.periode}
+                            filterValue={hookParams.filterValue}
+                            onPeriodeChange={hookParams.handlePeriodeChange}
+                            onFilterValueChange={hookParams.setFilterValue}
+                        />
+
+                        {(hookParams.searchQuery || hookParams.filterDepartemen || hookParams.filterJabatan) && (
+                            <button
+                                type="button"
+                                onClick={hookParams.handleResetFilters}
+                                className="flex items-center gap-1 text-xs text-slate-500 hover:text-red-600 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                                title="Reset semua filter"
+                            >
+                                <RotateCcw size={13} />
+                                <span className="hidden sm:inline">Reset</span>
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

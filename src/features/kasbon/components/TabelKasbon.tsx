@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DataGrid, type GridColDef, GridActionsCellItem, type GridRowId } from "@mui/x-data-grid";
-import { Trash2, Banknote } from "lucide-react";
+import { Trash2, Banknote, Search } from "lucide-react";
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import Notif from '../../../components/common/Notif';
@@ -18,6 +18,12 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
     const [showPopUp, setShowPopUp] = useState(false);
     const [hapusId, setHapusId] = useState<GridRowId | null>(null);
     const { notif, showNotif, closeNotif } = useNotif();
+
+    // Filter states
+    const [searchQuery, setSearchQuery] = useState("");
+    const [filterStartDate, setFilterStartDate] = useState("");
+    const [filterEndDate, setFilterEndDate] = useState("");
+    const [filterStatus, setFilterStatus] = useState("");
 
     const handleDeleteClick = (id: GridRowId) => () => {
         setHapusId(id);
@@ -195,23 +201,126 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
     ];
 
     // Urutkan data: yang Lunas taruh paling bawah
-    const sortedData = [...data].sort((a, b) => {
-        if (a.status === 'Lunas' && b.status !== 'Lunas') return 1;
-        if (a.status !== 'Lunas' && b.status === 'Lunas') return -1;
-        
-        // Opsional: Urutkan berdasarkan tanggal terbaru jika statusnya sama
-        return new Date(b.tanggal_pengajuan).getTime() - new Date(a.tanggal_pengajuan).getTime();
-    });
+    const sortedData = useMemo(() => {
+        return [...data].sort((a, b) => {
+            if (a.status === 'Lunas' && b.status !== 'Lunas') return 1;
+            if (a.status !== 'Lunas' && b.status === 'Lunas') return -1;
+            return new Date(b.tanggal_pengajuan).getTime() - new Date(a.tanggal_pengajuan).getTime();
+        });
+    }, [data]);
+
+    // Client-side filtering logic
+    const filteredSortedData = useMemo(() => {
+        return sortedData.filter((item) => {
+            const q = searchQuery.toLowerCase().trim();
+            const matchesSearch = !q || (item.pegawai?.nama && item.pegawai.nama.toLowerCase().includes(q));
+
+            let matchesDate = true;
+            if (item.tanggal_pengajuan) {
+                const itemDate = item.tanggal_pengajuan.split("T")[0]; // YYYY-MM-DD
+                if (filterStartDate && itemDate < filterStartDate) matchesDate = false;
+                if (filterEndDate && itemDate > filterEndDate) matchesDate = false;
+            }
+
+            const matchesStatus = !filterStatus || String(item.status).toLowerCase() === filterStatus.toLowerCase();
+
+            return matchesSearch && matchesDate && matchesStatus;
+        });
+    }, [sortedData, searchQuery, filterStartDate, filterEndDate, filterStatus]);
 
     return (
-        <div style={{ height: 500, width: '100%' }}>
+        <div className="w-full flex flex-col gap-4">
+            
+            {/* Control Bar: Search, Date & Status Filter */}
+            <div className="p-4 sm:p-5 border border-gray-200 bg-gray-50/70 rounded-xl flex flex-col gap-4">
+                
+                {/* Baris 1: Search */}
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                    {/* Search Input */}
+                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Cari nama pegawai..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full border border-slate-300 rounded-xl pl-10 pr-9 py-2 bg-white text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                            >
+                                &times;
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Baris 2: Date & Status Filters */}
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between pt-2 border-t border-gray-200/80">
+                    {/* Left: Date Filters */}
+                    <div className="flex flex-wrap gap-2 items-center">
+                        <span className="text-xs font-semibold text-slate-600">Tanggal Pengajuan:</span>
+                        <input
+                            type="date"
+                            value={filterStartDate}
+                            onChange={(e) => setFilterStartDate(e.target.value)}
+                            className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
+                        />
+                        <span className="text-xs font-semibold text-slate-500">s/d</span>
+                        <input
+                            type="date"
+                            value={filterEndDate}
+                            onChange={(e) => setFilterEndDate(e.target.value)}
+                            className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
+                        />
+
+                        {/* Reset Button */}
+                        {(searchQuery || filterStartDate || filterEndDate || filterStatus) && (
+                            <button
+                                onClick={() => {
+                                    setSearchQuery("");
+                                    setFilterStartDate("");
+                                    setFilterEndDate("");
+                                    setFilterStatus("");
+                                }}
+                                className="text-xs text-red-600 hover:text-red-700 font-bold px-2 py-1 transition-colors duration-150 cursor-pointer"
+                            >
+                                Reset Filter
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Right: Status Filter */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-slate-600">Status:</span>
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer min-w-[125px]"
+                        >
+                            <option value="">Semua Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Disetujui">Disetujui</option>
+                            <option value="Ditolak">Ditolak</option>
+                            <option value="Lunas">Lunas</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <DataGrid
-                showToolbar
-                rows={sortedData}
+                rows={filteredSortedData}
                 columns={columns}
                 loading={isLoading}
+                autoHeight
                 disableRowSelectionOnClick
-                sx={defaultDataGridSx}
+                sx={{
+                    ...defaultDataGridSx,
+                    minHeight: 300,
+                    width: '100%'
+                }}
             />
 
             <ConfirmPopUp

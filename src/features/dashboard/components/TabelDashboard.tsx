@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
     DataGrid,
     type GridColDef,
@@ -7,13 +7,17 @@ import {
 } from "@mui/x-data-grid";
 import type { AbsensiData } from "../../../types";
 import dayjs from "dayjs";
-import { Loader2, PlusCircle, Trash2 } from "lucide-react";
+import { useAuthStore } from "../../../store/useAuthStore";
+import { Loader2, PlusCircle, Trash2, Search, Download } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMediaQuery, useTheme } from "@mui/material";
 import { apiFetchJson } from "../../../utils/apiFetch";
 import Notif from "../../../components/common/Notif";
 import { defaultDataGridSx } from "../../../components/common/dataGridStyles";
 import ButtonNuklir from "../../../components/common/ButtonNuklir";
+import Button from "../../../components/common/Button";
+
+
 import { useNotif } from "../../../hooks/useNotif";
 
 
@@ -38,6 +42,59 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
 
     const [isNuklirOpen, setIsNuklirOpen] = useState(false);
     const [targetNuklir, setTargetNuklir] = useState({ id: "", nama: "" });
+
+    // States for Search and Filters
+    const [searchQuery, setSearchQuery] = useState("");
+    const [filterShift, setFilterShift] = useState("");
+    const [filterStatus, setFilterStatus] = useState("");
+    const [filterJabatan, setFilterJabatan] = useState("");
+
+    // Compute unique shifts and positions dynamically from initial data
+    const uniqueShifts = useMemo(() => {
+        const shifts = initialData
+            .map((item) => item.info_shift)
+            .filter((s): s is string => !!s && s !== "-");
+        return Array.from(new Set(shifts));
+    }, [initialData]);
+
+    const uniqueJabatans = useMemo(() => {
+        const jabs = initialData
+            .map((item) => item.jabatan)
+            .filter((j): j is string => !!j && j !== "-");
+        return Array.from(new Set(jabs));
+    }, [initialData]);
+
+    // Client-side filtering logic
+    const filteredRows = useMemo(() => {
+        return rows.filter((item) => {
+            const q = searchQuery.toLowerCase().trim();
+            const matchesSearch = !q || 
+                (item.nama && item.nama.toLowerCase().includes(q)) || 
+                (item.jabatan && item.jabatan.toLowerCase().includes(q));
+
+            const matchesShift = !filterShift || item.info_shift === filterShift;
+
+            let matchesStatus = true;
+            if (filterStatus) {
+                const itemStatus = (item.status_masuk || "").toLowerCase();
+                const targetStatus = filterStatus.toLowerCase();
+                
+                if (targetStatus === "void") {
+                    matchesStatus = itemStatus.includes("void") || itemStatus.includes("batalkan") || itemStatus.includes("batal");
+                } else if (targetStatus === "tepat") {
+                    matchesStatus = itemStatus.includes("tepat") || itemStatus.includes("ontime") || itemStatus.includes("intime");
+                } else if (targetStatus === "terlambat") {
+                    matchesStatus = itemStatus.includes("lambat") || itemStatus.includes("late");
+                } else if (targetStatus === "belum hadir") {
+                    matchesStatus = itemStatus.includes("belum");
+                }
+            }
+
+            const matchesJabatan = !filterJabatan || item.jabatan === filterJabatan;
+
+            return matchesSearch && matchesShift && matchesStatus && matchesJabatan;
+        });
+    }, [rows, searchQuery, filterShift, filterStatus, filterJabatan]);
 
     const isTvMode = location.pathname === '/tv';
     useEffect(() => {
@@ -365,15 +422,139 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                 );
             }
         }
-
     ];
 
+    const handleExportCSV = () => {
+        const headers = ["Nama Karyawan", "Waktu Masuk", "Status", "Waktu Pulang", "Kerapihan", "Status Lembur"];
+        const csvRows = [headers.join(",")];
+
+        filteredRows.forEach((row) => {
+            let kerapihanText = "-";
+            if (row.is_kerapian === true) kerapihanText = "Rapi";
+            else if (row.is_kerapian === false) kerapihanText = "Tidak rapi";
+
+            const values = [
+                `"${row.nama || ''}"`,
+                `"${row.waktu_masuk || '-'}"`,
+                `"${row.status_masuk || 'Belum Hadir'}"`,
+                `"${row.waktu_pulang || '-'}"`,
+                `"${kerapihanText}"`,
+                `"${row.status_lembur || '-'}"`
+            ];
+            csvRows.push(values.join(","));
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csvRows.join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Monitoring_Aktivitas_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
-        <div className="w-full bg-white ">
+        <div className="w-full bg-white flex flex-col gap-4">
+            
+            {/* Control Bar: Search, Filters & Export */}
+            <div className="p-4 sm:p-5 border border-gray-200 bg-gray-50/70 rounded-xl flex flex-col gap-4">
+                
+                {/* Baris 1: Search & Export */}
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                    {/* Search Input */}
+                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Cari nama / jabatan..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full border border-slate-300 rounded-xl pl-10 pr-9 py-2 bg-white text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                            >
+                                &times;
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Export Button */}
+                    <div className="w-full md:w-auto shrink-0">
+                        <Button
+                            variant="success"
+                            label="Export Excel/CSV"
+                            icon={<Download size={16} />}
+                            onClick={handleExportCSV}
+                            className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl font-bold shadow-md cursor-pointer flex items-center justify-center gap-2"
+                        />
+                    </div>
+                </div>
+
+                {/* Baris 2: Filters */}
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-start pt-2 border-t border-gray-200/80">
+                    <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
+                        {/* Filter Shift */}
+                        <select
+                            value={filterShift}
+                            onChange={(e) => setFilterShift(e.target.value)}
+                            className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer flex-1 md:flex-none md:w-48 truncate"
+                        >
+                            <option value="">Semua Shift</option>
+                            {uniqueShifts.map((shift, idx) => (
+                                <option key={idx} value={shift}>{shift}</option>
+                            ))}
+                        </select>
+
+                        {/* Filter Status */}
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer flex-1 md:flex-none md:w-48 truncate"
+                        >
+                            <option value="">Semua Status</option>
+                            <option value="tepat">Tepat Waktu</option>
+                            <option value="terlambat">Terlambat</option>
+                            <option value="belum hadir">Belum Hadir</option>
+                            <option value="void">Void</option>
+                        </select>
+
+                        {/* Filter Jabatan */}
+                        <select
+                            value={filterJabatan}
+                            onChange={(e) => setFilterJabatan(e.target.value)}
+                            className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer flex-1 md:flex-none md:w-48 truncate"
+                        >
+                            <option value="">Semua Jabatan</option>
+                            {uniqueJabatans.map((jab, idx) => (
+                                <option key={idx} value={jab}>{jab}</option>
+                            ))}
+                        </select>
+
+                        {/* Reset Button */}
+                        {(searchQuery || filterShift || filterStatus || filterJabatan) && (
+                            <button
+                                onClick={() => {
+                                    setSearchQuery("");
+                                    setFilterShift("");
+                                    setFilterStatus("");
+                                    setFilterJabatan("");
+                                }}
+                                className="text-xs text-red-600 hover:text-red-700 font-bold px-2 py-1 transition-colors duration-150 cursor-pointer"
+                            >
+                                Reset Filter
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
             <DataGrid
-                showToolbar
                 rowModesModel={rowModesModel}
-                rows={rows}
+                rows={filteredRows}
                 columns={columns}
                 autoHeight
                 initialState={{
@@ -386,7 +567,6 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                     params.row.status === 'Absensi di Batalkan' ? 'bg-gray-50 text-gray-400 transition-all' : ''
                 }
                 columnVisibilityModel={{
-                    // Kolom ini akan disembunyikan (!isMobile) saat di HP, tapi muncul di Laptop
                     waktu_masuk: !isMobile,
                     waktu_pulang: !isMobile,
                 }}

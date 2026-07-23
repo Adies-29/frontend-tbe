@@ -163,7 +163,7 @@ export default function ModalTambahBonusCustom({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-150">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl lg:max-w-5xl h-[82vh] max-h-[700px] min-h-[560px] overflow-hidden border border-gray-200 animate-in zoom-in-95 my-auto flex flex-col">
-                
+
                 {/* MODAL HEADER */}
                 <div className="bg-gray-50 p-4 border-b border-gray-200 flex justify-between items-center shrink-0">
                     <div className="flex items-center gap-2.5">
@@ -190,7 +190,7 @@ export default function ModalTambahBonusCustom({
                 {/* FORM BODY GRID (2 COLUMNS) */}
                 <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
                     <div className="p-5 grid grid-cols-1 md:grid-cols-12 gap-5 flex-1 min-h-0 overflow-hidden">
-                        
+
                         {/* LEFT COLUMN: PENGATURAN BONUS */}
                         <div className="md:col-span-5 flex flex-col gap-4 bg-gray-50/70 p-4 rounded-xl border border-gray-200 h-full overflow-y-auto">
                             <h4 className="text-xs font-extrabold text-gray-800 uppercase tracking-wide border-b border-gray-200 pb-2">
@@ -286,7 +286,7 @@ export default function ModalTambahBonusCustom({
                                     value={formFilterJabatan}
                                     onChange={(e) => setFormFilterJabatan(e.target.value)}
                                     disabled={!formFilterDept}
-                                    className={`w-full border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none text-xs shadow-2xs font-medium ${!formFilterDept ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
+                                    className={`w-full border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none text-xs shadow-2xs font-medium ${!formFilterDept ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
                                 >
                                     <option value="">Semua Jabatan</option>
                                     {formUniqueJabs.map((jab, idx) => (
@@ -312,8 +312,8 @@ export default function ModalTambahBonusCustom({
                                     const isChecked = selectedPegawaiIds.includes(String(p.id));
                                     return (
                                         <label key={p.id} className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer hover:bg-blue-50/60 p-2 rounded-lg transition-colors border border-transparent hover:border-blue-100 select-none">
-                                            <input 
-                                                type="checkbox" 
+                                            <input
+                                                type="checkbox"
                                                 checked={isChecked}
                                                 onChange={(e) => {
                                                     if (e.target.checked) {
@@ -362,12 +362,12 @@ export default function ModalTambahBonusCustom({
                             onClick={onClose}
                             className="px-4 py-2 text-xs font-semibold"
                         />
-                        <Button 
-                            type="submit" 
-                            label={isCreating ? "Menyimpan..." : "Simpan Bonus"} 
-                            variant="success" 
+                        <Button
+                            type="submit"
+                            label={isCreating ? "Menyimpan..." : "Simpan Bonus"}
+                            variant="success"
                             isLoading={isCreating}
-                            icon={<PlusCircle size={16} />} 
+                            icon={<PlusCircle size={16} />}
                             disabled={isCreating || selectedPegawaiIds.length === 0}
                             className="px-5 py-2 text-xs font-bold shadow-md cursor-pointer"
                         />

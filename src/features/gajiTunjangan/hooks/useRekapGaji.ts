@@ -77,7 +77,8 @@ export function useRekapGaji() {
                         id: String(item.id),
                         nama: item.pegawai?.nama || "Tanpa Nama",
                         jabatan: item.pegawai?.jabatan?.nama_jabatan || "-",
-                        shift: "-",
+                        departemen: item.pegawai?.jabatan?.departemen?.nama_departemen || "-",
+                        shift: "-", 
                         tipe_penggajian: item.pegawai?.jabatan?.tipe_penggajian || 'Bulanan',
                         periode_tanggal: formatPeriodeGaji(item.tanggal_awal_periode, item.tanggal_akhir_periode, filterValue),
 
@@ -186,11 +187,23 @@ export function useRekapGaji() {
         }
     });
 
-    const handlePelunasanGaji = (id_gaji: string) => {
-        const confirmLunas = window.confirm("Apakah Anda yakin ingin menandai gaji ini sebagai Lunas? (Tindakan ini akan mengunci slip gaji dan memotong saldo kasbon pegawai secara permanen jika ada).");
-        if (!confirmLunas) return;
+    const [showConfirmGenerate, setShowConfirmGenerate] = useState(false);
+    const [generateParams, setGenerateParams] = useState<any>(null);
+    const [labelPeriode, setLabelPeriode] = useState("");
 
-        pelunasanGajiMutation.mutate(id_gaji);
+    const [showConfirmLunas, setShowConfirmLunas] = useState(false);
+    const [lunasGajiId, setLunasGajiId] = useState("");
+
+    const handlePelunasanGaji = (id_gaji: string) => {
+        setLunasGajiId(id_gaji);
+        setShowConfirmLunas(true);
+    };
+
+    const confirmPelunasanGaji = () => {
+        if (lunasGajiId) {
+            pelunasanGajiMutation.mutate(lunasGajiId);
+        }
+        setShowConfirmLunas(false);
     };
 
     // ==========================================================
@@ -211,7 +224,7 @@ export function useRekapGaji() {
         let tanggalSelesai = "";
         let targetBulan = 1;
         let targetTahun = 2026;
-        let labelPeriode = "";
+        let label = "";
 
         if (periode === 'bulan') {
             const [tahun, bulan] = filterValue.split('-');
@@ -223,7 +236,7 @@ export function useRekapGaji() {
             const totalHari = new Date(targetTahun, targetBulan, 0).getDate();
             tanggalSelesai = `${tahun}-${bulanPad}-${String(totalHari).padStart(2, '0')}`;
 
-            labelPeriode = `Bulan ${bulanPad} Tahun ${tahun}`;
+            label = `Bulan ${bulanPad} Tahun ${tahun}`;
 
         } else if (periode === 'minggu') {
             const parsed = parseWeekValue(filterValue);
@@ -237,18 +250,24 @@ export function useRekapGaji() {
             targetBulan = parsed.targetBulan;
             targetTahun = parsed.targetTahun;
 
-            labelPeriode = `Mingguan (${tanggalMulai} s/d ${tanggalSelesai})`;
+            label = `Mingguan (${tanggalMulai} s/d ${tanggalSelesai})`;
         }
 
-        const confirmGenerate = window.confirm(`Apakah Anda yakin ingin menghitung dan menerbitkan gaji untuk periode ${labelPeriode}?`);
-        if (!confirmGenerate) return;
-
-        generateGajiMutation.mutate({
+        setGenerateParams({
             tanggal_mulai: tanggalMulai,
             tanggal_selesai: tanggalSelesai,
             periode_bulan: targetBulan,
             periode_tahun: targetTahun
         });
+        setLabelPeriode(label);
+        setShowConfirmGenerate(true);
+    };
+
+    const confirmGenerateGaji = () => {
+        if (generateParams) {
+            generateGajiMutation.mutate(generateParams);
+        }
+        setShowConfirmGenerate(false);
     };
 
     const [isModalPreviewOpen, setIsModalPreviewOpen] = useState(false);
@@ -301,5 +320,15 @@ export function useRekapGaji() {
         handleCetakSemuaSlip,
         handleFilter,
         handlePeriodeChange,
+        closeNotif,
+
+        // PopUp Confirm States & Functions
+        showConfirmGenerate,
+        setShowConfirmGenerate,
+        labelPeriode,
+        confirmGenerateGaji,
+        showConfirmLunas,
+        setShowConfirmLunas,
+        confirmPelunasanGaji
     };
 }

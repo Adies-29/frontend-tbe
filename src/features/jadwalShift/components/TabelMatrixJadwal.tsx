@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { Loader2, MousePointerClick, X, Search } from 'lucide-react';
-import Button from '../../../components/common/Button';
 
 import ModalKelolaShift from './ModalKelolaShift';
 import ModalKelolaJadwalMassal from './ModalKelolaJadwalMassal';
@@ -8,8 +11,13 @@ import { useMatrixJadwal } from '../hooks/useMatrixJadwal';
 import Notif from '../../../components/common/Notif';
 import PeriodSwitcher from '../../../components/common/PeriodSwitcher';
 
-export default function TabelMatrixJadwal() {
-    const hookParams = useMatrixJadwal();
+interface TabelMatrixJadwalProps {
+    hookParams?: ReturnType<typeof useMatrixJadwal>;
+}
+
+export default function TabelMatrixJadwal({ hookParams: propsHookParams }: TabelMatrixJadwalProps) {
+    const localHookParams = useMatrixJadwal();
+    const hookParams = propsHookParams || localHookParams;
 
     // Memoized formatted dates array untuk mencegah freeze UI saat rentang tahunan (365 hari)
     const formattedDays = useMemo(() => {
@@ -91,40 +99,92 @@ export default function TabelMatrixJadwal() {
                             </div>
                         </div>
 
-                        {/* Kanan: Tombol Kelola Shift & Generate Massal */}
-                        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-end">
-                            <Button 
-                                variant="info" 
-                                label="Kelola Shift" 
-                                onClick={() => hookParams.setIsModalOpen(true)}
-                                className="text-xs border-slate-300 text-slate-700 "
-                            />
-                            <Button 
-                                variant="primary" 
-                                label="Generate Massal" 
-                                onClick={() => hookParams.setIsModalMassalOpen(true)}
-                                className="text-xs shadow-2xs"
-                            />
-                        </div>
+                {/* Baris 1: Search */}
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                    {/* Pencarian Pegawai */}
+                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Cari nama / jabatan..."
+                            value={hookParams.searchQuery}
+                            onChange={(e) => hookParams.setSearchQuery(e.target.value)}
+                            className="w-full border border-slate-300 rounded-xl pl-10 pr-9 py-2 bg-white text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all"
+                        />
+                        {hookParams.searchQuery && (
+                            <button
+                                type="button"
+                                onClick={() => hookParams.setSearchQuery('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full cursor-pointer"
+                            >
+                                &times;
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Baris 2: Filter Departemen & Jabatan + Date Filters */}
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between pt-2 border-t border-gray-200/80">
+                    {/* Left: Grup Departemen & Jabatan */}
+                    <div className="flex gap-2 w-full md:w-auto items-center">
+                        <select
+                            value={hookParams.filterDepartemen}
+                            onChange={(e) => {
+                                hookParams.setFilterDepartemen(e.target.value);
+                                hookParams.setFilterJabatan('');
+                            }}
+                            className="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none text-xs shadow-2xs font-medium"
+                        >
+                            <option value="">Semua Departemen</option>
+                            {hookParams.uniqueDepartemenList.map((dept: string, idx: number) => (
+                                <option key={idx} value={dept}>{dept}</option>
+                            ))}
+                        </select>
+
+                        <select
+                            value={hookParams.filterJabatan}
+                            onChange={(e) => hookParams.setFilterJabatan(e.target.value)}
+                            disabled={!hookParams.filterDepartemen}
+                            className={`border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold shadow-2xs cursor-pointer flex-1 md:flex-none md:max-w-[150px] truncate outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 ${!hookParams.filterDepartemen ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200' : 'bg-white text-slate-700'}`}
+                            title={!hookParams.filterDepartemen ? "Pilih Departemen terlebih dahulu" : "Filter berdasarkan Jabatan"}
+                        >
+                            <option value="">{hookParams.filterJabatan ? "Semua Jabatan" : "Semua Jabatan"}</option>
+                            {hookParams.uniqueJabatanList?.map((jab: string, idx: number) => (
+                                <option key={idx} value={jab}>{jab}</option>
+                            ))}
+                        </select>
                     </div>
 
-                    {/* Baris 2: Filter Periode & Departemen/Jabatan */}
-                    <div className="flex flex-col md:flex-row flex-wrap gap-3 items-start md:items-center justify-end pt-2 border-t border-gray-200/80">
-                        <PeriodSwitcher
-                            periode={hookParams.periode}
-                            filterValue={hookParams.filterValue}
-                            onPeriodeChange={hookParams.handlePeriodeChange}
-                            onFilterValueChange={hookParams.handleFilterValueChange}
-                        />
-
-                        <div className="hidden md:block h-6 w-px bg-gray-300 mx-1"></div>
-
-                        {/* Grup Departemen & Jabatan */}
-                        <div className="flex gap-2 w-full md:w-auto items-center">
-                            <select
-                                value={hookParams.filterDepartemen}
-                                onChange={(e) => hookParams.setFilterDepartemen(e.target.value)}
-                                className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer flex-1 md:flex-none md:max-w-[150px] truncate"
+                    {/* Right: Grup Periode Segmented Control & Date Picker Input */}
+                    <div className="flex gap-2 w-full md:w-auto items-center flex-wrap sm:flex-nowrap md:justify-end">
+                        <div className="bg-slate-200/80 p-1 rounded-xl flex items-center gap-1 shadow-inner">
+                            <button
+                                type="button"
+                                onClick={() => hookParams.handlePeriodeChange('minggu')}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${hookParams.periode === 'minggu'
+                                    ? 'bg-white text-slate-800 shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                            >
+                                Mingguan
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => hookParams.handlePeriodeChange('bulan')}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${hookParams.periode === 'bulan'
+                                    ? 'bg-white text-slate-800 shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                            >
+                                Bulanan
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => hookParams.handlePeriodeChange('tahun')}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${hookParams.periode === 'tahun'
+                                    ? 'bg-white text-slate-800 shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                                    }`}
                             >
                                 <option value="">Semua Dept</option>
                                 {hookParams.uniqueDepartemenList.map((dept: string, idx: number) => (
@@ -145,6 +205,16 @@ export default function TabelMatrixJadwal() {
                                 ))}
                             </select>
                         </div>
+
+                        {(hookParams.searchQuery || hookParams.filterDepartemen || hookParams.filterJabatan) && (
+                            <button
+                                type="button"
+                                onClick={hookParams.handleFilter}
+                                className="flex items-center gap-1 text-xs text-slate-500 hover:text-red-600 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                                title="Reset semua filter"
+                            >
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -296,7 +366,10 @@ export default function TabelMatrixJadwal() {
                 setMassalShiftId={hookParams.setMassalShiftId}
                 isSaving={hookParams.isSaving}
                 handleProsesGenerateMassal={hookParams.handleProsesGenerateMassal}
-                onSuccess={hookParams.handleFilter}
+                onSuccess={() => {
+                    hookParams.refetchJadwal();
+                    hookParams.handleFilter();
+                }}
             />
 
             <Notif

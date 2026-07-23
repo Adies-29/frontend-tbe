@@ -277,8 +277,8 @@ export function useMatrixPencapaian() {
         today: now, filterStartDate, filterEndDate,
         periode, setPeriode, filterValue, setFilterValue, handleFilter, handlePeriodeChange, handleResetFilters,
         // State Data
-        matrixKaryawan, filteredMatrixKaryawan, searchQuery, setSearchQuery, isLoading: pencapaianQuery.isLoading || pencapaianQuery.isFetching, errorMsg,
-        listPegawai, listMasterTargets,
+        matrixKaryawan, filteredMatrixKaryawan, searchQuery, setSearchQuery, isLoading: pencapaianQuery.isLoading || pencapaianQuery.isFetching, errorMsg, 
+        listPegawai, listMasterTargets, targetJabatanNames,
         filterJabatan, setFilterJabatan, filterDepartemen, setFilterDepartemen, uniqueJabatanList, uniqueDepartemenList,
         // State Modal
         selectedCell, setSelectedCell,

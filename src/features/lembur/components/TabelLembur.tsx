@@ -1,10 +1,12 @@
 import { DataGrid, GridActionsCellItem, type GridColDef, type GridRowId } from "@mui/x-data-grid";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2, Search } from "lucide-react";
 import dayjs from "dayjs";
 import type { LemburData } from "../../../types";
 import { defaultDataGridSx } from "../../../components/common/dataGridStyles";
-import { useState } from "react";
-import { apiFetchJson } from "../../../utils/apiFetch";
+import { useState, useMemo } from "react";
+import { useAuthStore } from "../../../store/useAuthStore";
+import { apiFetch } from "../../../utils/apiFetch";
+import { getSafeErrorMessage } from "../../../utils/errorHandler";
 import { useNavigate } from "react-router-dom";
 import ConfirmPopUp from "../../../components/common/ConfirmPopUp";
 import Notif from "../../../components/common/Notif";
@@ -24,6 +26,11 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
     const [hapusId, setHapusId] = useState<GridRowId | null>(null);
     const [showPopUp, setShowPopUp] = useState(false);
     const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
+
+    // Filter states
+    const [searchQuery, setSearchQuery] = useState("");
+    const [filterStartDate, setFilterStartDate] = useState("");
+    const [filterEndDate, setFilterEndDate] = useState("");
 
     const handleDeleteClick = (id: GridRowId) => () => {
         setHapusId(id);
@@ -205,6 +212,23 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
         },
     ];
 
+    const filteredData = useMemo(() => {
+        return data.filter((item) => {
+            const nama = item.nama || item.pegawai?.nama || "";
+            const q = searchQuery.toLowerCase().trim();
+            const matchesSearch = !q || nama.toLowerCase().includes(q);
+
+            let matchesDate = true;
+            if (item.tanggal) {
+                const itemDate = item.tanggal.split("T")[0]; // YYYY-MM-DD
+                if (filterStartDate && itemDate < filterStartDate) matchesDate = false;
+                if (filterEndDate && itemDate > filterEndDate) matchesDate = false;
+            }
+
+            return matchesSearch && matchesDate;
+        });
+    }, [data, searchQuery, filterStartDate, filterEndDate]);
+
     if (isLoading) {
         return (
             <div className="flex flex-col items-center justify-center h-64 text-gray-400">
@@ -215,10 +239,71 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
     }
 
     return (
-        <div className="w-full bg-white relative" style={{ width: "100%", minHeight: "400px" }}>
+        <div className="w-full bg-white relative flex flex-col gap-4">
+            
+            {/* Control Bar: Search & Date Filter */}
+            <div className="p-4 sm:p-5 border border-gray-200 bg-gray-50/70 rounded-xl flex flex-col gap-4">
+                
+                {/* Baris 1: Search */}
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                    {/* Search Input */}
+                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Cari nama pegawai..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full border border-slate-300 rounded-xl pl-10 pr-9 py-2 bg-white text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                            >
+                                &times;
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Baris 2: Date Filters */}
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-start pt-2 border-t border-gray-200/80">
+                    <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
+                        <span className="text-xs font-semibold text-slate-600">Tanggal Lembur:</span>
+                        <input
+                            type="date"
+                            value={filterStartDate}
+                            onChange={(e) => setFilterStartDate(e.target.value)}
+                            className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
+                        />
+                        <span className="text-xs font-semibold text-slate-500">s/d</span>
+                        <input
+                            type="date"
+                            value={filterEndDate}
+                            onChange={(e) => setFilterEndDate(e.target.value)}
+                            className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
+                        />
+
+                        {/* Reset Button */}
+                        {(searchQuery || filterStartDate || filterEndDate) && (
+                            <button
+                                onClick={() => {
+                                    setSearchQuery("");
+                                    setFilterStartDate("");
+                                    setFilterEndDate("");
+                                }}
+                                className="text-xs text-red-600 hover:text-red-700 font-bold px-2 py-1 transition-colors duration-150 cursor-pointer"
+                            >
+                                Reset Filter
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
             <DataGrid
-                showToolbar
-                rows={data}
+                rows={filteredData}
                 columns={columns}
                 autoHeight
                 disableRowSelectionOnClick
