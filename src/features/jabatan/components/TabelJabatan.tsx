@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 import {
     DataGrid,
@@ -8,7 +8,7 @@ import {
     type GridRowId,
     type GridRowModel
 } from '@mui/x-data-grid';
-import { Pencil, Trash2, Save, X } from 'lucide-react';
+import { Pencil, Trash2, Save, X, Search } from 'lucide-react';
 import { useAuthStore } from '../../../store/useAuthStore';
 import type { JabatanData, DepartemenOption } from '../../../types';
 
@@ -39,6 +39,30 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
         type: "success"
     });
     const queryClient = useQueryClient();
+
+    // Filter states
+    const [searchQuery, setSearchQuery] = useState("");
+    const [filterDepartemen, setFilterDepartemen] = useState("");
+
+    // Compute unique departments from initialData to prevent list disappearing when filtered
+    const uniqueDepartemenList = useMemo(() => {
+        const depts = initialData
+            .map((j) => j.departemen?.nama_departemen)
+            .filter((d): d is string => !!d);
+        return Array.from(new Set(depts));
+    }, [initialData]);
+
+    // Client-side filtering logic
+    const filteredRows = useMemo(() => {
+        return rows.filter((item) => {
+            const q = searchQuery.toLowerCase().trim();
+            const matchesSearch = !q || (item.nama_jabatan && item.nama_jabatan.toLowerCase().includes(q));
+
+            const matchesDept = !filterDepartemen || item.departemen?.nama_departemen === filterDepartemen;
+
+            return matchesSearch && matchesDept;
+        });
+    }, [rows, searchQuery, filterDepartemen]);
 
     
 
@@ -285,12 +309,69 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
     ];
 
     return (
-        <div className='w-full bg-white relative'>
+        <div className='w-full bg-white relative flex flex-col gap-4'>
+            
+            {/* Control Bar: Search & Filters */}
+            <div className="p-4 sm:p-5 border border-gray-200 bg-gray-50/70 rounded-xl flex flex-col gap-4">
+                
+                {/* Baris 1: Search */}
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                    {/* Search Input */}
+                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Cari nama jabatan..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full border border-slate-300 rounded-xl pl-10 pr-9 py-2 bg-white text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                            >
+                                &times;
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Baris 2: Filters */}
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-start pt-2 border-t border-gray-200/80">
+                    <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
+                        {/* Filter Departemen */}
+                        <select
+                            value={filterDepartemen}
+                            onChange={(e) => setFilterDepartemen(e.target.value)}
+                            className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer flex-1 md:flex-none md:w-48 truncate"
+                        >
+                            <option value="">Semua Departemen</option>
+                            {uniqueDepartemenList.map((dept, idx) => (
+                                <option key={idx} value={dept}>{dept}</option>
+                            ))}
+                        </select>
+
+                        {/* Reset Button */}
+                        {(searchQuery || filterDepartemen) && (
+                            <button
+                                onClick={() => {
+                                    setSearchQuery("");
+                                    setFilterDepartemen("");
+                                }}
+                                className="text-xs text-red-600 hover:text-red-700 font-bold px-2 py-1 transition-colors duration-150 cursor-pointer"
+                            >
+                                Reset Filter
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
             <DataGrid
                 autoHeight
-                rows={rows}
+                rows={filteredRows}
                 columns={columns}
-                showToolbar
 
                 // Pengaturan CRUD Inline Editing
                 editMode="row"
@@ -340,8 +421,5 @@ export default function TabelJabatan({ data: initialData }: TabelJabatanProps) {
                 onClose={() => setNotif({ show: false, message: "", type: "success" })}
             />
         </div>
-
-
-
     );
 }
