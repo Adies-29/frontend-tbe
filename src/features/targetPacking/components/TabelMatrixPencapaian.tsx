@@ -88,7 +88,7 @@ export default function TabelMatrixPencapaian() {
                 {/* Baris Atas: Search */}
                 <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
                     {/* Search Input */}
-                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                    <div className="relative flex-1 min-w-60 max-w-md">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <input
                             type="text"
@@ -120,7 +120,7 @@ export default function TabelMatrixPencapaian() {
                                     hookParams.setFilterDepartemen(e.target.value);
                                     hookParams.setFilterJabatan('');
                                 }}
-                                className="w-full sm:min-w-[160px] border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all cursor-pointer"
+                                className="w-full sm:min-w-40 border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all cursor-pointer"
                             >
                                 <option value="">Semua Departemen</option>
                                 {hookParams.uniqueDepartemenList.map((dept: string, idx: number) => (
@@ -135,7 +135,7 @@ export default function TabelMatrixPencapaian() {
                                 value={hookParams.filterJabatan}
                                 onChange={(e) => hookParams.setFilterJabatan(e.target.value)}
                                 disabled={!hookParams.filterDepartemen}
-                                className={`w-full sm:min-w-[160px] border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all ${
+                                className={`w-full sm:min-w-40 border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all ${
                                     !hookParams.filterDepartemen
                                         ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
                                         : 'bg-white text-slate-700 cursor-pointer'
@@ -189,11 +189,11 @@ export default function TabelMatrixPencapaian() {
                     <table className="w-full text-sm text-left border-collapse min-w-max">
                         <thead className="text-xs text-gray-600 uppercase bg-gray-100 sticky top-0 z-20 shadow-sm">
                             <tr>
-                                <th scope="col" className="px-4 py-3 border-r border-gray-200 sticky left-0 z-30 bg-gray-100 min-w-[150px] md:min-w-[220px]">
+                                <th scope="col" className="px-4 py-3 border-r border-gray-200 sticky left-0 z-30 bg-gray-100 min-w-37.5 md:min-w-55">
                                     Nama Pegawai
                                 </th>
                                 {formattedDays.map((item, idx) => (
-                                    <th key={idx} scope="col" className={`px-2 py-3 border-r border-gray-200 text-center min-w-[60px] leading-tight ${item.isWeekend ? 'bg-red-50/50' : ''}`}>
+                                    <th key={idx} scope="col" className={`px-2 py-3 border-r border-gray-200 text-center min-w-15 leading-tight ${item.isWeekend ? 'bg-red-50/50' : ''}`}>
                                         <div className={`text-lg ${item.isWeekend ? 'text-red-600 font-bold' : ''}`}>{item.dayNum}</div>
                                         <div className={`text-[9px] ${item.isWeekend ? 'text-red-400 font-medium' : 'text-gray-400'}`}>
                                             {item.monthShort}
@@ -231,7 +231,7 @@ export default function TabelMatrixPencapaian() {
                                                 <td key={idx} className={`p-1 border-r border-gray-100 relative group cursor-pointer transition-colors hover:bg-blue-100/40 ${cellBg}`}
                                                     onClick={() => hookParams.handleCellClick(pegawai.id, pegawai.nama, item.tglKey, pegawai.jabatan)}>
 
-                                                    <div className="w-full h-full min-h-[42px] flex flex-col items-center justify-center relative">
+                                                    <div className="w-full h-full min-h-10.5 flex flex-col items-center justify-center relative">
                                                         {pencapaianHariIni && pencapaianHariIni.totalPack > 0 ? (
                                                             <div className="flex flex-col items-center">
                                                                 <span className="text-sm font-bold text-emerald-700">

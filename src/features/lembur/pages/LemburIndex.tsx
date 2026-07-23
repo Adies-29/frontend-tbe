@@ -1,6 +1,5 @@
-import { Coffee, Plus } from "lucide-react";
-import { useAuthStore } from "../../../store/useAuthStore";
-import { apiFetch } from "../../../utils/apiFetch";
+import {  Plus } from "lucide-react";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import TabelLembur from "../../../features/lembur/components/TabelLembur";
 import type { LemburData } from "../../../types";
 import { useQuery } from "@tanstack/react-query";
@@ -38,7 +37,7 @@ export default function LemburIndex() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                            <Coffee size={28} className="text-amber-600" /> Data Perintah Lembur
+                         Data Perintah Lembur
                         </h1>
                         <p className="text-sm text-gray-500 mt-1">Kelola data perintah kerja lembur pegawai.</p>
                     </div>
@@ -56,7 +55,7 @@ export default function LemburIndex() {
             </section>
 
             {/* TABLE SECTION */}
-            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-[400px]">
+            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-100">
                 <div data-tour="lembur-table">
                     <TabelLembur 
                         data={lemburQuery.data || []} 

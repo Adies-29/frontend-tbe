@@ -1,8 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import Button from "../../../components/common/Button";
 import TabelDepartemen from "../../../features/departemen/components/TabelDepartemen";
-import { useState } from "react";
-import { Loader2, Layers, Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import type { DepartemenData, DepartemenOption, JabatanOption } from "../../../types";
 import { apiFetchJson } from "../../../utils/apiFetch";
 import Notif from "../../../components/common/Notif";
@@ -66,7 +65,7 @@ export default function DepartemenIndex() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                            <Layers size={28} className="text-teal-600" /> Data Departemen
+                             Data Departemen
                         </h1>
                         <p className="text-sm text-gray-500 mt-1">Kelola data divisi dan departemen operasional perusahaan.</p>
                     </div>

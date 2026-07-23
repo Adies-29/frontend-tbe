@@ -141,7 +141,7 @@ export default function HelpDrawer() {
             <div
                 className={`
                     fixed top-0 right-0 h-full z-9999
-                    w-full sm:w-[420px]
+                    w-full sm:w-105
                     bg-white shadow-2xl
                     transform transition-transform duration-300 ease-in-out
                     ${isHelpDrawerOpen ? 'translate-x-0' : 'translate-x-full'}

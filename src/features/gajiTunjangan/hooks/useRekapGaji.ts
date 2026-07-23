@@ -320,7 +320,6 @@ export function useRekapGaji() {
         handleCetakSemuaSlip,
         handleFilter,
         handlePeriodeChange,
-        closeNotif,
 
         // PopUp Confirm States & Functions
         showConfirmGenerate,

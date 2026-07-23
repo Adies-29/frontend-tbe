@@ -7,7 +7,6 @@ import {
 } from "@mui/x-data-grid";
 import type { AbsensiData } from "../../../types";
 import dayjs from "dayjs";
-import { useAuthStore } from "../../../store/useAuthStore";
 import { Loader2, PlusCircle, Trash2, Search, Download } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMediaQuery, useTheme } from "@mui/material";
@@ -232,7 +231,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
 
                 return (
 
-                    <span className={`min-w-[120px] px-4 py-1.5 inline-flex justify-center items-center rounded-lg text-xs md:text-sm font-bold ${colorClass}`}>
+                    <span className={`min-w-30 px-4 py-1.5 inline-flex justify-center items-center rounded-lg text-xs md:text-sm font-bold ${colorClass}`}>
                         {statusText}
                     </span>
                 );
@@ -371,7 +370,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                     <div className="flex justify-center w-full">
                         <button
                             onClick={() => navigate(`/dashboard/lembur/tambah-lembur?pegawai_id=${params.row.id}&nama=${params.row.nama}`)}
-                            className="w-25 flex justify-center items-center gap-1 text-purple-600 px-3 md:py-1 hover:text-black cursor-pointer font-semibold min-h-[44px] md:min-h-0 rounded-md active:bg-purple-50 active:scale-95 transition-transform">
+                            className="w-25 flex justify-center items-center gap-1 text-purple-600 px-3 md:py-1 hover:text-black cursor-pointer font-semibold min-h-11 md:min-h-0 rounded-md active:bg-purple-50 active:scale-95 transition-transform">
                                 
                             <PlusCircle size={14} />
                             Lembur
@@ -414,7 +413,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                     <div className="flex justify-center items-center w-full h-full">
                         <button
                             onClick={() => handleBukaPopUp(params.row.id, params.row.nama)}
-                            className="flex justify-center items-center gap-1 text-black hover:text-red-600 font-bold px-3 py-2 md:py-1 rounded-md text-xs cursor-pointer min-h-[44px] md:min-h-0 active:bg-red-50 active:scale-95 transition-transform"
+                            className="flex justify-center items-center gap-1 text-black hover:text-red-600 font-bold px-3 py-2 md:py-1 rounded-md text-xs cursor-pointer min-h-11 md:min-h-0 active:bg-red-50 active:scale-95 transition-transform"
                         >
                             <Trash2 size={18} /> Hapus
                         </button>
@@ -463,7 +462,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                 {/* Baris 1: Search & Export */}
                 <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
                     {/* Search Input */}
-                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                    <div className="relative flex-1 min-w-60 max-w-md">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <input
                             type="text"

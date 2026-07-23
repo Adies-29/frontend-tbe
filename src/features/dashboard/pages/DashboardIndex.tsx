@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Loader2, PlusCircle, LaptopMinimal } from "lucide-react";
+import { Loader2, PlusCircle } from "lucide-react";
 import type { AbsensiData, DashboardKaryawanResponse } from "../../../types";
 import { apiFetchJson } from "../../../utils/apiFetch";
 import TabelDashboard from "../components/TabelDashboard";
@@ -122,13 +122,13 @@ export default function DashboardIndex() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                            <LaptopMinimal size={28} className="text-blue-600" /> Monitoring Aktivitas
+                            Monitoring Aktivitas
                         </h1>
                         <p className="text-sm text-gray-500 mt-1">Pantau kehadiran, status kedatangan, dan aktivitas absensi pegawai secara real-time.</p>
                     </div>
                     <div className="w-full md:w-auto">
                         <Button 
-                            variant="info"
+                            variant="primary"
                             label="Input Manual" 
                             icon={<PlusCircle size={16} />}
                             onClick={() => setIsModalAbsenOpen(true)} 
@@ -162,7 +162,7 @@ export default function DashboardIndex() {
             </div>
 
             {/* BAGIAN TABEL */}
-            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-[400px]">
+            <section className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full min-h-100">
                 <div data-tour="dashboard-table" className="w-full">
                     {isLoading ? (
                         <div className="flex items-center justify-center gap-2 text-sm text-blue-600 font-semibold my-8">

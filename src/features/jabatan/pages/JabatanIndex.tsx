@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Briefcase, Users, Loader2, Rows2, Plus } from "lucide-react";
+import { Briefcase, Users, Loader2, Plus } from "lucide-react";
 import Button from "../../../components/common/Button";
 import type { JabatanData, JabatanOption, PegawaiData } from "../../../types";
 import { apiFetchJson } from "../../../utils/apiFetch";
@@ -70,7 +70,7 @@ export default function JabatanIndex() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                            <Rows2 size={28} className="text-amber-600" /> Data Jabatan
+                            Data Jabatan
                         </h1>
                         <p className="text-sm text-gray-500 mt-1">Kelola data jabatan, hierarki, dan kapasitas pegawai di perusahaan.</p>
                     </div>
