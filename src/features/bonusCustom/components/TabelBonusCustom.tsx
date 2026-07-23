@@ -440,12 +440,13 @@ export default function TabelBonusCustom({
                                 </td>
                             </tr>
                         ) : (
-                            filteredPegawai.map((pegawai, index) => {
+                             filteredPegawai.map((pegawai, index) => {
                                 const rowBg = index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50';
+                                const cellBg = index % 2 === 0 ? 'bg-white' : 'bg-slate-50';
                                 return (
                                     <tr key={pegawai.id} className={`border-b border-slate-100 hover:bg-slate-100/60 transition-colors ${rowBg}`}>
                                         {/* Sticky Employee Info */}
-                                        <td className="px-4 py-3 border-r border-slate-200 sticky left-0 z-10 bg-inherit shadow-[2px_0_6px_-2px_rgba(0,0,0,0.06)]">
+                                        <td className={`px-4 py-3 border-r border-slate-200 sticky left-0 z-10 ${cellBg} shadow-[2px_0_6px_-2px_rgba(0,0,0,0.06)]`}>
                                             <div className="flex items-center gap-2.5">
                                                 <div className="flex flex-col min-w-0">
                                                     <span className="font-bold text-slate-800 text-xs truncate" title={pegawai.nama}>
