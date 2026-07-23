@@ -26,6 +26,7 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
     const [searchQuery, setSearchQuery] = useState("");
     const [filterStartDate, setFilterStartDate] = useState("");
     const [filterEndDate, setFilterEndDate] = useState("");
+    const [filterStatus, setFilterStatus] = useState("");
 
     const handleDeleteClick = (id: GridRowId) => () => {
         setHapusId(id);
@@ -224,14 +225,16 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
                 if (filterEndDate && itemDate > filterEndDate) matchesDate = false;
             }
 
-            return matchesSearch && matchesDate;
+            const matchesStatus = !filterStatus || String(item.status).toLowerCase() === filterStatus.toLowerCase();
+
+            return matchesSearch && matchesDate && matchesStatus;
         });
-    }, [sortedData, searchQuery, filterStartDate, filterEndDate]);
+    }, [sortedData, searchQuery, filterStartDate, filterEndDate, filterStatus]);
 
     return (
         <div className="w-full flex flex-col gap-4">
             
-            {/* Control Bar: Search & Date Filter */}
+            {/* Control Bar: Search, Date & Status Filter */}
             <div className="p-4 sm:p-5 border border-gray-200 bg-gray-50/70 rounded-xl flex flex-col gap-4">
                 
                 {/* Baris 1: Search */}
@@ -257,9 +260,10 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
                     </div>
                 </div>
 
-                {/* Baris 2: Date Filters */}
-                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-start pt-2 border-t border-gray-200/80">
-                    <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
+                {/* Baris 2: Date & Status Filters */}
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between pt-2 border-t border-gray-200/80">
+                    {/* Left: Date Filters */}
+                    <div className="flex flex-wrap gap-2 items-center">
                         <span className="text-xs font-semibold text-slate-600">Tanggal Pengajuan:</span>
                         <input
                             type="date"
@@ -276,18 +280,35 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
                         />
 
                         {/* Reset Button */}
-                        {(searchQuery || filterStartDate || filterEndDate) && (
+                        {(searchQuery || filterStartDate || filterEndDate || filterStatus) && (
                             <button
                                 onClick={() => {
                                     setSearchQuery("");
                                     setFilterStartDate("");
                                     setFilterEndDate("");
+                                    setFilterStatus("");
                                 }}
                                 className="text-xs text-red-600 hover:text-red-700 font-bold px-2 py-1 transition-colors duration-150 cursor-pointer"
                             >
                                 Reset Filter
                             </button>
                         )}
+                    </div>
+
+                    {/* Right: Status Filter */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-slate-600">Status:</span>
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer min-w-[125px]"
+                        >
+                            <option value="">Semua Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Disetujui">Disetujui</option>
+                            <option value="Ditolak">Ditolak</option>
+                            <option value="Lunas">Lunas</option>
+                        </select>
                     </div>
                 </div>
             </div>
