@@ -39,94 +39,14 @@ export function useMatrixPencapaian() {
     const token = useAuthStore((state) => state.token);
     const now = new Date();
 
-    const getWeekNumber = (d: Date) => {
-        const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
-        const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-        const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-        return { year: date.getUTCFullYear(), week: weekNo };
-    };
-    
-    const weekData = getWeekNumber(now);
-    const defaultWeekStr = `${weekData.year}-W${weekData.week.toString().padStart(2, '0')}`;
-
-    const [periode, setPeriode] = useState<string>('minggu');
-    const [filterValue, setFilterValue] = useState<string>(defaultWeekStr);
-
-    const currentDay = now.getDay();
-    const diff = now.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
-    const monday = new Date(now);
-    monday.setDate(diff);
-
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-
-    const firstDay = monday.toLocaleDateString('en-CA');
-    const lastDay = sunday.toLocaleDateString('en-CA');
-
-    const { filterStartDate, filterEndDate } = useMemo(() => {
-        if (!filterValue) {
-            return { filterStartDate: firstDay, filterEndDate: lastDay };
-        }
-
-        const year = parseInt(filterValue.substring(0, 4));
-
-        if (periode === 'minggu') {
-            const week = parseInt(filterValue.substring(6, 8));
-            const jan4 = new Date(year, 0, 4);
-            const jan4Day = jan4.getDay() || 7;
-            const startDate = new Date(year, 0, 4 - jan4Day + 1 + (week - 1) * 7);
-            const endDate = new Date(startDate);
-            endDate.setDate(startDate.getDate() + 6);
-
-            return {
-                filterStartDate: startDate.toLocaleDateString('en-CA'),
-                filterEndDate: endDate.toLocaleDateString('en-CA')
-            };
-        } else if (periode === 'bulan') {
-            const month = parseInt(filterValue.substring(5, 7));
-            const startDate = new Date(year, month - 1, 1);
-            const endDate = new Date(year, month, 0);
-
-            return {
-                filterStartDate: startDate.toLocaleDateString('en-CA'),
-                filterEndDate: endDate.toLocaleDateString('en-CA')
-            };
-        } else if (periode === 'tahun') {
-            const startDate = new Date(year, 0, 1);
-            const endDate = new Date(year, 11, 31);
-            return {
-                filterStartDate: startDate.toLocaleDateString('en-CA'),
-                filterEndDate: endDate.toLocaleDateString('en-CA')
-            };
-        }
-
-        return { filterStartDate: firstDay, filterEndDate: lastDay };
-    }, [periode, filterValue, firstDay, lastDay]);
-
-    const handleFilter = () => {};
-
-    const handlePeriodeChange = (newPeriode: string) => {
-        startTransition(() => {
-            setPeriode(newPeriode);
-            if (newPeriode === 'minggu') {
-                setFilterValue(defaultWeekStr);
-            } else if (newPeriode === 'bulan') {
-                const monthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-                setFilterValue(monthStr);
-            } else {
-                setFilterValue(String(now.getFullYear()));
-            }
-        });
-    };
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
     const [searchQuery, setSearchQuery] = useState("");
     const [filterDepartemen, setFilterDepartemen] = useState("");
     const [filterJabatan, setFilterJabatan] = useState("");
 
     const [isSaving, setIsSaving] = useState(false);
-
-
 
     // Modal State
     const [selectedCell, setSelectedCell] = useState<SelectedCell>({ pegawaiId: 0, pegawaiNama: "", tanggal: "" });
@@ -233,10 +153,11 @@ export function useMatrixPencapaian() {
                     master_target_id: masterTargetId,
                     nama_target: pencapaian.master_target?.nama_target || "Unknown",
                     harga_satuan: pencapaian.master_target?.harga_satuan || 0,
+                    shadow_satuan: pencapaian.master_target?.harga_satuan || 0, // Fallback if needed
                     jumlah_pencapaian: pencapaian.jumlah_pencapaian,
                     nominal: pencapaian.nominal_total_riil,
                     pencapaian_id: pencapaian.id
-                });
+                } as any);
             }
         });
 
@@ -244,9 +165,16 @@ export function useMatrixPencapaian() {
     };
 
     const pencapaianQuery = useQuery({
-        queryKey: ['pencapaianList', filterStartDate, filterEndDate],
+        queryKey: ['pencapaianList', startDate, endDate],
         queryFn: async () => {
-            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/pencapaian?tanggal_mulai=${filterStartDate}&tanggal_selesai=${filterEndDate}`, {
+            let url = `${import.meta.env.VITE_API_BASE_URL}/api/v1/target/pencapaian`;
+            const params: string[] = [];
+            if (startDate) params.push(`tanggal_mulai=${startDate}`);
+            if (endDate) params.push(`tanggal_selesai=${endDate}`);
+            if (params.length > 0) {
+                url += `?${params.join("&")}`;
+            }
+            const res = await apiFetch(url, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const data = await res.json();
@@ -305,18 +233,18 @@ export function useMatrixPencapaian() {
         setSearchQuery("");
         setFilterDepartemen("");
         setFilterJabatan("");
-        setPeriode("minggu");
-        setFilterValue(defaultWeekStr);
+        setStartDate("");
+        setEndDate("");
     };
 
     return {
         // State Tanggal & Filter
-        today: now, filterStartDate, filterEndDate,
-        periode, setPeriode, filterValue, setFilterValue, handleFilter, handlePeriodeChange, handleResetFilters,
+        today: now, startDate, setStartDate, endDate, setEndDate, handleResetFilters,
         // State Data
         matrixKaryawan, filteredMatrixKaryawan, searchQuery, setSearchQuery, isLoading: pencapaianQuery.isLoading || pencapaianQuery.isFetching, errorMsg, 
         listPegawai, listMasterTargets, targetJabatanNames,
         filterJabatan, setFilterJabatan, filterDepartemen, setFilterDepartemen, uniqueJabatanList, uniqueDepartemenList,
+        pencapaianData: pencapaianQuery.data || [],
         // State Modal
         selectedCell, setSelectedCell,
         isModalOpen, setIsModalOpen,
