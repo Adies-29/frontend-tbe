@@ -1,4 +1,8 @@
 import { useMemo } from 'react';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { Loader2, Search, RotateCcw } from 'lucide-react';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { apiFetch } from '../../../utils/apiFetch';
@@ -57,63 +61,34 @@ export default function TabelMatrixPencapaian() {
 
     // Memoized formatted dates array untuk mencegah freeze UI saat rentang tahunan (365 hari)
     const formattedDays = useMemo(() => {
-        if (hookParams.startDate && hookParams.endDate) {
-            const [sY, sM, sD] = hookParams.startDate.split('-').map(Number);
-            const [eY, eM, eD] = hookParams.endDate.split('-').map(Number);
+        if (!hookParams.filterStartDate || !hookParams.filterEndDate) return [];
+        const [sY, sM, sD] = hookParams.filterStartDate.split('-').map(Number);
+        const [eY, eM, eD] = hookParams.filterEndDate.split('-').map(Number);
 
-            const currentDate = new Date(Date.UTC(sY, sM - 1, sD));
-            const stopDate = new Date(Date.UTC(eY, eM - 1, eD));
-            const result = [];
+        const currentDate = new Date(Date.UTC(sY, sM - 1, sD));
+        const stopDate = new Date(Date.UTC(eY, eM - 1, eD));
+        const result = [];
 
-            // Limit to prevent browser crash if range is too large (max 90 days)
-            let limit = 0;
-            while (currentDate <= stopDate && limit < 90) {
-                limit++;
-                const isWeekend = currentDate.getUTCDay() === 0;
-                const dayNum = currentDate.getUTCDate();
-                const monthShort = currentDate.toLocaleDateString('id-ID', { month: 'short', timeZone: 'UTC' });
-                const y = currentDate.getUTCFullYear();
-                const m = String(currentDate.getUTCMonth() + 1).padStart(2, '0');
-                const d = String(dayNum).padStart(2, '0');
-                const tglKey = `${y}-${m}-${d}`;
+        while (currentDate <= stopDate) {
+            const isWeekend = currentDate.getUTCDay() === 0;
+            const dayNum = currentDate.getUTCDate();
+            const monthShort = currentDate.toLocaleDateString('id-ID', { month: 'short', timeZone: 'UTC' });
+            const y = currentDate.getUTCFullYear();
+            const m = String(currentDate.getUTCMonth() + 1).padStart(2, '0');
+            const d = String(dayNum).padStart(2, '0');
+            const tglKey = `${y}-${m}-${d}`;
 
-                result.push({
-                    tglKey,
-                    dayNum,
-                    monthShort,
-                    isWeekend
-                });
-
-                currentDate.setUTCDate(currentDate.getUTCDate() + 1);
-            }
-            return result;
-        } else {
-            // Extract unique dates from actual fetched data
-            const rawData = hookParams.pencapaianData || [];
-            const uniqueDates = Array.from(new Set(rawData.map((p: any) => p.tanggal)))
-                .filter((t): t is string => !!t)
-                .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-
-            // If there are no dates at all, default to today
-            if (uniqueDates.length === 0) {
-                const todayStr = new Date().toLocaleDateString('en-CA');
-                uniqueDates.push(todayStr);
-            }
-
-            return uniqueDates.map((tglKey) => {
-                const dateObj = new Date(tglKey);
-                const isWeekend = dateObj.getDay() === 0;
-                const dayNum = dateObj.getDate();
-                const monthShort = dateObj.toLocaleDateString('id-ID', { month: 'short' });
-                return {
-                    tglKey,
-                    dayNum,
-                    monthShort,
-                    isWeekend
-                };
+            result.push({
+                tglKey,
+                dayNum,
+                monthShort,
+                isWeekend
             });
+
+            currentDate.setUTCDate(currentDate.getUTCDate() + 1);
         }
-    }, [hookParams.startDate, hookParams.endDate, hookParams.pencapaianData]);
+        return result;
+    }, [hookParams.filterStartDate, hookParams.filterEndDate]);
 
     const daysInMonth = formattedDays.length;
 
@@ -187,29 +162,70 @@ export default function TabelMatrixPencapaian() {
                         </div>
                     </div>
 
-                    {/* Right: Date Controls (Dari Tanggal & Sampai Tanggal) */}
+                    {/* Right: Date Controls */}
                     <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap md:justify-end">
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-semibold text-slate-500">Dari:</span>
-                            <input
-                                type="date"
-                                value={hookParams.startDate}
-                                onChange={(e) => hookParams.setStartDate(e.target.value)}
-                                className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
+                        {/* Segmented Control */}
+                        <div className="bg-slate-200/80 p-1 rounded-xl flex items-center gap-1 shadow-inner">
+                            <Button
+                                label="Mingguan"
+                                onClick={() => hookParams.handlePeriodeChange('minggu')}
+                                className={`px-3! py-1.5! text-xs! font-semibold! shadow-none ${
+                                    hookParams.periode === 'minggu'
+                                        ? 'bg-white! text-slate-800! shadow-xs'
+                                        : 'bg-transparent! text-slate-600! hover:text-slate-900!'
+                                }`}
+                            />
+                            <Button
+                                label="Bulanan"
+                                onClick={() => hookParams.handlePeriodeChange('bulan')}
+                                className={`px-3! py-1.5! text-xs! font-semibold! shadow-none ${
+                                    hookParams.periode === 'bulan'
+                                        ? 'bg-white! text-slate-800! shadow-xs'
+                                        : 'bg-transparent! text-slate-600! hover:text-slate-900!'
+                                }`}
+                            />
+                            <Button
+                                label="Tahunan"
+                                onClick={() => hookParams.handlePeriodeChange('tahun')}
+                                className={`px-3! py-1.5! text-xs! font-semibold shadow-none ${
+                                    hookParams.periode === 'tahun'
+                                        ? 'bg-white! text-slate-800! shadow-xs'
+                                        : 'bg-transparent! text-slate-600! hover:text-slate-900!'
+                                }`}
                             />
                         </div>
 
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-semibold text-slate-500">Sampai:</span>
-                            <input
-                                type="date"
-                                value={hookParams.endDate}
-                                onChange={(e) => hookParams.setEndDate(e.target.value)}
-                                className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
-                            />
+                        {/* Date Picker Input */}
+                        <div className="relative">
+                            {hookParams.periode === 'minggu' && (
+                                <input
+                                    type="week"
+                                    value={hookParams.filterValue}
+                                    onChange={(e) => hookParams.setFilterValue(e.target.value)}
+                                    className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
+                                />
+                            )}
+                            {hookParams.periode === 'bulan' && (
+                                <input
+                                    type="month"
+                                    value={hookParams.filterValue}
+                                    onChange={(e) => hookParams.setFilterValue(e.target.value)}
+                                    className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer"
+                                />
+                            )}
+                            {hookParams.periode === 'tahun' && (
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        views={['year']}
+                                        value={hookParams.filterValue ? dayjs().year(parseInt(hookParams.filterValue)) : null}
+                                        onChange={(newValue: Dayjs | null) => newValue && hookParams.setFilterValue(newValue.year().toString())}
+                                        slotProps={{ textField: { size: 'small', className: "bg-white flex-1 md:w-32", sx: { '& .MuiOutlinedInput-root': { borderRadius: '12px', fontSize: '12px' } } } }}
+                                    />
+                                </LocalizationProvider>
+                            )}
                         </div>
 
-                        {(hookParams.searchQuery || hookParams.filterDepartemen || hookParams.filterJabatan || hookParams.startDate || hookParams.endDate) && (
+                        {(hookParams.searchQuery || hookParams.filterDepartemen || hookParams.filterJabatan) && (
                             <button
                                 type="button"
                                 onClick={hookParams.handleResetFilters}
