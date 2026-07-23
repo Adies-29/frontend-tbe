@@ -252,7 +252,7 @@ export default function TabelMatrixPencapaian() {
                 </div>
             ) : (
                 <div className="overflow-x-auto w-full relative">
-                    <table className="w-full text-sm text-left border-collapse min-w-max table-fixed">
+                    <table className="w-full text-sm text-left border-collapse min-w-max">
                         <thead className="text-xs text-gray-600 uppercase bg-gray-100 sticky top-0 z-20 shadow-sm">
                             <tr>
                                 <th scope="col" className="px-4 py-3 border-r border-gray-200 sticky left-0 z-30 bg-gray-100 min-w-[150px] md:min-w-[220px]">
