@@ -37,7 +37,7 @@ export default function GajiTunjanganIndex() {
                                     onClick={rekapGajiParams.handleGenerateGaji} 
                                     isLoading={rekapGajiParams.isGenerating}
                                     disabled={!rekapGajiParams.filterValue}
-                                    className="w-full sm:w-auto rounded-xl active:scale-95 py-3 md:py-2 text-[15px] md:text-sm font-bold shadow-md cursor-pointer"
+                                    className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl font-bold shadow-md cursor-pointer"
                                 />
                             )}
                         </div>

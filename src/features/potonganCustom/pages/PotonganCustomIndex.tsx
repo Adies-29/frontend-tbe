@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PlusCircle, Loader2, Scissors } from 'lucide-react';
+import { Plus, Loader2, Scissors } from 'lucide-react';
 import Button from '../../../components/common/Button';
 import Notif from '../../../components/common/Notif';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
@@ -44,9 +44,9 @@ export default function PotonganCustomIndex() {
                         <Button
                             label="Buat Potongan Baru"
                             variant="danger"
-                            icon={<PlusCircle size={16} />}
+                            icon={<Plus size={16} />}
                             onClick={() => setIsModalOpen(true)}
-                            className="w-full md:w-auto font-bold text-xs shadow-md"
+                            className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl font-bold shadow-md cursor-pointer"
                         />
                     </div>
                 </div>

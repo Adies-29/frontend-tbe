@@ -77,10 +77,11 @@ export default function TargetPackingIndex() {
                     {activeTab === 'pencapaian' && (
                         <div className="flex gap-3 items-center w-full md:w-auto shrink-0">
                             <Button
+                                variant="info"
                                 label="Buat Target Massal"
                                 icon={<Plus size={16} />}
                                 onClick={() => setIsModalMassalOpen(true)}
-                                className="w-full md:w-auto font-bold text-xs"
+                                className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl font-bold shadow-md cursor-pointer"
                             />
                         </div>
                     )}

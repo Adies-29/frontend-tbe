@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { apiFetch } from "../../../utils/apiFetch";
-import { Wallet } from "lucide-react";
+import { Wallet, Plus } from "lucide-react";
 import Button from "../../../components/common/Button";
 import Notif from "../../../components/common/Notif";
 import TabelKasbon from "../components/TabelKasbon";
@@ -147,10 +147,11 @@ export default function KasbonIndex() {
                     </div>
                     <div className="flex gap-3 items-center w-full md:w-auto">
                         <Button
+                            variant="success"
                             label="Tambah Kasbon"
-                            variant="primary"
+                            icon={<Plus size={16} />}
                             onClick={() => navigate('/dashboard/kasbon/tambah')}
-                            className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl"
+                            className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl font-bold shadow-md cursor-pointer"
                             data-tour="btn-add-kasbon"
                         />
                     </div>

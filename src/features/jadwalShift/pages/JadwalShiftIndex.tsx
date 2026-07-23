@@ -35,11 +35,11 @@ export default function JadwalShiftIndex() {
                     {activeTab === 'jadwal' && (
                         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
                             <Button 
-                                variant="primary" 
+                                variant="info" 
                                 label="Kelola Shift & Pola Massal" 
-                                icon={<Users size={15} />}
+                                icon={<Users size={16} />}
                                 onClick={() => matrixJadwalParams.setIsModalMassalOpen(true)} 
-                                className="w-full sm:w-auto rounded-xl active:scale-95 py-3 md:py-2 text-[15px] md:text-sm font-bold shadow-md cursor-pointer"
+                                className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl font-bold shadow-md cursor-pointer"
                             />
                         </div>
                     )}
@@ -48,15 +48,17 @@ export default function JadwalShiftIndex() {
                             <Button 
                                 variant="secondary" 
                                 label="Pola Rolling Shift" 
-                                icon={<RefreshCw size={15} className="text-blue-600" />}
+                                icon={<RefreshCw size={16} className="text-blue-600" />}
                                 onClick={() => setIsModalPolaOpen(true)} 
-                                className="w-full sm:w-auto rounded-xl active:scale-95 py-3 md:py-2 text-[15px] md:text-sm"
+                                className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl font-bold shadow-md cursor-pointer"
                             />
                             <Button  
+                                variant="info"
                                 data-tour="btn-add-shift"
                                 label="Tambah Master Shift" 
+                                icon={<Plus size={16} />}
                                 onClick={() => navigate('/dashboard/jadwal-shift/tambah')}
-                                className="w-full sm:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl"
+                                className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl font-bold shadow-md cursor-pointer"
                             />
                         </div>
                     )}

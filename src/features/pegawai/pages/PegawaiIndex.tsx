@@ -66,10 +66,11 @@ export default function PegawaiIndex() {
                     </div>
                     <div className="w-full md:w-auto">
                         <Button 
+                            variant="info"
                             label="Tambah Pegawai" 
                             icon={<Plus size={16} />}
                             onClick={() => navigate("/dashboard/data-pegawai/tambah-pegawai")} 
-                            className="w-full md:w-auto font-bold text-xs shadow-md"
+                            className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl font-bold shadow-md cursor-pointer"
                             data-tour="btn-add-pegawai"
                         />
                     </div>

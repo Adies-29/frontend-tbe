@@ -140,10 +140,11 @@ export default function DashboardIndex() {
                     </div>
                     <div className="w-full md:w-auto">
                         <Button 
+                            variant="info"
                             label="Input Manual" 
                             icon={<PlusCircle size={16} />}
                             onClick={() => setIsModalAbsenOpen(true)} 
-                            className="w-full md:w-auto font-bold text-xs shadow-md"
+                            className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl font-bold shadow-md cursor-pointer"
                             data-tour="btn-input-manual"
                         />
                     </div>
