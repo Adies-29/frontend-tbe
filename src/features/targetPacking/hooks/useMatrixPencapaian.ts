@@ -61,15 +61,8 @@ export function useMatrixPencapaian() {
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
 
-    const formatYYYYMMDD = (d: Date) => {
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${y}-${m}-${day}`;
-    };
-
-    const firstDay = formatYYYYMMDD(monday);
-    const lastDay = formatYYYYMMDD(sunday);
+    const firstDay = monday.toLocaleDateString('en-CA');
+    const lastDay = sunday.toLocaleDateString('en-CA');
 
     const { filterStartDate, filterEndDate } = useMemo(() => {
         if (!filterValue) {
@@ -87,8 +80,8 @@ export function useMatrixPencapaian() {
             endDate.setDate(startDate.getDate() + 6);
 
             return {
-                filterStartDate: formatYYYYMMDD(startDate),
-                filterEndDate: formatYYYYMMDD(endDate)
+                filterStartDate: startDate.toLocaleDateString('en-CA'),
+                filterEndDate: endDate.toLocaleDateString('en-CA')
             };
         } else if (periode === 'bulan') {
             const month = parseInt(filterValue.substring(5, 7));
@@ -96,15 +89,15 @@ export function useMatrixPencapaian() {
             const endDate = new Date(year, month, 0);
 
             return {
-                filterStartDate: formatYYYYMMDD(startDate),
-                filterEndDate: formatYYYYMMDD(endDate)
+                filterStartDate: startDate.toLocaleDateString('en-CA'),
+                filterEndDate: endDate.toLocaleDateString('en-CA')
             };
         } else if (periode === 'tahun') {
             const startDate = new Date(year, 0, 1);
             const endDate = new Date(year, 11, 31);
             return {
-                filterStartDate: formatYYYYMMDD(startDate),
-                filterEndDate: formatYYYYMMDD(endDate)
+                filterStartDate: startDate.toLocaleDateString('en-CA'),
+                filterEndDate: endDate.toLocaleDateString('en-CA')
             };
         }
 
