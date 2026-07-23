@@ -3,8 +3,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-import { Loader2, MousePointerClick, X, Search, Users, RotateCcw } from 'lucide-react';
-import Button from '../../../components/common/Button';
+import { Loader2, MousePointerClick, X, Search } from 'lucide-react';
 
 import ModalKelolaShift from './ModalKelolaShift';
 import ModalKelolaJadwalMassal from './ModalKelolaJadwalMassal';

@@ -36,10 +36,7 @@ interface ModalInputPencapaianMassalProps {
     ) => void;
 }
 
-const MONTH_SHORT_NAMES_ID = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-    'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
-];
+
 
 const formatDateDisplay = (startStr: string, endStr: string) => {
     if (!startStr && !endStr) return "Pilih Rentang Tanggal...";

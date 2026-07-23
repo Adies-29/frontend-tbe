@@ -1,6 +1,6 @@
 
 import { useState, useMemo } from 'react';
-import { Wallet, TrendingDown, TrendingUp, Loader2, PlayCircle, Printer, Search, RotateCcw } from 'lucide-react';
+import { Wallet, TrendingDown, TrendingUp, Printer, Search, RotateCcw } from 'lucide-react';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -35,12 +35,10 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
         rekapGajiData,
         isLoadingRekap,
         isErrorRekap,
-        isGenerating,
         isModalPreviewOpen,
         setIsModalPreviewOpen,
         summaryCards,
         notif,
-        handleGenerateGaji,
         handlePelunasanGaji,
         handleCetakSemuaSlip,
         handlePeriodeChange,
@@ -114,7 +112,7 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
         }
         const depts = rekapGajiData
             .map((p: any) => p.departemen)
-            .filter((dept): dept is string => !!dept && dept !== "-");
+            .filter((dept: any): dept is string => !!dept && dept !== "-");
         return Array.from(new Set(depts));
     }, [deptData, rekapGajiData]);
 
@@ -128,7 +126,7 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
         const jabs = rekapGajiData
             .filter((p: any) => !filterDepartemen || p.departemen === filterDepartemen)
             .map((p: any) => p.jabatan)
-            .filter((jab): jab is string => !!jab && jab !== "-");
+            .filter((jab: any): jab is string => !!jab && jab !== "-");
         return Array.from(new Set(jabs));
     }, [jabatanData, rekapGajiData, filterDepartemen]);
 
@@ -252,7 +250,7 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
                                 className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer flex-1 md:flex-none md:w-48 truncate"
                             >
                                 <option value="">Semua Departemen</option>
-                                {uniqueDepartemenList.map((dept, idx) => (
+                                {uniqueDepartemenList.map((dept: string, idx: number) => (
                                     <option key={idx} value={dept}>{dept}</option>
                                 ))}
                             </select>
@@ -265,7 +263,7 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
                                 title={!filterDepartemen ? "Pilih Departemen terlebih dahulu" : "Filter berdasarkan Jabatan"}
                             >
                                 <option value="">Semua Jabatan</option>
-                                {uniqueJabatanList.map((jab, idx) => (
+                                {uniqueJabatanList.map((jab: string, idx: number) => (
                                     <option key={idx} value={jab}>{jab}</option>
                                 ))}
                             </select>

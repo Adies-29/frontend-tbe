@@ -36,12 +36,12 @@ interface PolaRotasi {
     detail_pola_rotasi?: DetailPola[];
 }
 
-interface DisplayItem {
-    id: string | number;
-    label: string;
-    subLabel: string;
-    pegawaiIds: number[];
-}
+// interface DisplayItem {
+//     id: string | number;
+//     label: string;
+//     subLabel: string;
+//     pegawaiIds: number[];
+// }
 
 export interface ModalKelolaJadwalMassalProps {
     isOpen: boolean;
@@ -56,7 +56,7 @@ export interface ModalKelolaJadwalMassalProps {
     filterLevel3: string;
     setFilterLevel3: (val: string) => void;
     selectedPegawaiIds: number[];
-    setSelectedPegawaiIds: (updater: (prev: number[]) => number[] | number[]) => void;
+    setSelectedPegawaiIds: React.Dispatch<React.SetStateAction<number[]>>;
     massalTanggalMulai: string;
     setMassalTanggalMulai: (val: string) => void;
     massalTanggalSelesai: string;
@@ -74,12 +74,6 @@ export default function ModalKelolaJadwalMassal({
     initialTab = 'generate',
     listPegawai,
     listMasterShifts,
-    filterLevel1,
-    setFilterLevel1,
-    filterLevel2,
-    setFilterLevel2,
-    filterLevel3,
-    setFilterLevel3,
     selectedPegawaiIds,
     setSelectedPegawaiIds,
     massalTanggalMulai,

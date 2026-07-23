@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { CalendarDays, Clock, RefreshCw, Users } from "lucide-react";
+import { CalendarDays, Clock, Plus, RefreshCw, Users } from "lucide-react";
 import Button from '../../../components/common/Button';
 import TabJadwal from "./tabs/TabJadwal";
 import TabShift from "./tabs/TabShift";
