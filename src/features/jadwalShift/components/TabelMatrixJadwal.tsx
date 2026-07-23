@@ -1,10 +1,5 @@
 import { useMemo } from 'react';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs, { Dayjs } from 'dayjs';
 import { Loader2, MousePointerClick, X, Search } from 'lucide-react';
-
 import ModalKelolaShift from './ModalKelolaShift';
 import ModalKelolaJadwalMassal from './ModalKelolaJadwalMassal';
 import { useMatrixJadwal } from '../hooks/useMatrixJadwal';
@@ -63,128 +58,59 @@ export default function TabelMatrixJadwal({ hookParams: propsHookParams }: Tabel
             <div data-tour="matrix-jadwal-table" className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col w-full">
                 
                 {/* TOOLBAR MATRIX */}
-                <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col gap-3">
+                <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 w-full">
                     
-                    {/* Baris 1: Search, Info Hari, & Action Buttons */}
-                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                        
-                        {/* Kiri: Search Input & Badge Total Hari */}
-                        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-                            {/* Input Search Pegawai */}
-                            <div className="relative min-w-[200px] sm:min-w-[240px] flex-1 sm:flex-none">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                <input 
-                                    type="text" 
-                                    placeholder="Cari nama / NIP..." 
-                                    value={hookParams.searchQuery}
-                                    onChange={(e) => hookParams.setSearchQuery(e.target.value)}
-                                    className="w-full border border-slate-300 rounded-xl pl-9 pr-8 py-1.5 bg-white text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all"
-                                />
-                                {hookParams.searchQuery && (
-                                    <button
-                                        onClick={() => hookParams.setSearchQuery('')}
-                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* Badge Total Hari */}
-                            <div className="text-xs text-slate-600 font-semibold bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs flex items-center gap-1.5">
-                                <span>Total Periode:</span>
-                                <span className="bg-red-50 text-red-700 px-1.5 py-0.5 rounded-md font-bold text-[11px]">
-                                    {formattedDays.length} Hari
-                                </span>
-                            </div>
+                    {/* Kiri: Search Input & Badge Total Hari */}
+                    <div className="flex flex-wrap items-center gap-3">
+                        {/* Input Search Pegawai */}
+                        <div className="relative min-w-50 sm:min-w-60 flex-1 sm:flex-none">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                            <input 
+                                type="text" 
+                                placeholder="Cari nama..." 
+                                value={hookParams.searchQuery}
+                                onChange={(e) => hookParams.setSearchQuery(e.target.value)}
+                                className="w-full border border-slate-300 rounded-xl pl-9 pr-8 py-1.5 bg-white text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all"
+                            />
+                            {hookParams.searchQuery && (
+                                <button
+                                    onClick={() => hookParams.setSearchQuery('')}
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
                         </div>
 
-                {/* Baris 1: Search */}
-                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-                    {/* Pencarian Pegawai */}
-                    <div className="relative flex-1 min-w-[240px] max-w-md">
-                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Cari nama / jabatan..."
-                            value={hookParams.searchQuery}
-                            onChange={(e) => hookParams.setSearchQuery(e.target.value)}
-                            className="w-full border border-slate-300 rounded-xl pl-10 pr-9 py-2 bg-white text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all"
+                        {/* Badge Total Hari */}
+                        <div className="text-xs text-slate-600 font-semibold bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs flex items-center gap-1.5">
+                            <span>Total Periode:</span>
+                            <span className="bg-red-50 text-red-700 px-1.5 py-0.5 rounded-md font-bold text-[11px]">
+                                {formattedDays.length} Hari
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Kanan: Filter Periode & Departemen/Jabatan */}
+                    <div className="flex flex-wrap items-center justify-start lg:justify-end gap-3">
+                        <PeriodSwitcher
+                            periode={hookParams.periode}
+                            filterValue={hookParams.filterValue}
+                            onPeriodeChange={hookParams.handlePeriodeChange}
+                            onFilterValueChange={hookParams.handleFilterValueChange}
                         />
-                        {hookParams.searchQuery && (
-                            <button
-                                type="button"
-                                onClick={() => hookParams.setSearchQuery('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full cursor-pointer"
-                            >
-                                &times;
-                            </button>
-                        )}
-                    </div>
-                </div>
 
-                {/* Baris 2: Filter Departemen & Jabatan + Date Filters */}
-                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between pt-2 border-t border-gray-200/80">
-                    {/* Left: Grup Departemen & Jabatan */}
-                    <div className="flex gap-2 w-full md:w-auto items-center">
-                        <select
-                            value={hookParams.filterDepartemen}
-                            onChange={(e) => {
-                                hookParams.setFilterDepartemen(e.target.value);
-                                hookParams.setFilterJabatan('');
-                            }}
-                            className="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none text-xs shadow-2xs font-medium"
-                        >
-                            <option value="">Semua Departemen</option>
-                            {hookParams.uniqueDepartemenList.map((dept: string, idx: number) => (
-                                <option key={idx} value={dept}>{dept}</option>
-                            ))}
-                        </select>
+                        <div className="hidden sm:block h-6 w-px bg-gray-300 mx-0.5"></div>
 
-                        <select
-                            value={hookParams.filterJabatan}
-                            onChange={(e) => hookParams.setFilterJabatan(e.target.value)}
-                            disabled={!hookParams.filterDepartemen}
-                            className={`border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold shadow-2xs cursor-pointer flex-1 md:flex-none md:max-w-[150px] truncate outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 ${!hookParams.filterDepartemen ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200' : 'bg-white text-slate-700'}`}
-                            title={!hookParams.filterDepartemen ? "Pilih Departemen terlebih dahulu" : "Filter berdasarkan Jabatan"}
-                        >
-                            <option value="">{hookParams.filterJabatan ? "Semua Jabatan" : "Semua Jabatan"}</option>
-                            {hookParams.uniqueJabatanList?.map((jab: string, idx: number) => (
-                                <option key={idx} value={jab}>{jab}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Right: Grup Periode Segmented Control & Date Picker Input */}
-                    <div className="flex gap-2 w-full md:w-auto items-center flex-wrap sm:flex-nowrap md:justify-end">
-                        <div className="bg-slate-200/80 p-1 rounded-xl flex items-center gap-1 shadow-inner">
-                            <button
-                                type="button"
-                                onClick={() => hookParams.handlePeriodeChange('minggu')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${hookParams.periode === 'minggu'
-                                    ? 'bg-white text-slate-800 shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900'
-                                    }`}
-                            >
-                                Mingguan
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => hookParams.handlePeriodeChange('bulan')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${hookParams.periode === 'bulan'
-                                    ? 'bg-white text-slate-800 shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900'
-                                    }`}
-                            >
-                                Bulanan
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => hookParams.handlePeriodeChange('tahun')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${hookParams.periode === 'tahun'
-                                    ? 'bg-white text-slate-800 shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900'
-                                    }`}
+                        {/* Grup Departemen & Jabatan */}
+                        <div className="flex gap-2 items-center">
+                            <select
+                                value={hookParams.filterDepartemen}
+                                onChange={(e) => {
+                                    hookParams.setFilterDepartemen(e.target.value);
+                                    hookParams.setFilterJabatan('');
+                                }}
+                                className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer max-w-37.5 truncate"
                             >
                                 <option value="">Semua Dept</option>
                                 {hookParams.uniqueDepartemenList.map((dept: string, idx: number) => (
@@ -196,7 +122,7 @@ export default function TabelMatrixJadwal({ hookParams: propsHookParams }: Tabel
                                 value={hookParams.filterJabatan}
                                 onChange={(e) => hookParams.setFilterJabatan(e.target.value)}
                                 disabled={!hookParams.filterDepartemen}
-                                className={`border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold shadow-2xs cursor-pointer flex-1 md:flex-none md:max-w-[150px] truncate outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 ${!hookParams.filterDepartemen ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white text-slate-700'}`}
+                                className={`border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold shadow-2xs cursor-pointer max-w-37.5 truncate outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 ${!hookParams.filterDepartemen ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200' : 'bg-white text-slate-700'}`}
                                 title={!hookParams.filterDepartemen ? "Pilih Departemen terlebih dahulu" : "Filter berdasarkan Jabatan"}
                             >
                                 <option value="">{hookParams.filterJabatan ? "Semua Jabatan" : "Semua Jabatan"}</option>
@@ -205,16 +131,6 @@ export default function TabelMatrixJadwal({ hookParams: propsHookParams }: Tabel
                                 ))}
                             </select>
                         </div>
-
-                        {(hookParams.searchQuery || hookParams.filterDepartemen || hookParams.filterJabatan) && (
-                            <button
-                                type="button"
-                                onClick={hookParams.handleFilter}
-                                className="flex items-center gap-1 text-xs text-slate-500 hover:text-red-600 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-                                title="Reset semua filter"
-                            >
-                            </button>
-                        )}
                     </div>
                 </div>
 
@@ -233,11 +149,11 @@ export default function TabelMatrixJadwal({ hookParams: propsHookParams }: Tabel
                         <table className="w-full text-sm text-left border-collapse min-w-max">
                             <thead className="text-xs text-gray-600 uppercase bg-gray-100 sticky top-0 z-20 shadow-sm">
                                 <tr>
-                                    <th scope="col" className="px-4 py-3 border-r border-gray-200 sticky left-0 z-30 bg-gray-100 min-w-[150px] md:min-w-[220px]">
+                                    <th scope="col" className="px-4 py-3 border-r border-gray-200 sticky left-0 z-30 bg-gray-100 min-w-37.5 md:min-w-55">
                                         Nama Pegawai
                                     </th>
                                     {formattedDays.map((item, idx) => (
-                                        <th key={idx} scope="col" className={`px-2 py-3 border-r border-gray-200 text-center min-w-[60px] leading-tight ${item.isSunday ? 'bg-red-50/50' : ''}`}>
+                                        <th key={idx} scope="col" className={`px-2 py-3 border-r border-gray-200 text-center min-w-15 leading-tight ${item.isSunday ? 'bg-red-50/50' : ''}`}>
                                             <div className={`text-lg ${item.isSunday ? 'text-red-600 font-bold' : ''}`}>{item.dayNum}</div>
                                             <div className={`text-[9px] ${item.isSunday ? 'text-red-400 font-medium' : 'text-gray-400'}`}>
                                                 {item.monthShort}
@@ -277,9 +193,9 @@ export default function TabelMatrixJadwal({ hookParams: propsHookParams }: Tabel
                                                     <td key={idx} className={`p-1 border-r border-gray-100 relative group cursor-pointer transition-colors hover:bg-blue-100/40 ${cellBg}`}
                                                         onClick={() => hookParams.handleCellClick(pegawai.id, pegawai.nama, item.tglKey, shiftDetail, pegawai.jabatan)}>
 
-                                                        <div className="w-full h-full min-h-[42px] flex flex-col items-center justify-center relative">
+                                                        <div className="w-full h-full min-h-10.5 flex flex-col items-center justify-center relative">
                                                             {shiftDetail ? (
-                                                                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md tracking-wide transition-all truncate max-w-[65px] ${shiftDetail.warna} border-none shadow-none mt-1`}>
+                                                                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md tracking-wide transition-all truncate max-w-16.25 ${shiftDetail.warna} border-none shadow-none mt-1`}>
                                                                     {shiftDetail.kode.replace(/^SHIFT[\s-]?/i, '')}
                                                                 </span>
                                                             ) : (

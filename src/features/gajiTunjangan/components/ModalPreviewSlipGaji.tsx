@@ -320,17 +320,14 @@ export default function ModalPreviewSlipGaji({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-5 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl h-[92vh] max-h-[850px] overflow-hidden border border-gray-200 flex flex-col my-auto">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl h-[92vh] max-h-212.5 overflow-hidden border border-gray-200 flex flex-col my-auto">
 
                 {/* MODAL HEADER */}
-                <div className="bg-slate-900 text-white px-5 py-4 flex justify-between items-center shrink-0">
+                <div className="bg-white text-slate-800 border-b border-gray-200 px-5 py-4 flex justify-between items-center shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-slate-800 text-emerald-400 rounded-xl border border-slate-700">
-                            <FileText size={22} />
-                        </div>
                         <div>
-                            <h3 className="font-extrabold text-white text-lg leading-tight">Preview & Cetak Slip Gaji</h3>
-                            <p className="text-xs text-slate-400 font-medium mt-0.5">
+                            <h3 className="font-extrabold text-slate-800 text-lg leading-tight">Preview & Cetak Slip Gaji</h3>
+                            <p className="text-xs text-slate-500 font-medium mt-0.5">
                                 Pilih pegawai, pratinjau tampilan slip gaji, dan ekspor ke PDF, PNG, atau Print.
                             </p>
                         </div>
@@ -339,7 +336,7 @@ export default function ModalPreviewSlipGaji({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                         title="Tutup Modal"
                     >
                         <X size={20} />
@@ -484,7 +481,7 @@ export default function ModalPreviewSlipGaji({
 
                             <Button
                                 label={`Cetak (${selectedEmployees.length} Slip)`}
-                                variant="primary"
+                                variant="success"
                                 icon={<Printer size={16} />}
                                 onClick={handleDirectPrint}
                                 disabled={selectedEmployees.length === 0}
@@ -603,7 +600,7 @@ export default function ModalPreviewSlipGaji({
                                                                 <td className="border-r border-slate-900 py-0.5 text-left px-1.5 font-semibold">{hari.hari_tanggal || '-'}</td>
                                                                 {currentPreviewPegawai.tipe_penggajian === 'Target' ? (
                                                                     <>
-                                                                        <td className="border-r border-slate-900 py-0.5 text-left px-1.5 italic truncate max-w-[120px]">{hari.nama_target || '-'}</td>
+                                                                        <td className="border-r border-slate-900 py-0.5 text-left px-1.5 italic truncate max-w-30">{hari.nama_target || '-'}</td>
                                                                         <td className="border-r border-slate-900 py-0.5 text-right px-1.5">{formatAngka(hari.harga_satuan)}</td>
                                                                         <td className="border-r border-slate-900 py-0.5 font-bold">{formatAngka(hari.capaian)}</td>
                                                                     </>
@@ -723,12 +720,12 @@ export default function ModalPreviewSlipGaji({
                                     </div>
 
                                     {/* 4. TOTAL UPAH BERSIH (TAKE-HOME PAY BANNER) */}
-                                    <div className="bg-slate-900 text-white p-2.5 rounded-lg flex justify-between items-center shadow-xs">
+                                    <div className=" text-black p-2.5 rounded-lg flex justify-between items-center shadow-xs">
                                         <div>
-                                            <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">TOTAL UPAH BERSIH (TAKE-HOME PAY)</span>
-                                            <span className="text-[10px] text-slate-300 font-semibold">Status: <strong className={currentPreviewPegawai.status?.toLowerCase() === 'lunas' ? 'text-emerald-400' : 'text-amber-400'}>{currentPreviewPegawai.status}</strong></span>
+                                            <span className="text-[9px] uppercase font-bold block tracking-wider">TOTAL UPAH BERSIH (TAKE-HOME PAY)</span>
+                                            <span className="text-[10px] font-semibold">Status: <strong className={currentPreviewPegawai.status?.toLowerCase() === 'lunas' ? 'text-emerald-700' : 'text-amber-400'}>{currentPreviewPegawai.status}</strong></span>
                                         </div>
-                                        <div className="text-base font-black text-emerald-400">
+                                        <div className="text-base font-black text-emerald-500">
                                             {formatRupiah(currentPreviewPegawai.total_upah)}
                                         </div>
                                     </div>
@@ -816,7 +813,7 @@ export default function ModalPreviewSlipGaji({
                                                         <td className="border-r border-slate-900 py-0.2 text-left px-1 font-semibold">{hari.hari_tanggal || '-'}</td>
                                                         {pegawai.tipe_penggajian === 'Target' ? (
                                                             <>
-                                                                <td className="border-r border-slate-900 py-0.2 text-left px-1 italic truncate max-w-[80px]">{hari.nama_target || '-'}</td>
+                                                                <td className="border-r border-slate-900 py-0.2 text-left px-1 italic truncate max-w-20">{hari.nama_target || '-'}</td>
                                                                 <td className="border-r border-slate-900 py-0.2 text-right px-1">{formatAngka(hari.harga_satuan)}</td>
                                                                 <td className="border-r border-slate-900 py-0.2 font-bold">{formatAngka(hari.capaian)}</td>
                                                             </>

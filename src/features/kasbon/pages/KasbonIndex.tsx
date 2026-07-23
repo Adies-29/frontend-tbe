@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../../store/useAuthStore";
-import { apiFetch } from "../../../utils/apiFetch";
-import { Wallet, Plus } from "lucide-react";
+import { apiFetchJson } from "../../../utils/apiFetch";
+import {  Plus } from "lucide-react";
 import Button from "../../../components/common/Button";
 import Notif from "../../../components/common/Notif";
 import TabelKasbon from "../components/TabelKasbon";
@@ -127,7 +127,7 @@ export default function KasbonIndex() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                            <Wallet size={28} className="text-emerald-600" /> Manajemen Kasbon
+                            Manajemen Kasbon
                         </h1>
                         <p className="text-sm text-gray-500 mt-1">Kelola data pinjaman dan potongan cicilan pegawai.</p>
                     </div>

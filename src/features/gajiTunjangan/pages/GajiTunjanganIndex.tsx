@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ReceiptText, Briefcase, Loader2, PlayCircle } from 'lucide-react';
+import { ReceiptText, Briefcase, Loader2, PlayCircle, Printer } from 'lucide-react';
 import Button from '../../../components/common/Button';
 import TabRekapGaji from './tabs/TabRekapGaji';
 import TabMasterGaji from './tabs/TabMasterGaji';
@@ -22,13 +22,21 @@ export default function GajiTunjanganIndex() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                            <ReceiptText size={28} className="text-blue-600" /> Manajemen Gaji & Tunjangan
+                            Manajemen Gaji & Tunjangan
                         </h1>
                         <p className="text-sm text-gray-500 mt-1">Kelola rekapitulasi gaji pegawai dan atur master nominal gaji berdasarkan jabatan.</p>
                     </div>
                     {/* Tombol aksi dinamis berdasarkan Tab yang aktif */}
                     {activeTab === 'rekap' && (
                         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+                            <Button 
+                                label="Cetak Slip Gaji" 
+                                variant="success" 
+                                icon={<Printer size={16} />} 
+                                onClick={rekapGajiParams.handleCetakSemuaSlip} 
+                                disabled={rekapGajiParams.rekapGajiData.length === 0}
+                                className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl font-bold shadow-2xs cursor-pointer"
+                            />
                             {(rekapGajiParams.periode === "bulan" || rekapGajiParams.periode === "minggu") && (
                                 <Button 
                                     label={rekapGajiParams.isGenerating ? "Memproses..." : "Generate Gaji"} 
@@ -74,7 +82,7 @@ export default function GajiTunjanganIndex() {
             </section>
 
             {/* RENDER KONTEN BERDASARKAN TAB AKTIF */}
-            <div className="w-full min-h-[400px]">
+            <div className="w-full min-h-100">
                 {activeTab === 'rekap' ? <TabRekapGaji hookParams={rekapGajiParams} /> : <TabMasterGaji />}
             </div>
 

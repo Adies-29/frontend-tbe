@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthStore } from "../../../store/useAuthStore";
-import { apiFetch } from "../../../utils/apiFetch";
-import { Plus, ListCheck } from "lucide-react";
+import { apiFetchJson } from "../../../utils/apiFetch";
+import { Plus } from "lucide-react";
 import Button from "../../../components/common/Button";
 import TabelMatrixPencapaian from "../components/TabelMatrixPencapaian";
 import MasterTargetTab from "../components/MasterTargetTab";
@@ -14,7 +13,6 @@ export default function TargetPackingIndex() {
     const location = useLocation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const token = useAuthStore(state => state.token);
     
     // Derivasi tab aktif langsung dari location.state agar tidak memicu cascading render
     const activeTab = (location.state?.tab as 'pencapaian' | 'master') || 'pencapaian';
@@ -28,24 +26,18 @@ export default function TargetPackingIndex() {
             for (const id of payload.pegawai_ids) {
                 for (const tgl of payload.tanggals) {
                     promises.push(
-                        (async () => {
-                            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/pencapaian`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`
-                                },
-                                body: JSON.stringify({
-                                    pegawai_id: id,
-                                    master_target_id: payload.master_target_id,
-                                    tanggal: tgl,
-                                    jumlah_pencapaian: payload.jumlah_pencapaian
-                                })
-                            });
-                            const data = await res.json();
-                            if (!res.ok) throw new Error(data.message || "Gagal menyimpan pencapaian target");
-                            return data;
-                        })()
+                        apiFetchJson('/api/v1/target/pencapaian', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                pegawai_id: id,
+                                master_target_id: payload.master_target_id,
+                                tanggal: tgl,
+                                jumlah_pencapaian: payload.jumlah_pencapaian
+                            })
+                        })
                     );
                 }
             }
@@ -70,14 +62,13 @@ export default function TargetPackingIndex() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                            <ListCheck size={28} className="text-indigo-600" /> Target Pegawai
+                            Target Pegawai
                         </h1>
                         <p className="text-sm text-gray-500 mt-1">Kelola pencapaian target harian dan harga satuan target.</p>
                     </div>
                     {activeTab === 'pencapaian' && (
                         <div className="flex gap-3 items-center w-full md:w-auto shrink-0">
                             <Button
-                                variant="info"
                                 label="Buat Target Massal"
                                 icon={<Plus size={16} />}
                                 onClick={() => setIsModalMassalOpen(true)}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Loader2, Gift } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import Button from '../../../components/common/Button';
 import Notif from '../../../components/common/Notif';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
@@ -36,7 +36,7 @@ export default function BonusCustomIndex() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                            <Gift size={28} className="text-indigo-600" /> Bonus Custom
+                             Bonus Custom
                         </h1>
                         <p className="text-sm text-gray-500 mt-1">
                             Kelola dan berikan bonus/reward khusus secara mandiri ke pegawai.
@@ -44,7 +44,6 @@ export default function BonusCustomIndex() {
                     </div>
                     <div className="flex gap-3 items-center w-full md:w-auto">
                         <Button
-                            variant="info"
                             label="Buat Bonus Baru"
                             icon={<Plus size={16} />}
                             onClick={() => setIsModalOpen(true)}

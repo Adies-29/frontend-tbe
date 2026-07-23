@@ -153,7 +153,7 @@ export default function FormMasterTarget({ jabatanId, isAdding, setIsAdding }: F
             ) : (
                 <div className="flex flex-col gap-3">
                     <div className="border border-gray-200 rounded-lg overflow-x-auto w-full relative">
-                        <table className="w-full text-sm text-left min-w-[500px]">
+                        <table className="w-full text-sm text-left min-w-125">
                             <thead className="bg-gray-50 text-gray-600 text-[11px] uppercase border-b border-gray-200">
                                 <tr>
                                     <th className="px-4 py-3 font-semibold">Nama Target</th>

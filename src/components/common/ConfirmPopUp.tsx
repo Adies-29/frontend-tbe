@@ -9,7 +9,7 @@ interface ConfirmPopUpProps {
     message: React.ReactNode; 
     confirmText?: string;
     cancelText?: string;
-    variant?: 'danger' | 'warning' | 'primary';
+    variant?: 'danger' | 'warning' | 'primary' | 'success';
 }
 
 export default function ConfirmPopUp({
@@ -38,6 +38,10 @@ export default function ConfirmPopUp({
         primary: {
             iconBg: "bg-blue-100 text-blue-600",
             btnConfirm: "bg-blue-600 hover:bg-blue-700 text-white"
+        },
+        success: {
+            iconBg: "bg-emerald-100 text-emerald-600",
+            btnConfirm: "bg-emerald-600 hover:bg-emerald-700 text-white"
         }
     };
 

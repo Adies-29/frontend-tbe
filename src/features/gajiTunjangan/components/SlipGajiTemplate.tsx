@@ -238,7 +238,7 @@ export default function SlipGajiTemplate({ data, filterValue }: SlipGajiTemplate
 
                                                             {isTarget ? (
                                                                 <>
-                                                                    <td className="border-r border-black py-0.5 text-left px-1 uppercase truncate max-w-[80px]">{hari.nama_target || '-'}</td>
+                                                                    <td className="border-r border-black py-0.5 text-left px-1 uppercase truncate max-w-20">{hari.nama_target || '-'}</td>
                                                                     <td className="border-r border-black py-0.5 text-right px-1">{formatAngka(hari.harga_satuan)}</td>
                                                                     <td className="border-r border-black py-0.5 font-bold">{formatAngka(hari.capaian)}</td>
                                                                 </>

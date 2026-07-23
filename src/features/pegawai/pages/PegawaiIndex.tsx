@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import Button from "../../../components/common/Button";
-import { useAuthStore } from "../../../store/useAuthStore";
-import { Loader2, Users, Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import TabelPegawai from "../../../features/pegawai/components/TabelPegawai";
 import type { PegawaiData } from "../../../types";
 import { getSafeErrorMessage } from "../../../utils/errorHandler";
@@ -41,13 +40,13 @@ export default function PegawaiIndex() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                            <Users size={28} className="text-blue-600" /> Data Pegawai Aktif
+                         Data Pegawai Aktif
                         </h1>
                         <p className="text-sm text-gray-500 mt-1">Kelola data profil, jabatan, dan informasi kontrak kerja seluruh pegawai.</p>
                     </div>
                     <div className="w-full md:w-auto">
                         <Button 
-                            variant="info"
+                            variant="primary"
                             label="Tambah Pegawai" 
                             icon={<Plus size={16} />}
                             onClick={() => navigate("/dashboard/data-pegawai/tambah-pegawai")} 
