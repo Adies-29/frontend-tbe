@@ -1,14 +1,19 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ReceiptText, Briefcase } from 'lucide-react';
+import { ReceiptText, Briefcase, PlayCircle, Loader2 } from 'lucide-react';
 import TabRekapGaji from './tabs/TabRekapGaji';
 import TabMasterGaji from './tabs/TabMasterGaji';
+import Button from '../../../components/common/Button';
+import { useRekapGaji } from '../hooks/useRekapGaji';
 
 export default function GajiTunjanganIndex() {
     const location = useLocation();
     
     // State Navigasi
     const [activeTab, setActiveTab] = useState<'rekap' | 'master'>(location.state?.tab || 'rekap');
+    
+    // Instantiate rekapGaji hook at index level to show action button in header
+    const rekapGajiParams = useRekapGaji();
 
     return (
         <div className="flex flex-col gap-4 md:gap-6 w-full">
@@ -17,9 +22,26 @@ export default function GajiTunjanganIndex() {
             <section data-tour="gaji-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full print:hidden">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h1 className="text-xl md:text-2xl font-bold text-gray-800">Manajemen Gaji & Tunjangan</h1>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                            <ReceiptText size={28} className="text-blue-600" /> Manajemen Gaji & Tunjangan
+                        </h1>
                         <p className="text-sm text-gray-500 mt-1">Kelola rekapitulasi gaji pegawai dan atur master nominal gaji berdasarkan jabatan.</p>
                     </div>
+                    {activeTab === 'rekap' && (
+                        <div className="flex gap-3 items-center w-full md:w-auto">
+                            {(rekapGajiParams.periode === "bulan" || rekapGajiParams.periode === "minggu") && (
+                                <Button 
+                                    label={rekapGajiParams.isGenerating ? "Memproses..." : "Generate Gaji"} 
+                                    variant="primary" 
+                                    icon={rekapGajiParams.isGenerating ? <Loader2 className="animate-spin" size={16} /> : <PlayCircle size={16} />} 
+                                    onClick={rekapGajiParams.handleGenerateGaji} 
+                                    isLoading={rekapGajiParams.isGenerating}
+                                    disabled={!rekapGajiParams.filterValue}
+                                    className="w-full md:w-auto font-bold text-xs shadow-md cursor-pointer"
+                                />
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* SISTEM TAB NAVIGASI UI */}
@@ -53,7 +75,7 @@ export default function GajiTunjanganIndex() {
 
             {/* RENDER KONTEN BERDASARKAN TAB AKTIF */}
             <div className="w-full min-h-[400px]">
-                {activeTab === 'rekap' ? <TabRekapGaji /> : <TabMasterGaji />}
+                {activeTab === 'rekap' ? <TabRekapGaji rekapGajiParams={rekapGajiParams} /> : <TabMasterGaji />}
             </div>
 
         </div>

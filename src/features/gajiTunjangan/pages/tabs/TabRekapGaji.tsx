@@ -1,6 +1,6 @@
 
 import { useState, useMemo } from 'react';
-import { Wallet, TrendingDown, TrendingUp, Loader2, PlayCircle, Printer, Search } from 'lucide-react';
+import { Wallet, TrendingDown, TrendingUp, Loader2, PlayCircle, Printer, Search, RotateCcw } from 'lucide-react';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -20,7 +20,14 @@ const formatRupiah = (angka: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
 };
 
-export default function TabRekapGaji() {
+interface TabRekapGajiProps {
+    rekapGajiParams?: ReturnType<typeof useRekapGaji>;
+}
+
+export default function TabRekapGaji({ rekapGajiParams }: TabRekapGajiProps) {
+    const localParams = useRekapGaji();
+    const params = rekapGajiParams || localParams;
+
     const {
         periode,
         filterValue,
@@ -47,9 +54,11 @@ export default function TabRekapGaji() {
         showConfirmLunas,
         setShowConfirmLunas,
         confirmPelunasanGaji
-    } = useRekapGaji();
+    } = params;
 
     const [searchQuery, setSearchQuery] = useState("");
+    const [filterDepartemen, setFilterDepartemen] = useState("");
+    const [filterJabatan, setFilterJabatan] = useState("");
     const [modalDetail, setModalDetail] = useState<{
         isOpen: boolean;
         type: 'bonus' | 'potongan';
@@ -69,16 +78,53 @@ export default function TabRekapGaji() {
         rincianData: null
     });
 
-    // Filter rekapGajiData berdasarkan pencarian nama atau jabatan pegawai
+    // Get unique departments from rekapGajiData
+    const uniqueDepartemenList = useMemo(() => {
+        const depts = rekapGajiData.map((item: any) => 
+            item.pegawai?.jabatan?.departemen?.nama_departemen || item.departemen
+        );
+        return Array.from(new Set(depts)).filter((d): d is string => !!d && d !== "-");
+    }, [rekapGajiData]);
+
+    // Get unique positions from rekapGajiData, optionally filtered by selected department
+    const uniqueJabatanList = useMemo(() => {
+        const jabs = rekapGajiData
+            .filter((item: any) => {
+                if (!filterDepartemen) return true;
+                const deptName = item.pegawai?.jabatan?.departemen?.nama_departemen || item.departemen;
+                return deptName === filterDepartemen;
+            })
+            .map((item: any) => item.pegawai?.jabatan?.nama_jabatan || item.jabatan);
+        return Array.from(new Set(jabs)).filter((j): j is string => !!j && j !== "-");
+    }, [rekapGajiData, filterDepartemen]);
+
+    // Filter rekapGajiData berdasarkan pencarian nama atau jabatan pegawai, serta departemen & jabatan
     const filteredRekapGajiData = useMemo(() => {
-        if (!searchQuery.trim()) return rekapGajiData;
+        let result = rekapGajiData;
+
+        // Filter Departemen
+        if (filterDepartemen) {
+            result = result.filter((item: any) => {
+                const deptName = item.pegawai?.jabatan?.departemen?.nama_departemen || item.departemen;
+                return deptName === filterDepartemen;
+            });
+        }
+
+        // Filter Jabatan
+        if (filterJabatan) {
+            result = result.filter((item: any) => {
+                const jabName = item.pegawai?.jabatan?.nama_jabatan || item.jabatan;
+                return jabName === filterJabatan;
+            });
+        }
+
+        if (!searchQuery.trim()) return result;
         const q = searchQuery.toLowerCase();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return rekapGajiData.filter((item: any) =>
+        return result.filter((item: any) =>
             (item.nama && item.nama.toLowerCase().includes(q)) ||
             (item.jabatan && item.jabatan.toLowerCase().includes(q))
         );
-    }, [rekapGajiData, searchQuery]);
+    }, [rekapGajiData, searchQuery, filterDepartemen, filterJabatan]);
 
     const handleShowDetail = (row: RekapGajiData, type: 'bonus' | 'potongan') => {
         setModalDetail({
@@ -157,9 +203,8 @@ export default function TabRekapGaji() {
                         />
                     </div>
 
-                    {/* Baris Bawah: Controls (Search di Kiri, Filter Periode & Action Buttons di Kanan) */}
-                    <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between pt-1">
-                        
+                    {/* Baris 1: Search */}
+                    <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 pt-1">
                         {/* Search Pegawai */}
                         <div className="relative min-w-[240px] max-w-md w-full lg:w-auto">
                             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -179,8 +224,11 @@ export default function TabRekapGaji() {
                                 </button>
                             )}
                         </div>
+                    </div>
 
-                        {/* Filter Periode & Action Buttons */}
+                    {/* Baris 2: Filter Tanggal di Kiri & Filter Pegawai di Kanan */}
+                    <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between pt-2 border-t border-gray-200/80">
+                        {/* Left (Ujung Sisi Kiri): Filter Tanggal */}
                         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                             {/* Segmented Control Periode Filter */}
                             <div className="bg-slate-200/80 p-1 rounded-xl flex items-center gap-1 shadow-inner">
@@ -264,18 +312,51 @@ export default function TabRekapGaji() {
                                     </LocalizationProvider>
                                 )}
                             </div>
+                        </div>
 
-                            {/* Tombol Generate Gaji */}
-                            {(periode === "bulan" || periode === "minggu") && (
-                                <Button 
-                                    label={isGenerating ? "Memproses..." : "Generate Gaji"} 
-                                    variant="primary" 
-                                    icon={isGenerating ? <Loader2 className="animate-spin" size={16} /> : <PlayCircle size={16} />} 
-                                    onClick={handleGenerateGaji} 
-                                    isLoading={isGenerating}
-                                    disabled={!filterValue}
-                                    className="px-3.5 py-1.5 text-xs font-bold shadow-xs cursor-pointer"
-                                />
+                        {/* Right (Sisi Kanan / Bawah Search): Filter Pegawai */}
+                        <div className="flex gap-2 w-full md:w-auto items-center md:justify-end">
+                            <select
+                                value={filterDepartemen}
+                                onChange={(e) => {
+                                    setFilterDepartemen(e.target.value);
+                                    setFilterJabatan('');
+                                }}
+                                className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer flex-1 md:flex-none md:max-w-[150px] truncate"
+                            >
+                                <option value="">Semua Dept</option>
+                                {uniqueDepartemenList.map((dept, idx) => (
+                                    <option key={idx} value={dept}>{dept}</option>
+                                ))}
+                            </select>
+
+                            <select
+                                value={filterJabatan}
+                                onChange={(e) => setFilterJabatan(e.target.value)}
+                                disabled={!filterDepartemen}
+                                className={`border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold shadow-2xs cursor-pointer flex-1 md:flex-none md:max-w-[150px] truncate outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 ${!filterDepartemen ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200' : 'bg-white text-slate-700'}`}
+                                title={!filterDepartemen ? "Pilih Departemen terlebih dahulu" : "Filter berdasarkan Jabatan"}
+                            >
+                                <option value="">{filterJabatan ? "Semua Jabatan" : "Semua Jabatan"}</option>
+                                {uniqueJabatanList.map((jab, idx) => (
+                                    <option key={idx} value={jab}>{jab}</option>
+                                ))}
+                            </select>
+
+                            {(searchQuery || filterDepartemen || filterJabatan) && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setFilterDepartemen('');
+                                        setFilterJabatan('');
+                                    }}
+                                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-red-600 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                                    title="Reset semua filter"
+                                >
+                                    <RotateCcw size={13} />
+                                    <span className="hidden sm:inline">Reset</span>
+                                </button>
                             )}
                         </div>
                     </div>
