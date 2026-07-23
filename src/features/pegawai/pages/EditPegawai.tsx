@@ -1,12 +1,9 @@
 import { useNavigate, useParams } from "react-router-dom";
 import z from "zod"
-import { useAuthStore } from "../../../store/useAuthStore";
 import { useEffect, useState, useRef } from "react";
-
 import { useForm, Controller } from 'react-hook-form'; 
 import Autocomplete from '@mui/material/Autocomplete'; 
 import TextField from '@mui/material/TextField'; 
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Button from "../../../components/common/Button";
@@ -14,9 +11,10 @@ import { TextArea } from "../../../components/common/TextArea";
 import { Input } from "../../../components/common/InputText";
 import { InputSelect } from "../../../components/common/InputSelect";
 import Notif from "../../../components/common/Notif";
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import type { JabatanOption, KotaOption } from "../../../types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNotif } from '../../../hooks/useNotif';
 
 const schema = z.object({
     nik: z.string()
@@ -62,17 +60,12 @@ const MOCK_KOTA = [
 export default function EditPegawai(){
     const { id } =useParams();
     const navigate = useNavigate();
-    const token = useAuthStore((state) => (state.token));
 
     //master data
     const [jabatanList, setJabatanList] = useState<JabatanOption[]>([]);
     const [kotaList, _setKotaList] = useState<KotaOption[]>(MOCK_KOTA); 
 
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, closeNotif } = useNotif();
 
     const queryClient = useQueryClient();
 
@@ -91,23 +84,20 @@ export default function EditPegawai(){
     const { data: pageData, isLoading: isFetchingData } = useQuery({
         queryKey: ['editPegawai', id],
         queryFn: async () => {
-            const [resDept, resJabatan, resShift, resPegawai] = await Promise.all([
-                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, { headers: { "Authorization": `Bearer ${token}` } }),
-                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Authorization": `Bearer ${token}` } }),
-                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, { headers: { "Authorization": `Bearer ${token}` } }),
-                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${id}`, { headers: { "Authorization": `Bearer ${token}` } })
+            const [dept, jab, shift, pegawai] = await Promise.all([
+                apiFetchJson('/api/v1/departemen'),
+                apiFetchJson('/api/v1/jabatan'),
+                apiFetchJson('/api/v1/shifts'),
+                apiFetchJson(`/api/v1/pegawai/${id}`)
             ]);
-            const dept = await resDept.json();
-            const jab = await resJabatan.json();
-            const shift = await resShift.json();
-            const pegawai = await resPegawai.json();
             return {
-                departemen: dept.success ? dept.data : [],
-                jabatan: jab.success ? jab.data : [],
-                shift: shift.success ? shift.data : [],
-                pegawai: pegawai.success ? pegawai.data : null
+                departemen: dept.data || [],
+                jabatan: jab.data || [],
+                shift: shift.data || [],
+                pegawai: pegawai.data || null
             };
-        }
+        },
+        enabled: !!id
     });
 
     const departemenList = pageData?.departemen || [];
@@ -174,11 +164,10 @@ export default function EditPegawai(){
 
     const EditPegawaiMutation = useMutation({
         mutationFn: async (data: FormData) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai/${id}`, {
+            const result = await apiFetchJson(`/api/v1/pegawai/${id}`, {
                 method: "PUT",
                 headers: {
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`
+                    "Content-Type" : "application/json"
                 },
                 body: JSON.stringify({
                     nik: data.nik || null,
@@ -196,23 +185,17 @@ export default function EditPegawai(){
                     default_shift_id: parseInt(data.default_shift_id),
                 }),
             });
-            const result = await response.json();
-
-            if (!response.ok || !result.success){
-                throw new Error(result.message || "Gagal memperbarui data pegawai");
-            }
             return result;
         },
         onSuccess: () => {
-            setNotif({ show: true, message: "Data pegawai berhasil diperbarui!", type: "success" });
+            showNotif(`Data pegawai berhasil diperbarui! (ID: ${id})`, "success" );
             queryClient.invalidateQueries({ queryKey: ['pegawai'] });
             setTimeout(() => {
                 navigate("/dashboard/data-pegawai");
             }, 2000);
         },
-        onError: (error) => {
-            setNotif({ show: true, message: error.message || "Terjadi kesalahan saat memperbarui data", type: "error" });
-
+        onError: (error: any) => {
+            showNotif(error.message || "Terjadi kesalahan saat memperbarui data", "error");
         }
     })
 
@@ -353,7 +336,7 @@ export default function EditPegawai(){
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     )

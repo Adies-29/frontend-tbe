@@ -17,11 +17,8 @@ import SlipGajiTemplate from '../../../../features/gajiTunjangan/components/Slip
 import ModalRincianGaji from '../../../../features/gajiTunjangan/components/ModalRincianGaji';
 import ModalPreviewSlipGaji from '../../../../features/gajiTunjangan/components/ModalPreviewSlipGaji';
 import { useRekapGaji } from '../../hooks/useRekapGaji';
-
-
-const formatRupiah = (angka: number) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
-};
+import PeriodSwitcher from '../../../../components/common/PeriodSwitcher';
+import { formatRupiah } from '../../../../utils/formatCurrency';
 
 interface TabRekapGajiProps {
     hookParams: ReturnType<typeof useRekapGaji>;
@@ -225,113 +222,14 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
                             )}
                         </div>
 
-                        {/* Button Cetak Slip Gaji */}
-                        <div className="w-full md:w-auto shrink-0">
-                            <Button
-                                label="Cetak Slip Gaji"
-                                variant="info"
-                                icon={<Printer size={16} />}
-                                onClick={handleCetakSemuaSlip}
-                                className="w-full md:w-auto font-bold shadow-2xs text-xs py-2 px-4 rounded-xl cursor-pointer animate-in fade-in duration-200"
+                        {/* Filter Periode & Action Buttons */}
+                        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                            <PeriodSwitcher
+                                periode={periode}
+                                filterValue={filterValue}
+                                onPeriodeChange={handlePeriodeChange}
+                                onFilterValueChange={setFilterValue}
                             />
-                        </div>
-                    </div>
-
-                    {/* Baris 2: Filter Pegawai (Left) + Filter Tanggal (Right) */}
-                    <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between pt-2 border-t border-gray-200/80">
-                        {/* Left: Filter Pegawai (Departemen & Jabatan) */}
-                        <div className="flex gap-2 w-full md:w-auto items-center">
-                            <select
-                                value={filterDepartemen}
-                                onChange={(e) => {
-                                    setFilterDepartemen(e.target.value);
-                                    setFilterJabatan('');
-                                }}
-                                className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer flex-1 md:flex-none md:w-48 truncate"
-                            >
-                                <option value="">Semua Departemen</option>
-                                {uniqueDepartemenList.map((dept: string, idx: number) => (
-                                    <option key={idx} value={dept}>{dept}</option>
-                                ))}
-                            </select>
-
-                            <select
-                                value={filterJabatan}
-                                onChange={(e) => setFilterJabatan(e.target.value)}
-                                disabled={!filterDepartemen}
-                                className={`border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold shadow-2xs cursor-pointer flex-1 md:flex-none md:w-48 truncate outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 ${!filterDepartemen ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200' : 'bg-white text-slate-700'}`}
-                                title={!filterDepartemen ? "Pilih Departemen terlebih dahulu" : "Filter berdasarkan Jabatan"}
-                            >
-                                <option value="">Semua Jabatan</option>
-                                {uniqueJabatanList.map((jab: string, idx: number) => (
-                                    <option key={idx} value={jab}>{jab}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Right: Filter Tanggal (Periode & Picker) */}
-                        <div className="flex gap-2 w-full md:w-auto items-center flex-wrap sm:flex-nowrap md:justify-end">
-                            <div className="bg-slate-200/80 p-1 rounded-xl flex items-center gap-1 shadow-inner">
-                                <button
-                                    type="button"
-                                    onClick={() => handlePeriodeChange('minggu')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${periode === 'minggu' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                                        }`}
-                                >
-                                    Mingguan
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handlePeriodeChange('bulan')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${periode === 'bulan' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                                        }`}
-                                >
-                                    Bulanan
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handlePeriodeChange('tahun')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${periode === 'tahun' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                                        }`}
-                                >
-                                    Tahunan
-                                </button>
-                            </div>
-
-                            {/* Date Picker Input */}
-                            <div className="relative">
-                                {periode === "minggu" && <input type="week" value={filterValue} onChange={(e) => setFilterValue(e.target.value)} className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer" />}
-                                {periode === "bulan" && <input type="month" value={filterValue} onChange={(e) => setFilterValue(e.target.value)} className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer" />}
-                                {periode === "tahun" && (
-                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                        <DatePicker
-                                            views={['year']}
-                                            value={filterValue ? dayjs().year(parseInt(filterValue)) : null}
-                                            onChange={(newValue: Dayjs | null) => newValue && setFilterValue(newValue.year().toString())}
-                                            slotProps={{
-                                                textField: {
-                                                    size: 'small',
-                                                    className: "bg-white flex-1 md:w-32",
-                                                    sx: {
-                                                        '& .MuiOutlinedInput-root': {
-                                                            borderRadius: '12px',
-                                                            fontSize: '12px',
-                                                            fontWeight: 600,
-                                                            height: '35px',
-                                                            color: '#334155',
-                                                            '& fieldset': { borderColor: '#cbd5e1' },
-                                                            '&:hover fieldset': { borderColor: '#94a3b8' },
-                                                            '&.Mui-focused fieldset': { borderColor: '#ef4444' },
-                                                        },
-                                                        '& .MuiOutlinedInput-input': { padding: '6px 12px' },
-                                                        '& .MuiIconButton-root': { padding: '4px', color: '#64748b' }
-                                                    }
-                                                }
-                                            }}
-                                        />
-                                    </LocalizationProvider>
-                                )}
-                            </div>
 
                             {(searchQuery || filterDepartemen || filterJabatan) && (
                                 <button

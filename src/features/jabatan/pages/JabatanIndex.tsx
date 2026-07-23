@@ -1,60 +1,45 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Briefcase, Users, Loader2, Rows2, Plus } from "lucide-react";
 import Button from "../../../components/common/Button";
-
 import type { JabatanData, JabatanOption, PegawaiData } from "../../../types";
-import { useAuthStore } from "../../../store/useAuthStore";
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import Notif from "../../../components/common/Notif";
 import TabelJabatan from "../components/TabelJabatan";
-
 import { useQuery } from "@tanstack/react-query";
+import { useNotif } from "../../../hooks/useNotif";
 
 export default function JabatanIndex() {
     const navigate = useNavigate();
-    const token = useAuthStore((state) => state.token)
-
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showErrorNotif, closeNotif } = useNotif();
 
     const fetchJabatan = async (): Promise<JabatanData[]> => {
         try {
-            const [resJabatan, resPegawai] = await Promise.all([
-                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }),
-                apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } })
+            const [resultJabatan, resultPegawai] = await Promise.all([
+                apiFetchJson('/api/v1/jabatan'),
+                apiFetchJson('/api/v1/pegawai')
             ]);
 
-            const resultJabatan = await resJabatan.json();
-            const resultPegawai = await resPegawai.json();
+            const listJabatan = resultJabatan.data || [];
+            const listPegawai = resultPegawai.data || [];
 
-            if (resJabatan.ok && resPegawai.ok) {
+            const mappedData: JabatanData[] = listJabatan.map((jab: JabatanOption) => {
+                const jumlah = listPegawai.filter(
+                    (peg: PegawaiData) => String(peg.jabatan_id) === String(jab.id)
+                ).length;
 
-                const mappedData: JabatanData[] = resultJabatan.data.map((jab: JabatanOption) => {
+                return {
+                    id: jab.id,
+                    nama_jabatan: jab.nama_jabatan,
+                    departemen: jab.departemen?.nama_departemen || "Tanpa Departemen",
+                    departemen_id: jab.departemen_id,
+                    jumlah_pegawai: jumlah
+                };
+            });
 
-                    const jumlah = resultPegawai.data.filter(
-                        (peg: PegawaiData) => peg.jabatan_id === jab.id).length;
-
-                    return {
-                        id: jab.id,
-                        nama_jabatan: jab.nama_jabatan,
-                        departemen: jab.departemen?.nama_departemen || "Tanpa Departemen",
-                        departemen_id: jab.departemen_id,
-                        jumlah_pegawai: jumlah
-                    };
-                });
-
-                return (mappedData);
-            } else {
-                console.error("Gagal mengambil data:", resultJabatan, resultPegawai);
-                return [];
-            }
+            return mappedData;
         } catch (error) {
             console.error("Error fetching jabatan:", error);
-            setNotif({ show: true, message: "Gagal memuat data jabatan. Pastikan backend berjalan.", type: "error" });
+            showErrorNotif(error);
             return [];
         }
     };
@@ -65,8 +50,7 @@ export default function JabatanIndex() {
         isError,
     } = useQuery({
         queryKey: ['jabatan_pegawai'],
-        queryFn: fetchJabatan,
-        enabled: !!token
+        queryFn: fetchJabatan
     });
 
     const totalJabatan = dataJabatan.length;
@@ -144,7 +128,7 @@ export default function JabatanIndex() {
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     );

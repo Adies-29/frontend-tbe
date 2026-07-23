@@ -5,8 +5,8 @@ import Button from '../../../components/common/Button';
 import ConfirmPopUp from '../../../components/common/ConfirmPopUp';
 import Notif from '../../../components/common/Notif';
 import type { MasterTargetData } from '../../../types';
-import { apiFetch } from '../../../utils/apiFetch';
-import { useAuthStore } from '../../../store/useAuthStore';
+import { apiFetchJson } from '../../../utils/apiFetch';
+import { useNotif } from '../../../hooks/useNotif';
 
 interface FormMasterTargetProps {
     jabatanId: string;
@@ -16,7 +16,6 @@ interface FormMasterTargetProps {
 
 export default function FormMasterTarget({ jabatanId, isAdding, setIsAdding }: FormMasterTargetProps) {
     const queryClient = useQueryClient();
-    const token = useAuthStore((state) => state.token);
     
     // Inline Add state (isAdding moved to props)
     const [newTargetName, setNewTargetName] = useState("");
@@ -32,24 +31,12 @@ export default function FormMasterTarget({ jabatanId, isAdding, setIsAdding }: F
     const [deleteId, setDeleteId] = useState<number | null>(null);
 
     // Notifications
-    const [notifState, setNotifState] = useState<{ show: boolean, message: string, type: 'success' | 'error' }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
-
-    const showNotif = (message: string, type: 'success' | 'error' = 'success') => {
-        setNotifState({ show: true, message, type });
-    };
+    const { notif, showNotif, closeNotif, showErrorNotif } = useNotif();
 
     const targetsQuery = useQuery({
         queryKey: ['masterTargetList', jabatanId],
         queryFn: async () => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/master?jabatan_id=${jabatanId}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error("Gagal mengambil data");
+            const result = await apiFetchJson(`/api/v1/target/master?jabatan_id=${jabatanId}`);
             return result.data || result || [];
         }
     });
@@ -62,9 +49,9 @@ export default function FormMasterTarget({ jabatanId, isAdding, setIsAdding }: F
 
     const addMutation = useMutation({
         mutationFn: async () => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/master`, {
+            await apiFetchJson('/api/v1/target/master', {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },  
+                headers: { "Content-Type": "application/json" },  
                 body: JSON.stringify({
                     jabatan_id: parseInt(jabatanId),
                     nama_target: newTargetName,
@@ -72,7 +59,6 @@ export default function FormMasterTarget({ jabatanId, isAdding, setIsAdding }: F
                     is_active: true
                 })
             });
-            if (!response.ok) throw new Error("Gagal menyimpan data");
         },
         onSuccess: () => {
             showNotif("Target baru berhasil ditambahkan", "success");
@@ -99,12 +85,11 @@ export default function FormMasterTarget({ jabatanId, isAdding, setIsAdding }: F
 
     const editMutation = useMutation({
         mutationFn: async (payload: any) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/master`, {
+            await apiFetchJson('/api/v1/target/master', {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },  
+                headers: { "Content-Type": "application/json" },  
                 body: JSON.stringify(payload)
             });
-            if (!response.ok) throw new Error("Gagal menyimpan data");
         },
         onSuccess: (_, variables) => {
             if (variables.is_active === false && Object.keys(variables).length > 2) {
@@ -119,7 +104,7 @@ export default function FormMasterTarget({ jabatanId, isAdding, setIsAdding }: F
             }
             queryClient.invalidateQueries({ queryKey: ['masterTargetList', jabatanId] });
         },
-        onError: (error: any) => showNotif(error.message || "Gagal menyimpan data", "error")
+        onError: (error: any) => showErrorNotif(error)
     });
 
     const handleSaveEdit = () => {
@@ -332,10 +317,10 @@ export default function FormMasterTarget({ jabatanId, isAdding, setIsAdding }: F
             />
             
             <Notif 
-                show={notifState.show} 
-                message={notifState.message} 
-                type={notifState.type} 
-                onClose={() => setNotifState(prev => ({...prev, show: false}))} 
+                show={notif.show} 
+                message={notif.message} 
+                type={notif.type} 
+                onClose={closeNotif} 
             />
         </section>
     );

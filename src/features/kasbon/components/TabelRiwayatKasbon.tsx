@@ -17,12 +17,8 @@ export default function TabelRiwayatKasbon() {
     const riwayatQuery = useQuery({
         queryKey: ['riwayatKasbonList'],
         queryFn: async () => {
-            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/kasbon/riwayat`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await res.json();
-            if (!res.ok) throw new Error(result.message || "Gagal load data riwayat kasbon");
-            return result.data || [];
+            const res = await apiFetchJson('/api/v1/kasbon/riwayat');
+            return res.data || [];
         }
     });
 

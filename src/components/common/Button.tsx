@@ -21,7 +21,7 @@ export const Button: React.FC<ButtonProps> = ({
 }) => {
 
     const baseStyle = "inline-flex items-center justify-center gap-2 font-semibold text-[15px] md:text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95";
-    const varianStyle = {
+    const variantStyle = {
         primary: "bg-[#FFb702] hover:bg-yellow-500 text-white focus:ring-yellow-400 rounded-lg px-5 py-2.5 shadow-sm",
         success: "bg-green-600 hover:bg-green-700 text-white focus:ring-green-600 rounded-lg px-5 py-2.5 shadow-sm",
 
@@ -45,7 +45,7 @@ export const Button: React.FC<ButtonProps> = ({
             type={type}
             disabled={disabled || isLoading}
             onClick={onClick}
-            className={`${baseStyle} ${varianStyle[variant]} ${className}`}
+            className={`${baseStyle} ${variantStyle[variant]} ${className}`}
             title={label} // Menampilkan teks tooltip saat mouse hover (berguna untuk tombol back)
             {...rest}
         >

@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import ConfirmPopUp from "../../../components/common/ConfirmPopUp";
 import Notif from "../../../components/common/Notif";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNotif } from "../../../hooks/useNotif";
 
 interface TabelLemburProps {
     data: LemburData[];
@@ -19,17 +20,12 @@ interface TabelLemburProps {
 }
 
 export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburProps) {
-    const token = useAuthStore((state) => state.token);
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     
     const [hapusId, setHapusId] = useState<GridRowId | null>(null);
     const [showPopUp, setShowPopUp] = useState(false);
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
 
     // Filter states
     const [searchQuery, setSearchQuery] = useState("");
@@ -43,30 +39,24 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
 
     const deleteLemburMutation = useMutation({
         mutationFn: async (idToDelete: GridRowId) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/${idToDelete}`, {
+            const result = await apiFetchJson(`/api/v1/lembur/${idToDelete}`, {
                 method: 'DELETE',
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 }
             });
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                throw new Error(getSafeErrorMessage(response.status));
-            }
             return result;
         },
         onSuccess: () => {
-            setNotif({ show: true, message: "Data lembur berhasil dihapus", type: "success" });
+            showNotif("Data lembur berhasil dihapus", "success");
             queryClient.invalidateQueries({ queryKey: ['lemburList'] });
             // onRefresh tetap dipertahankan untuk redundansi yang aman
             setTimeout(() => {
                 onRefresh();
             }, 2000);
         },
-        onError: () => {
-            setNotif({ show: true, message: "Gagal menghapus data. Periksa koneksi.", type: "error" });
+        onError: (error) => {
+            showErrorNotif(error);
         },
         onSettled: () => {
             setShowPopUp(false);
@@ -341,7 +331,7 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     );

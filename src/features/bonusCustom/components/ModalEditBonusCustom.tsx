@@ -3,6 +3,7 @@ import { X, User, Lock } from 'lucide-react';
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/InputText';
 import type { BonusCustomData } from './TabelBonusCustom';
+import { formatRupiah } from '../../../utils/formatCurrency';
 
 interface ModalEditBonusCustomProps {
     isOpen: boolean;
@@ -154,7 +155,7 @@ export default function ModalEditBonusCustom({
                         helperText={
                             nominal && Number(nominal) > 0 ? (
                                 <span className="text-xs font-extrabold text-emerald-600 animate-in fade-in duration-200">
-                                    Preview: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(nominal))}
+                                    {formatRupiah(nominal)}
                                 </span>
                             ) : undefined
                         }

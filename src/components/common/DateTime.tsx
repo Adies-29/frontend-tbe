@@ -1,8 +1,6 @@
 import { Calendar, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
-// 1. Import useAuthStore untuk mengambil token
-import { useAuthStore } from "../../store/useAuthStore";
-import { apiFetch } from "../../utils/apiFetch";
+import { apiFetchJson } from "../../utils/apiFetch";
 
 interface ShiftData {
     kode_shift: string; // 2. Ubah dari kode_shift menjadi kode_shift agar sesuai dengan database
@@ -16,9 +14,6 @@ export default function DateTime() {
     const [shiftList, setShiftList] = useState<ShiftData[]>([]);
     const [activeShift, setActiveShift] = useState("Memuat...");
     const [isLoading, setIsLoading] = useState(true);
-
-    // 3. Ambil token JWT dari store
-    const token = useAuthStore((state) => state.token);
 
     const checkCurrentShift = (currentTime: Date, shifts: ShiftData[]) => {
         if (!shifts || shifts.length === 0) return "Error/Kosong";
@@ -58,20 +53,8 @@ export default function DateTime() {
             try {
                 setIsLoading(true);
 
-                // 4. Tambahkan Headers Authorization Bearer
-                const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/shifts`, {
-                    method: "GET",
-                    headers: {
-                        "Authorization": `Bearer ${token}`, // <-- Kunci masuknya di sini
-                        "Content-Type": "application/json"
-                    }
-                });
+                const result = await apiFetchJson('/api/v1/shifts');
 
-                if (!response.ok) {
-                    throw new Error("Gagal ambil data. Pastikan token valid.");
-                }
-
-                const result = await response.json();
                 const dataShift = Array.isArray(result) ? result : result.data;
 
                 setShiftList(dataShift);
@@ -85,14 +68,8 @@ export default function DateTime() {
             }
         };
 
-        // Hanya jalankan fetch jika token sudah tersedia (sudah login)
-        if (token) {
-            fetchShift();
-        } else {
-            setActiveShift("Belum Login");
-            setIsLoading(false);
-        }
-    }, [token]); // Tambahkan token sebagai dependency useEffect
+        fetchShift();
+    }, []);
 
     // Update Shift otomatis
     useEffect(() => {

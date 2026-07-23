@@ -3,14 +3,16 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Autocomplete, TextField } from "@mui/material";
 import { ArrowLeft, Banknote } from "lucide-react";
-import { useAuthStore } from "../../../store/useAuthStore";
 import Button from "../../../components/common/Button";
 import Notif from "../../../components/common/Notif";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
+import { formatRupiah } from "../../../utils/formatCurrency";
 import { formatMinutesToText } from "../../../utils/formatMinutes";
+import { useAuthStore } from "../../../store/useAuthStore";
+import { useNotif } from '../../../hooks/useNotif';
 
 const lemburSchema = z.object({
     pegawai_id: z.string().min(1, "ID Pegawai wajib diisi")
@@ -29,11 +31,10 @@ export default function AddLembur() {
     const navigate = useNavigate();
 
     const [searchParams] = useSearchParams();
-    const token = useAuthStore((state) => state.token);
     const userToken = useAuthStore((state) => state.user);
     const queryClient = useQueryClient();
 
-    const idPegwai = searchParams.get("pegawai_id") || "";
+    const idPegawai = searchParams.get("pegawai_id") || "";
     const namaPegawai = searchParams.get("nama") || "";
 
     const {
@@ -46,7 +47,7 @@ export default function AddLembur() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         resolver: zodResolver(lemburSchema) as any,
         defaultValues: {
-            pegawai_id: idPegwai,
+            pegawai_id: idPegawai,
             tanggal: "",
             alasan_lembur: ""
         }
@@ -63,48 +64,39 @@ export default function AddLembur() {
     const [customUpahError, setCustomUpahError] = useState("");
 
     const pegawaiQuery = useQuery({
-        queryKey: ['pegawaiList'],
+        queryKey: ['pegawai'],
         queryFn: async () => {
-            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await res.json();
-            return result.data || [];
+            const res = await apiFetchJson('/api/v1/pegawai');
+            return res.data || [];
         }
     });
 
-    // Set selectedPegawai saat data pegawai dimuat dan idPegwai sudah ada dari URL
+    // Set selectedPegawai saat data pegawai dimuat dan idPegawai sudah ada dari URL
     useEffect(() => {
-        if (idPegwai && pegawaiQuery.data) {
+        if (idPegawai && pegawaiQuery.data) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const found = (pegawaiQuery.data as any[]).find((p: any) => String(p.id) === String(idPegwai));
+            const found = (pegawaiQuery.data as any[]).find((p: any) => String(p.id) === String(idPegawai));
             if (found) setSelectedPegawai(found);
         }
-    }, [idPegwai, pegawaiQuery.data]);
+    }, [idPegawai, pegawaiQuery.data]);
 
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, closeNotif } = useNotif();
 
     const addLemburMutation = useMutation({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         mutationFn: async (payload: any) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/lembur/spl`, {
+            const result = await apiFetchJson('/api/v1/lembur/spl', {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify(payload)
             });
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error("Gagal menyimpan ke database.");
             return result;
         },
-        onSuccess: () => {
-            setNotif({ show: true, message: `Sukses! Perintah lembur telah disimpan`, type: "success" });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onSuccess: (data: any) => {
+            showNotif(`Sukses! Perintah lembur telah disimpan. ${data.data.tanggal}`, "success");
             queryClient.invalidateQueries({ queryKey: ['lemburList'] });
             setTimeout(() => {
                 navigate("/dashboard/lembur");
@@ -112,7 +104,7 @@ export default function AddLembur() {
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Terjadi kesalahan jaringan.", type: "error" });
+            showNotif( error.message || "Terjadi kesalahan jaringan.", "error" );
         }
     });
 
@@ -169,7 +161,7 @@ export default function AddLembur() {
                     <Autocomplete
                         options={pegawaiQuery.data || []}
                         getOptionLabel={(option: any) => `${option.nama} (ID: ${option.id})`}
-                        disabled={!!idPegwai || pegawaiQuery.isLoading}
+                        disabled={!!idPegawai || pegawaiQuery.isLoading}
                         value={(pegawaiQuery.data || []).find((p: any) => String(p.id) === String(watch("pegawai_id"))) || null}
                         onChange={(_, newValue) => {
                             setValue("pegawai_id", newValue ? String(newValue.id) : "", { shouldValidate: true });
@@ -187,7 +179,7 @@ export default function AddLembur() {
                                     '& .MuiOutlinedInput-root': {
                                         padding: '4px',
                                         borderRadius: '0.5rem',
-                                        backgroundColor: !!idPegwai ? '#f3f4f6' : 'white',
+                                        backgroundColor: !!idPegawai ? '#f3f4f6' : 'white',
                                     }
                                 }}
                             />
@@ -294,11 +286,11 @@ export default function AddLembur() {
                                     <Banknote size={14} />
                                     Upah lembur sesuai jabatan:{" "}
                                     <strong>
-                                        Rp {Number(
+                                        {formatRupiah(
                                             tipeHitungLembur === 'flat' 
                                                 ? (selectedPegawai.jabatan.upah_lembur_flat || selectedPegawai.jabatan.upah_lembur_per_jam)
                                                 : selectedPegawai.jabatan.upah_lembur_per_jam
-                                        ).toLocaleString('id-ID')}
+                                        )}
                                         {tipeHitungLembur === 'per_jam' ? '/jam' : ' (Flat)'}
                                     </strong>
                                 </p>
@@ -326,8 +318,8 @@ export default function AddLembur() {
                             />
                             {customUpahError && <p className="text-xs text-red-500 mt-1">{customUpahError}</p>}
                             {customUpahValue && Number(customUpahValue) > 0 && (
-                                <p className="text-xs text-blue-600 mt-1 font-medium italic">
-                                    Rp {Number(customUpahValue).toLocaleString('id-ID')}
+                                <p className="text-xs text-emerald-600 mt-1 font-medium italic">
+                                    {formatRupiah(customUpahValue)}
                                     {tipeHitungLembur === 'per_jam' ? '/jam' : ' (Flat)'}
                                 </p>
                             )}
@@ -366,7 +358,7 @@ export default function AddLembur() {
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     );

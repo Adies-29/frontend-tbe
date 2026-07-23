@@ -9,16 +9,14 @@ import TabelKasbon from "../components/TabelKasbon";
 import ModalBayarKasbon from "../components/ModalBayarKasbon";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import TabelRiwayatKasbon from "../components/TabelRiwayatKasbon";
+import { useNotif } from "../../../hooks/useNotif";
 
 export default function KasbonIndex() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const token = useAuthStore((state) => state.token);
     const user = useAuthStore((state) => state.user);
 
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false, message: "", type: "success"
-    });
+    const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
     
     // State untuk Modal Bayar
     const [isModalBayarOpen, setIsModalBayarOpen] = useState(false);
@@ -30,68 +28,58 @@ export default function KasbonIndex() {
     const kasbonQuery = useQuery({
         queryKey: ['kasbonList'],
         queryFn: async () => {
-            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/kasbon`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const result = await res.json();
-            if (!res.ok) throw new Error(result.message || "Gagal load data kasbon");
-            return result.data || [];
+            const res = await apiFetchJson('/api/v1/kasbon');
+            return res.data || [];
         }
     });
 
     // 2. Mutasi Update Status
     const statusMutation = useMutation({
         mutationFn: async ({ id, newStatus }: { id: number, newStatus: string }) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/kasbon/${id}/status`, {
+            const result = await apiFetchJson(`/api/v1/kasbon/${id}/status`, {
                 method: 'PATCH',
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ status: newStatus, disetujui_oleh: user || null })
             });
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error(result.message || "Gagal mengubah status");
             return { newStatus, message: result.message };
         },
         onSuccess: (data) => {
-            setNotif({ show: true, message: `Status berhasil diubah menjadi ${data.newStatus}`, type: "success" });
+            showNotif(`Status berhasil diubah menjadi ${data.newStatus}`, "success");
             queryClient.invalidateQueries({ queryKey: ['kasbonList'] });
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Terjadi kesalahan server", type: "error" });
+            showErrorNotif(error);
         }
     });
 
     // 3. Mutasi Hapus Kasbon
     const deleteMutation = useMutation({
         mutationFn: async (id: number) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/kasbon/${id}`, {
-                method: 'DELETE',
-                headers: { "Authorization": `Bearer ${token}` }
+            const result = await apiFetchJson(`/api/v1/kasbon/${id}`, {
+                method: 'DELETE'
             });
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error(result.message || "Gagal menghapus kasbon");
             return result;
         },
         onSuccess: () => {
+            showNotif("Data kasbon berhasil dihapus", "success");
             queryClient.invalidateQueries({ queryKey: ['kasbonList'] });
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Terjadi kesalahan server", type: "error" });
+            showErrorNotif(error);
         }
     });
 
     // 4. Mutasi Bayar Kasbon
     const bayarMutation = useMutation({
         mutationFn: async ({ id, nominal_bayar, keterangan, metode_pembayaran }: { id: number, nominal_bayar: number, keterangan: string, metode_pembayaran: string }) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/kasbon/${id}/bayar-manual`, {
+            const result = await apiFetchJson(`/api/v1/kasbon/${id}/bayar-manual`, {
                 method: 'PATCH',
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ 
                     nominal_bayar, 
@@ -100,19 +88,17 @@ export default function KasbonIndex() {
                     metode_pembayaran
                 })
             });
-            const result = await response.json();
-            if (!response.ok || !result.success) throw new Error(result.message || "Gagal memproses pembayaran");
             return result;
         },
         onSuccess: () => {
-            setNotif({ show: true, message: "Pembayaran kasbon berhasil dicatat", type: "success" });
+            showNotif("Pembayaran kasbon berhasil dicatat", "success");
             setIsModalBayarOpen(false);
             setSelectedKasbon(null);
             queryClient.invalidateQueries({ queryKey: ['kasbonList'] });
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
-            setNotif({ show: true, message: error.message || "Terjadi kesalahan server", type: "error" });
+            showErrorNotif(error);
         }
     });
 
@@ -134,7 +120,7 @@ export default function KasbonIndex() {
 
     return (
         <div className="flex flex-col gap-4 md:gap-6 w-full">
-            <Notif show={notif.show} message={notif.message} type={notif.type} onClose={() => setNotif(prev => ({ ...prev, show: false }))} />
+            <Notif show={notif.show} message={notif.message} type={notif.type} onClose={closeNotif} />
 
             {/* HEADER & TAB NAVIGATION */}
             <section data-tour="kasbon-header" className="bg-white border border-gray-300 rounded-2xl p-4 md:p-6 shadow-sm w-full">

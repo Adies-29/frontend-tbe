@@ -1,8 +1,9 @@
 import { useState, useMemo, startTransition } from 'react';
-import { useAuthStore } from '../../../store/useAuthStore';
 import type { PencapaianTargetData } from '../../../types';
-import { apiFetch } from '../../../utils/apiFetch';
+import { apiFetchJson } from '../../../utils/apiFetch';
 import { useQuery } from '@tanstack/react-query';
+import { useNotif } from '../../../hooks/useNotif';
+import { getCurrentWeek } from '../../../utils/dateHelpers';
 
 
 export interface TargetDetail {
@@ -19,12 +20,12 @@ export interface PegawaiMatrix {
     nama: string;
     jabatan: string;
     departemen: string;
-    pencapaian: { 
+    pencapaian: {
         [tanggal: string]: {
             totalPack: number;
             totalNominal: number;
             details: TargetDetail[];
-        } 
+        }
     };
 }
 
@@ -36,19 +37,9 @@ export interface SelectedCell {
 }
 
 export function useMatrixPencapaian() {
-    const token = useAuthStore((state) => state.token);
     const now = new Date();
 
-    const getWeekNumber = (d: Date) => {
-        const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
-        const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-        const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-        return { year: date.getUTCFullYear(), week: weekNo };
-    };
-    
-    const weekData = getWeekNumber(now);
-    const defaultWeekStr = `${weekData.year}-W${weekData.week.toString().padStart(2, '0')}`;
+    const defaultWeekStr = getCurrentWeek();
 
     const [periode, setPeriode] = useState<string>('minggu');
     const [filterValue, setFilterValue] = useState<string>(defaultWeekStr);
@@ -104,7 +95,7 @@ export function useMatrixPencapaian() {
         return { filterStartDate: firstDay, filterEndDate: lastDay };
     }, [periode, filterValue, firstDay, lastDay]);
 
-    const handleFilter = () => {};
+    const handleFilter = () => { };
 
     const handlePeriodeChange = (newPeriode: string) => {
         startTransition(() => {
@@ -131,31 +122,15 @@ export function useMatrixPencapaian() {
     // Modal State
     const [selectedCell, setSelectedCell] = useState<SelectedCell>({ pegawaiId: 0, pegawaiNama: "", tanggal: "" });
     const [isModalOpen, setIsModalOpen] = useState(false);
-    
+
     // Notification State
-    const [notifState, setNotifState] = useState<{ show: boolean, message: string, type: 'success' | 'error' }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
-
-    const showNotif = (message: string, type: 'success' | 'error' = 'success') => {
-        setNotifState({ show: true, message, type });
-    };
-
-    const closeNotif = () => {
-        setNotifState(prev => ({ ...prev, show: false }));
-    };
+    const { notif, showNotif, closeNotif } = useNotif();
 
     // --- ACTUAL API FETCHES WITH REACT QUERY ---
     const pegawaiQuery = useQuery({
-        queryKey: ['pegawaiList'],
+        queryKey: ['pegawai'],
         queryFn: async () => {
-            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/pegawai`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error("Gagal memuat pegawai");
+            const data = await apiFetchJson('/api/v1/pegawai');
             return data.data || [];
         }
     });
@@ -163,24 +138,16 @@ export function useMatrixPencapaian() {
     const masterTargetsQuery = useQuery({
         queryKey: ['masterTargetListAll'],
         queryFn: async () => {
-            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/master`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error("Gagal memuat master target");
+            const data = await apiFetchJson('/api/v1/target/master');
             return (data.data || []).filter((t: any) => t.is_active);
         }
     });
 
     // Fetch daftar jabatan untuk mengetahui tipe_penggajian
     const jabatanQuery = useQuery({
-        queryKey: ['jabatanListForTarget'],
+        queryKey: ['jabatan'],
         queryFn: async () => {
-            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error("Gagal memuat daftar jabatan");
+            const data = await apiFetchJson('/api/v1/jabatan');
             return data.data || [];
         }
     });
@@ -228,7 +195,7 @@ export function useMatrixPencapaian() {
                 const curr = matrixMap[pegId].pencapaian[pencapaian.tanggal];
                 curr.totalPack += pencapaian.jumlah_pencapaian;
                 curr.totalNominal += pencapaian.nominal_total_riil;
-                
+
                 curr.details.push({
                     master_target_id: masterTargetId,
                     nama_target: pencapaian.master_target?.nama_target || "Unknown",
@@ -246,11 +213,7 @@ export function useMatrixPencapaian() {
     const pencapaianQuery = useQuery({
         queryKey: ['pencapaianList', filterStartDate, filterEndDate],
         queryFn: async () => {
-            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/target/pencapaian?tanggal_mulai=${filterStartDate}&tanggal_selesai=${filterEndDate}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || "Gagal memuat data pencapaian");
+            const data = await apiFetchJson(`/api/v1/target/pencapaian?tanggal_mulai=${filterStartDate}&tanggal_selesai=${filterEndDate}`);
             return data.data || [];
         },
         enabled: listPegawai.length > 0,
@@ -321,7 +284,7 @@ export function useMatrixPencapaian() {
         selectedCell, setSelectedCell,
         isModalOpen, setIsModalOpen,
         // Notif State
-        notifState, closeNotif, showNotif,
+        notif, closeNotif, showNotif,
         // Handlers
         isSaving, setIsSaving,
         handleCellClick

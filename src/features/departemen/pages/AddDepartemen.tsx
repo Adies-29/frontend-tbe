@@ -5,30 +5,21 @@ import Button from "../../../components/common/Button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "../../../components/common/InputText";
-import { useState } from "react";
-import { useAuthStore } from "../../../store/useAuthStore";
 import Notif from "../../../components/common/Notif";
-import { apiFetch } from "../../../utils/apiFetch";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-
+import { useNotif } from '../../../hooks/useNotif';
 
 
 const schema = z.object({
     nama: z.string().min(1, "Nama Departemen harus diisi"),
-
 });
 
 type FormData = z.infer<typeof schema>;
 
-
 export default function AddDepartemen() {
     const navigate = useNavigate();
-    const token = useAuthStore((state) => state.token)
-    const [notif, setNotif] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
-        show: false,
-        message: "",
-        type: "success"
-    });
+    const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
     const queryClient = useQueryClient();
 
     const {
@@ -40,34 +31,26 @@ export default function AddDepartemen() {
     });
 
     const addDeptMutation = useMutation({
-        mutationFn: async(data: FormData) => {
-            const response = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, {
+        mutationFn: (data: FormData) =>
+            apiFetchJson('/api/v1/departemen', {
                 method: "POST",
                 headers: {
-                    "Content-Type" : "application/json",
-                    "Authorization" : `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     nama_departemen: data.nama
                 })
-            });
-
-            const result = await response.json();
-
-            if(!response.ok || !result.success){
-                throw new Error(result.message || "Gagal menyimpan data");
-            }
-            return result;
-        },
-        onSuccess: () => {
-            setNotif({show: true, message: "Data departmen berhasil disimpan", type: "success"});
+            }),
+        onSuccess: (result) => {
+            const namaDept = result.data?.nama_departemen || "";
+            showNotif(`Data departemen ${namaDept} berhasil disimpan!`.trim(), "success");
             queryClient.invalidateQueries({ queryKey: ["departemen"] });
             setTimeout(() => {
-                navigate("/dashboard/departemen")
-            }, 2000);
+                navigate("/dashboard/departemen");
+            }, 1500);
         },
         onError: (error) => {
-            setNotif({show: true, message: error.message || "Gagal menyimpan data", type: "error"});
+            showErrorNotif(error);
         }
     });
 
@@ -124,7 +107,7 @@ export default function AddDepartemen() {
                 show={notif.show}
                 message={notif.message}
                 type={notif.type}
-                onClose={() => setNotif({ show: false, message: "", type: "success" })}
+                onClose={closeNotif}
             />
         </div>
     );

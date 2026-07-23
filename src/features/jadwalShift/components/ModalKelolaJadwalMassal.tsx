@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Search, Users, PlayCircle, AlertCircle, CheckCircle, Calendar } from 'lucide-react';
 import Button from '../../../components/common/Button';
-import { apiFetch } from '../../../utils/apiFetch';
-import { useAuthStore } from '../../../store/useAuthStore';
+import { apiFetchJson } from '../../../utils/apiFetch';
 import CustomDateRangePickerModal from './CustomDateRangePickerModal';
 
 interface Shift {
@@ -86,7 +85,6 @@ export default function ModalKelolaJadwalMassal({
     handleProsesGenerateMassal,
     onSuccess
 }: ModalKelolaJadwalMassalProps) {
-    const token = useAuthStore((state) => state.token);
     const [activeTab, setActiveTab] = useState<'generate' | 'pola'>(initialTab);
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     const [pickerTarget, setPickerTarget] = useState<'generate' | 'pola'>('generate');
@@ -199,16 +197,11 @@ export default function ModalKelolaJadwalMassal({
 
     const fetchPolaList = async () => {
         try {
-            const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-            const res = await apiFetch(`${baseUrl}/api/v1/pola-rotasi`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const json = await res.json();
-            if (json.success) {
-                setPolaList(json.data || []);
-                if (json.data?.length > 0 && !selectedPolaId) {
-                    setSelectedPolaId(json.data[0].id);
-                }
+            const res = await apiFetchJson('/api/v1/pola-rotasi');
+            const data = res.data || [];
+            setPolaList(data);
+            if (data.length > 0 && !selectedPolaId) {
+                setSelectedPolaId(data[0].id);
             }
         } catch (err: any) {
             console.error('Gagal memuat pola rotasi:', err);
@@ -239,15 +232,12 @@ export default function ModalKelolaJadwalMassal({
 
         setIsSavingPola(true);
         try {
-            const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-
             let countSuccess = 0;
             for (const pId of selectedPegawaiIds) {
-                const res = await apiFetch(`${baseUrl}/api/v1/pegawai/${pId}`, {
+                const res = await apiFetchJson(`/api/v1/pegawai/${pId}`, {
                     method: 'PUT',
                     headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         pola_rotasi_id: selectedPolaId === 'NONE' ? null : selectedPolaId,
@@ -255,16 +245,14 @@ export default function ModalKelolaJadwalMassal({
                     })
                 });
 
-                const json = await res.json();
-                if (json.success) countSuccess++;
+                if (res.success !== false) countSuccess++;
             }
 
             if (autoGenerateJadwal && selectedPolaId !== 'NONE') {
-                const genRes = await apiFetch(`${baseUrl}/api/v1/jadwal/generate-massal`, {
+                await apiFetchJson('/api/v1/jadwal/generate-massal', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         list_pegawai_ids: selectedPegawaiIds,
@@ -272,10 +260,6 @@ export default function ModalKelolaJadwalMassal({
                         tanggal_selesai: generateSampai
                     })
                 });
-                const genJson = await genRes.json();
-                if (!genRes.ok || !genJson.success) {
-                    throw new Error(genJson.message || 'Gagal generate kalender jadwal.');
-                }
             }
 
             setSuccessMsgPola(`Berhasil menerapkan pola rotasi & generate jadwal untuk ${countSuccess} pegawai!`);
