@@ -1,15 +1,8 @@
 
 import { useState, useMemo } from 'react';
-import { Wallet, TrendingDown, TrendingUp, Printer, Search, RotateCcw } from 'lucide-react';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs, { Dayjs } from 'dayjs';
+import { Wallet, TrendingDown, TrendingUp, Search, RotateCcw } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { useAuthStore } from '../../../../store/useAuthStore';
-import { apiFetch } from '../../../../utils/apiFetch';
-
-import Button from '../../../../components/common/Button';
+import { apiFetchJson } from '../../../../utils/apiFetch';
 import Notif from '../../../../components/common/Notif';
 import ConfirmPopUp from '../../../../components/common/ConfirmPopUp';
 import { TabelRekapGaji, type RekapGajiData } from '../../../../features/gajiTunjangan/components/TabelRekapGaji';
@@ -37,7 +30,6 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
         summaryCards,
         notif,
         handlePelunasanGaji,
-        handleCetakSemuaSlip,
         handlePeriodeChange,
         closeNotif,
 
@@ -55,32 +47,20 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
     const [filterDepartemen, setFilterDepartemen] = useState("");
     const [filterJabatan, setFilterJabatan] = useState("");
 
-    const token = useAuthStore((state) => state.token);
-
     const { data: deptData } = useQuery({
         queryKey: ['departemenList'],
         queryFn: async () => {
-            if (!token) return [];
-            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/departemen`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const json = await res.json();
+            const json = await apiFetchJson('/api/v1/departemen');
             return json.success ? json.data : [];
-        },
-        enabled: !!token
+        }
     });
 
     const { data: jabatanData } = useQuery({
         queryKey: ['jabatanList'],
         queryFn: async () => {
-            if (!token) return [];
-            const res = await apiFetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/jabatan`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const json = await res.json();
+            const json = await apiFetchJson('/api/v1/jabatan');
             return json.success ? json.data : [];
-        },
-        enabled: !!token
+        }
     });
 
     const [modalDetail, setModalDetail] = useState<{
@@ -156,7 +136,7 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
         setModalDetail(prev => ({ ...prev, isOpen: false }));
     };
 
-    return (
+     return (
         <div className="flex flex-col gap-6 animate-in fade-in duration-300">
             {isErrorRekap && (
                 <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm border border-red-300">
@@ -203,7 +183,7 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
                     {/* Baris 1: Search & Cetak Slip Gaji */}
                     <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
                         {/* Search Input */}
-                        <div className="relative flex-1 min-w-[240px] max-w-md">
+                        <div className="relative flex-1 min-w-60 max-w-md">
                             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                             <input
                                 type="text"
@@ -224,6 +204,38 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
 
                         {/* Filter Periode & Action Buttons */}
                         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                            {/* Filter Departemen */}
+                            <select
+                                value={filterDepartemen}
+                                onChange={(e) => {
+                                    setFilterDepartemen(e.target.value);
+                                    setFilterJabatan('');
+                                }}
+                                className="w-full sm:w-40 border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all cursor-pointer"
+                            >
+                                <option value="">Semua Departemen</option>
+                                {uniqueDepartemenList.map((dept: string, idx: number) => (
+                                    <option key={idx} value={dept}>{dept}</option>
+                                ))}
+                            </select>
+
+                            {/* Filter Jabatan */}
+                            <select
+                                value={filterJabatan}
+                                onChange={(e) => setFilterJabatan(e.target.value)}
+                                disabled={!filterDepartemen}
+                                className={`w-full sm:w-40 border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all ${
+                                    !filterDepartemen
+                                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
+                                        : 'bg-white text-slate-700 cursor-pointer'
+                                }`}
+                            >
+                                <option value="">Semua Jabatan</option>
+                                {uniqueJabatanList.map((jab: string, idx: number) => (
+                                    <option key={idx} value={jab}>{jab}</option>
+                                ))}
+                            </select>
+
                             <PeriodSwitcher
                                 periode={periode}
                                 filterValue={filterValue}
@@ -294,7 +306,7 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
                 title="Generate Gaji Periode Ini?"
                 message={`Apakah Anda yakin ingin menghitung dan menerbitkan gaji untuk periode ${labelPeriode}?`}
                 confirmText="Ya, Generate"
-                variant="primary"
+                variant="success"
             />
 
             {/* Custom PopUp Konfirmasi Pelunasan Gaji */}
@@ -305,10 +317,8 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
                 title="Tandai Sebagai Lunas?"
                 message="Apakah Anda yakin ingin menandai gaji ini sebagai Lunas? (Tindakan ini akan mengunci slip gaji dan memotong saldo kasbon pegawai secara permanen jika ada)."
                 confirmText="Ya, Lunasi"
-                variant="warning"
+                variant="success"
             />
         </div>
     );
 }
-
-

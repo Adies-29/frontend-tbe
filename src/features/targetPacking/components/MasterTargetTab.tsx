@@ -48,7 +48,7 @@ export default function MasterTargetTab() {
                                     setSelectedJabatanId(e.target.value);
                                     setIsAdding(false); // Reset status isAdding jika pindah jabatan
                                 }}
-                                className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-indigo-500 shadow-sm text-sm bg-white min-w-[300px] w-full sm:w-auto"
+                                className="border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-indigo-500 shadow-sm text-sm bg-white min-w-75 w-full sm:w-auto"
                             >
                                 {jabatanQuery.data?.map((jab: any) => (
                                     <option key={jab.id} value={jab.id.toString()}>

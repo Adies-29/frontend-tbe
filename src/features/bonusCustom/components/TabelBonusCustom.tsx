@@ -201,7 +201,7 @@ export default function TabelBonusCustom({
                 {/* Baris Atas: Search */}
                 <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
                     {/* Search Input */}
-                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                    <div className="relative flex-1 min-w-60 max-w-md">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <input
                             type="text"
@@ -230,7 +230,7 @@ export default function TabelBonusCustom({
                             <select
                                 value={filterDepartemen}
                                 onChange={handleDepartemenChange}
-                                className="w-full sm:min-w-[160px] border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all cursor-pointer"
+                                className="w-full sm:min-w-40 border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all cursor-pointer"
                             >
                                 <option value="">Semua Departemen</option>
                                 {uniqueDepartemenList.map((dept, idx) => (
@@ -245,7 +245,7 @@ export default function TabelBonusCustom({
                                 value={filterJabatan}
                                 onChange={(e) => setFilterJabatan(e.target.value)}
                                 disabled={!filterDepartemen}
-                                className={`w-full sm:min-w-[160px] border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all ${!filterDepartemen
+                                className={`w-full sm:min-w-40 border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs transition-all ${!filterDepartemen
                                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
                                     : 'bg-white text-slate-700 cursor-pointer'
                                     }`}
@@ -285,11 +285,11 @@ export default function TabelBonusCustom({
 
 
             {/* Matrix Table */}
-            <div className="overflow-x-auto w-full relative max-h-[500px] rounded-b-xl scrollbar-thin">
+            <div className="overflow-x-auto w-full relative max-h-125 rounded-b-xl scrollbar-thin">
                 <table className="w-full text-xs text-left border-collapse min-w-max">
                     <thead className="text-[11px] font-bold text-slate-600 uppercase bg-slate-100/90 sticky top-0 z-20 shadow-xs backdrop-blur-xs">
                         <tr>
-                            <th scope="col" className="px-4 py-3.5 border-r border-b border-slate-200 sticky left-0 z-30 bg-slate-100 min-w-[200px] shadow-[2px_0_6px_-2px_rgba(0,0,0,0.06)]">
+                            <th scope="col" className="px-4 py-3.5 border-r border-b border-slate-200 sticky left-0 z-30 bg-slate-100 min-w-50 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.06)]">
                                 <div className="flex items-center gap-2">
                                     <Users size={14} className="text-slate-500" />
                                     <span>Nama Pegawai</span>
@@ -299,7 +299,7 @@ export default function TabelBonusCustom({
                                 <th
                                     key={idx}
                                     scope="col"
-                                    className={`px-3 py-2.5 border-r border-b border-slate-200 text-center min-w-[105px] transition-colors ${item.isSunday ? 'bg-rose-50/70 text-rose-700' : item.isSaturday ? 'text-slate-700' : 'bg-slate-100 text-slate-700'
+                                    className={`px-3 py-2.5 border-r border-b border-slate-200 text-center min-w-26.25 transition-colors ${item.isSunday ? 'bg-rose-50/70 text-rose-700' : item.isSaturday ? 'text-slate-700' : 'bg-slate-100 text-slate-700'
                                         }`}
                                 >
                                     <div className="flex flex-col items-center justify-center">
@@ -380,9 +380,9 @@ export default function TabelBonusCustom({
                                             return (
                                                 <td
                                                     key={idx}
-                                                    className={`p-2 border-r border-slate-100 relative group hover:z-[100] transition-colors hover:bg-slate-100/80 min-w-[110px] vertical-top ${cellBg}`}
+                                                    className={`p-2 border-r border-slate-100 relative group hover:z-100 transition-colors hover:bg-slate-100/80 min-w-27.5 vertical-top ${cellBg}`}
                                                 >
-                                                    <div className="w-full min-h-[44px] flex flex-col gap-1.5 items-center justify-center relative">
+                                                    <div className="w-full min-h-11 flex flex-col gap-1.5 items-center justify-center relative">
                                                         {bonusesOnDay.length === 1 ? (
                                                             (() => {
                                                                 const bonus = bonusesOnDay[0];

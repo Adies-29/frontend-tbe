@@ -2,12 +2,10 @@ import { useState, useMemo } from "react";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
 import { useQuery } from "@tanstack/react-query";
-import { apiFetch } from "../../../utils/apiFetch";
-import { useAuthStore } from "../../../store/useAuthStore";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import { AlertCircle, Search } from "lucide-react";
 
 export default function TabelRiwayatKasbon() {
-    const token = useAuthStore((state) => state.token);
 
     // Filter states
     const [searchQuery, setSearchQuery] = useState("");
@@ -110,7 +108,7 @@ export default function TabelRiwayatKasbon() {
                 {/* Baris 1: Search */}
                 <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
                     {/* Search Input */}
-                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                    <div className="relative flex-1 min-w-60 max-w-md">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <input
                             type="text"

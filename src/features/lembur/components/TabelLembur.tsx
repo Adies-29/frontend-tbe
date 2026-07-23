@@ -4,9 +4,7 @@ import dayjs from "dayjs";
 import type { LemburData } from "../../../types";
 import { defaultDataGridSx } from "../../../components/common/dataGridStyles";
 import { useState, useMemo } from "react";
-import { useAuthStore } from "../../../store/useAuthStore";
-import { apiFetch } from "../../../utils/apiFetch";
-import { getSafeErrorMessage } from "../../../utils/errorHandler";
+import { apiFetchJson } from "../../../utils/apiFetch";
 import { useNavigate } from "react-router-dom";
 import ConfirmPopUp from "../../../components/common/ConfirmPopUp";
 import Notif from "../../../components/common/Notif";
@@ -247,7 +245,7 @@ export default function TabelLembur({ data, isLoading, onRefresh }: TabelLemburP
                 {/* Baris 1: Search */}
                 <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
                     {/* Search Input */}
-                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                    <div className="relative flex-1 min-w-60 max-w-md">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <input
                             type="text"

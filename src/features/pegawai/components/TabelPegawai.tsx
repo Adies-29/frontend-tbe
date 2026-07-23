@@ -8,7 +8,6 @@ import {
 
 } from "@mui/x-data-grid";
 import { Pencil, Trash2, Search } from "lucide-react";
-import { useAuthStore } from '../../../store/useAuthStore';
 import type { PegawaiData } from '../../../types';
 import { apiFetchJson } from "../../../utils/apiFetch";
 import { defaultDataGridSx } from '../../../components/common/dataGridStyles';
@@ -242,14 +241,14 @@ export default function TabelPegawai({ data: initialData }: TabelPegawaiProps) {
                     <GridActionsCellItem
                         icon={<Pencil size={20} className="text-gray-600 hover:text-black" />}
                         label="Edit"
-                        className="min-w-[44px] min-h-[44px] p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        className="min-w-11 min-h-11 p-2 hover:bg-gray-100 rounded-full transition-colors"
                         onClick={() => navigate(`/dashboard/data-pegawai/edit/${id}`)}
                         color="inherit"
                     />,
                     <GridActionsCellItem
                         icon={<Trash2 size={20} className="text-gray-600 hover:text-red-600" />}
                         label="Delete"
-                        className="min-w-[44px] min-h-[44px] p-2 hover:bg-red-50 rounded-full transition-colors"
+                        className="min-w-11 min-h-11 p-2 hover:bg-red-50 rounded-full transition-colors"
                         onClick={handleDeleteClick(id)}
                         color="inherit"
                     />,
@@ -267,7 +266,7 @@ export default function TabelPegawai({ data: initialData }: TabelPegawaiProps) {
                 {/* Baris 1: Search */}
                 <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
                     {/* Search Input */}
-                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                    <div className="relative flex-1 min-w-60 max-w-md">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <input
                             type="text"

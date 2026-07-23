@@ -27,7 +27,7 @@ export default function JadwalShiftIndex() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                            <CalendarDays size={28} className="text-blue-600" /> Manajemen Jadwal & Shift
+                            Manajemen Jadwal & Shift
                         </h1>
                         <p className="text-sm text-gray-500 mt-1">Kelola kalender kerja pegawai dan master aturan shift.</p>
                     </div>
@@ -35,7 +35,7 @@ export default function JadwalShiftIndex() {
                     {activeTab === 'jadwal' && (
                         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
                             <Button 
-                                variant="info" 
+                                variant="success" 
                                 label="Kelola Shift & Pola Massal" 
                                 icon={<Users size={16} />}
                                 onClick={() => matrixJadwalParams.setIsModalMassalOpen(true)} 
@@ -94,7 +94,7 @@ export default function JadwalShiftIndex() {
             </section>
 
             {/* RENDER KONTEN BERDASARKAN TAB AKTIF */}
-            <div className="w-full min-h-[400px]">
+            <div className="w-full min-h-100">
                 {activeTab === 'jadwal' ? <TabJadwal hookParams={matrixJadwalParams} /> : <TabShift />}
             </div>
 

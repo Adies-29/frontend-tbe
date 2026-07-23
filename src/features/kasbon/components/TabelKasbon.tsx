@@ -178,7 +178,7 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
                             icon={<Banknote size={20} className="text-emerald-600" />}
                             label="Bayar Kasbon"
                             onClick={() => onBayar && onBayar(params.row)}
-                            className="min-w-[44px] min-h-[44px] p-2 hover:bg-emerald-50 rounded-full transition-colors"
+                            className="min-w-11 min-h-11 p-2 hover:bg-emerald-50 rounded-full transition-colors"
                             color="inherit"
                         />
                     );
@@ -190,7 +190,7 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
                         icon={<Trash2 size={20} className="text-gray-600 hover:text-red-600" />}
                         label="Hapus"
                         onClick={handleDeleteClick(params.id)}
-                        className="min-w-[44px] min-h-[44px] p-2 hover:bg-red-50 rounded-full transition-colors"
+                        className="min-w-11 min-h-11 p-2 hover:bg-red-50 rounded-full transition-colors"
                         color="inherit"
                     />
                 );
@@ -237,7 +237,7 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
                 {/* Baris 1: Search */}
                 <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
                     {/* Search Input */}
-                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                    <div className="relative flex-1 min-w-60 max-w-md">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <input
                             type="text"
@@ -298,7 +298,7 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
                         <select
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                            className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer min-w-[125px]"
+                            className="border border-slate-300 rounded-xl px-3 py-1.5 bg-white text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-2xs cursor-pointer min-w-31.25"
                         >
                             <option value="">Semua Status</option>
                             <option value="Pending">Pending</option>
