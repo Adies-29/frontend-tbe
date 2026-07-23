@@ -434,6 +434,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
                 );
             }
         }
+    ];
 
     const handleExportCSV = () => {
         const headers = ["Nama Karyawan", "Waktu Masuk", "Status", "Waktu Pulang", "Kerapihan", "Status Lembur"];
