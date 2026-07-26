@@ -3,7 +3,7 @@ import type { PencapaianTargetData } from '../../../types';
 import { apiFetchJson } from '../../../utils/apiFetch';
 import { useQuery } from '@tanstack/react-query';
 import { useNotif } from '../../../hooks/useNotif';
-import { getCurrentWeek } from '../../../utils/dateHelpers';
+import { getCurrentWeek, parseWeekValue } from '../../../utils/dateHelpers';
 
 
 export interface TargetDetail {
@@ -44,16 +44,9 @@ export function useMatrixPencapaian() {
     const [periode, setPeriode] = useState<string>('minggu');
     const [filterValue, setFilterValue] = useState<string>(defaultWeekStr);
 
-    const currentDay = now.getDay();
-    const diff = now.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
-    const monday = new Date(now);
-    monday.setDate(diff);
-
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-
-    const firstDay = monday.toLocaleDateString('en-CA');
-    const lastDay = sunday.toLocaleDateString('en-CA');
+    const initialParsed = parseWeekValue(defaultWeekStr);
+    const firstDay = initialParsed?.startDate || '';
+    const lastDay = initialParsed?.endDate || '';
 
     const { filterStartDate, filterEndDate } = useMemo(() => {
         if (!filterValue) {
@@ -63,17 +56,13 @@ export function useMatrixPencapaian() {
         const year = parseInt(filterValue.substring(0, 4));
 
         if (periode === 'minggu') {
-            const week = parseInt(filterValue.substring(6, 8));
-            const jan4 = new Date(year, 0, 4);
-            const jan4Day = jan4.getDay() || 7;
-            const startDate = new Date(year, 0, 4 - jan4Day + 1 + (week - 1) * 7);
-            const endDate = new Date(startDate);
-            endDate.setDate(startDate.getDate() + 6);
-
-            return {
-                filterStartDate: startDate.toLocaleDateString('en-CA'),
-                filterEndDate: endDate.toLocaleDateString('en-CA')
-            };
+            const parsed = parseWeekValue(filterValue);
+            if (parsed) {
+                return {
+                    filterStartDate: parsed.startDate,
+                    filterEndDate: parsed.endDate
+                };
+            }
         } else if (periode === 'bulan') {
             const month = parseInt(filterValue.substring(5, 7));
             const startDate = new Date(year, month - 1, 1);

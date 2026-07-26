@@ -1,12 +1,13 @@
 /**
  * Mengembalikan string minggu ISO saat ini (contoh: "2026-W29")
  */
-export const getCurrentWeek = (): string => {
-    const d = new Date();
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+export const getCurrentWeek = (date: Date = new Date()): string => {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const dayNum = d.getDay() || 7;
+    d.setDate(d.getDate() + 4 - dayNum);
+    const yearStart = new Date(d.getFullYear(), 0, 1);
     const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-    return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+    return `${d.getFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 };
 
 /**
@@ -45,16 +46,16 @@ export const parseWeekValue = (weekStr: string): ParsedWeekResult | null => {
     const week = parseInt(mingguStr, 10);
     if (isNaN(year) || isNaN(week)) return null;
 
-    const jan4 = new Date(Date.UTC(year, 0, 4));
-    const dayOfJan4 = jan4.getUTCDay() || 7;
-    const week1Start = new Date(Date.UTC(year, 0, 4 - dayOfJan4 + 1));
-    const startDateObj = new Date(week1Start.getTime() + (week - 1) * 7 * 86400000);
-    const endDateObj = new Date(startDateObj.getTime() + 6 * 86400000);
+    const jan4 = new Date(year, 0, 4);
+    const dayOfJan4 = jan4.getDay() || 7;
+    const week1Start = new Date(year, 0, 4 - dayOfJan4 + 1);
+    const startDateObj = new Date(week1Start.getFullYear(), week1Start.getMonth(), week1Start.getDate() + (week - 1) * 7);
+    const endDateObj = new Date(startDateObj.getFullYear(), startDateObj.getMonth(), startDateObj.getDate() + 6);
 
     const formatISO = (d: Date) => {
-        const y = d.getUTCFullYear();
-        const m = String(d.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(d.getUTCDate()).padStart(2, '0');
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
         return `${y}-${m}-${day}`;
     };
 
@@ -68,8 +69,8 @@ export const parseWeekValue = (weekStr: string): ParsedWeekResult | null => {
         tanggalSelesai: endDate,
         year,
         week,
-        targetBulan: startDateObj.getUTCMonth() + 1,
-        targetTahun: startDateObj.getUTCFullYear()
+        targetBulan: startDateObj.getMonth() + 1,
+        targetTahun: startDateObj.getFullYear()
     };
 };
 
