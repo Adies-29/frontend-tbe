@@ -16,7 +16,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['tb.jpg'],
       manifest: {
         name: 'T-Be (Tiga Berlian)',
         short_name: 'T-Be',
@@ -26,9 +26,9 @@ export default defineConfig({
         display: 'standalone',
         icons: [
           {
-            src: 'favicon.svg',
+            src: 'tb.jpg',
             sizes: '192x192 512x512',
-            type: 'image/svg+xml',
+            type: 'image/jpeg',
             purpose: 'any maskable'
           }
         ]
