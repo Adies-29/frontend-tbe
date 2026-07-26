@@ -48,7 +48,7 @@ export default function Home() {
 
             {/* Navigation */}
             <nav className="relative z-10 flex items-center justify-between px-6 md:px-16 py-5 anim-fade-in">
-                <span className="text-sm font-bold tracking-tight text-gray-800">Sistem Absensi</span>
+                <span className="text-sm font-bold tracking-tight text-gray-800">T-Be (tiga berlian)</span>
                 <button
                     onClick={() => navigate('/login')}
                     className="text-sm font-medium text-gray-500 hover:text-[#C90003] transition-colors duration-300"
@@ -61,7 +61,7 @@ export default function Home() {
             <section className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 pb-24 pt-8">
 
                 {/* Animated Gradient Blobs */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-[60%] w-[600px] h-[400px] pointer-events-none">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-[60%] w-150 h-100 pointer-events-none">
                     <div className="absolute inset-0 rounded-full bg-[#FFb702]/20 blur-[100px] anim-blob-1" />
                     <div className="absolute inset-0 rounded-full bg-[#C90003]/12 blur-[100px] anim-blob-2" />
                     <div className="absolute inset-0 rounded-full bg-[#FFb702]/10 blur-[80px] anim-blob-3" />
@@ -108,8 +108,8 @@ export default function Home() {
 
             {/* Footer */}
             <footer className="relative z-10 py-5 text-center anim-fade-in">
-                <p className="text-[11px] text-red-500">
-                    © {new Date().getFullYear()} Sistem Absensi
+                <p className="text-[11px] text-gray-500">
+                    &copy; {new Date().getFullYear()} T-Be (tiga berlian) by R3A Studio &bull; All Rights Reserved
                 </p>
             </footer>
         </div>
