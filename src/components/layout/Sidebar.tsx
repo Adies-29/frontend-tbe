@@ -147,7 +147,7 @@ export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: Sidebar
                 <div className={`w-full text-center transition-all duration-300 
                     ${isOpen ? "opacity-100 block" : "opacity-0 hidden"}`}>
                     <p className="text-[10px] md:text-[11px] font-light text-white/70 leading-tight">
-                        &copy; {currentYear} T-Be (tiga berlian)<br />All Right Reserved
+                        &copy; {currentYear} T-Be (tiga berlian) by R3A Studio<br />All Rights Reserved
                     </p>
                     <p className="text-[10px] md:text-[11px] font-medium text-white/40 mt-1.5">
                         v{import.meta.env.PACKAGE_VERSION || "0.0.0"}
