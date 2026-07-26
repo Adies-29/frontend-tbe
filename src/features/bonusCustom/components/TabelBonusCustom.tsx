@@ -1,6 +1,6 @@
 import { Trash2, Search, Pencil, Users, RotateCcw } from 'lucide-react';
 import { useState, useMemo, startTransition } from 'react';
-import { getCurrentWeek } from '../../../utils/dateHelpers';
+import { getCurrentWeek, parseWeekValue } from '../../../utils/dateHelpers';
 import PeriodSwitcher from '../../../components/common/PeriodSwitcher';
 
 export interface BonusCustomData {
@@ -45,21 +45,11 @@ export default function TabelBonusCustom({
         if (!filterValue) return { filterStartDate: '', filterEndDate: '' };
 
         if (periode === 'minggu') {
-            const parts = filterValue.split('-W');
-            if (parts.length !== 2) return { filterStartDate: '', filterEndDate: '' };
-            const year = parseInt(parts[0], 10);
-            const week = parseInt(parts[1], 10);
-            const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
-            const dayOfWeek = simple.getUTCDay();
-            const monday = new Date(simple);
-            if (dayOfWeek <= 4) monday.setUTCDate(simple.getUTCDate() - simple.getUTCDay() + 1);
-            else monday.setUTCDate(simple.getUTCDate() + (8 - simple.getUTCDay()));
-            const sunday = new Date(monday);
-            sunday.setUTCDate(monday.getUTCDate() + 6);
-            return {
-                filterStartDate: monday.toISOString().split('T')[0],
-                filterEndDate: sunday.toISOString().split('T')[0]
-            };
+            const parsed = parseWeekValue(filterValue);
+            if (parsed) {
+                return { filterStartDate: parsed.startDate, filterEndDate: parsed.endDate };
+            }
+            return { filterStartDate: '', filterEndDate: '' };
         }
 
         if (periode === 'bulan') {

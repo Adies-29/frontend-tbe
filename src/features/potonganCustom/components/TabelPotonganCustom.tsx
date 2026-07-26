@@ -5,6 +5,8 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 
+import { getCurrentWeek, parseWeekValue } from '../../../utils/dateHelpers';
+
 export interface PotonganCustomData {
     id: string;
     nama_pegawai: string;
@@ -22,18 +24,7 @@ interface TabelPotonganCustomProps {
 }
 
 export const TabelPotonganCustom = ({ data = [], listPegawai = [], onDelete, onEdit }: TabelPotonganCustomProps) => {
-    // Helper to calculate week number
-    const getWeekNumber = (d: Date) => {
-        const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
-        const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-        const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-        return { year: date.getUTCFullYear(), week: weekNo };
-    };
-
-    const now = new Date();
-    const weekData = getWeekNumber(now);
-    const defaultWeekStr = `${weekData.year}-W${weekData.week.toString().padStart(2, '0')}`;
+    const defaultWeekStr = getCurrentWeek();
 
     // States for Filter & Search
     const [periode, setPeriode] = useState<'minggu' | 'bulan' | 'tahun'>('minggu');
@@ -45,32 +36,23 @@ export const TabelPotonganCustom = ({ data = [], listPegawai = [], onDelete, onE
     // Calculate filterStartDate and filterEndDate reactively based on period & input selection
     const { filterStartDate, filterEndDate } = useMemo(() => {
         if (!filterValue) {
-            const currentDay = now.getDay();
-            const diff = now.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
-            const monday = new Date(now);
-            monday.setDate(diff);
-            const sunday = new Date(monday);
-            sunday.setDate(monday.getDate() + 6);
+            const parsed = parseWeekValue(defaultWeekStr);
             return {
-                filterStartDate: monday.toLocaleDateString('en-CA'),
-                filterEndDate: sunday.toLocaleDateString('en-CA')
+                filterStartDate: parsed?.startDate || '',
+                filterEndDate: parsed?.endDate || ''
             };
         }
 
         const year = parseInt(filterValue.substring(0, 4));
 
         if (periode === 'minggu') {
-            const week = parseInt(filterValue.substring(6, 8));
-            const jan4 = new Date(year, 0, 4);
-            const jan4Day = jan4.getDay() || 7;
-            const startDate = new Date(year, 0, 4 - jan4Day + 1 + (week - 1) * 7);
-            const endDate = new Date(startDate);
-            endDate.setDate(startDate.getDate() + 6);
-
-            return {
-                filterStartDate: startDate.toLocaleDateString('en-CA'),
-                filterEndDate: endDate.toLocaleDateString('en-CA')
-            };
+            const parsed = parseWeekValue(filterValue);
+            if (parsed) {
+                return {
+                    filterStartDate: parsed.startDate,
+                    filterEndDate: parsed.endDate
+                };
+            }
         } else if (periode === 'bulan') {
             const month = parseInt(filterValue.substring(5, 7));
             const startDate = new Date(year, month - 1, 1);
