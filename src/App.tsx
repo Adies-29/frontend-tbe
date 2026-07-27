@@ -39,6 +39,7 @@ const DetailPegawai = lazy(() => import('./features/pegawai/pages/DetailPegawai'
 
 const BonusCustomIndex = lazy(() => import('./features/bonusCustom/pages/BonusCustomIndex'))
 const PotonganCustomIndex = lazy(() => import('./features/potonganCustom/pages/PotonganCustomIndex'))
+const PengaturanMesinIndex = lazy(() => import('./features/pengaturanMesin/pages/PengaturanMesinIndex'))
 
 
 function PageLoader() {
@@ -114,6 +115,7 @@ function App() {
 
                   <Route path="/dashboard/bonus-custom" element={<BonusCustomIndex />} />
                   <Route path="/dashboard/potongan-custom" element={<PotonganCustomIndex />} />
+                  <Route path="/dashboard/pengaturan-mesin" element={<PengaturanMesinIndex />} />
                 </Route>
 
                 {/* RUTE ADMIN, HRD, DAN MANDOR */}
