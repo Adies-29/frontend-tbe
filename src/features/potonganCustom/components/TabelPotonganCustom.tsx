@@ -5,7 +5,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 
-import { getCurrentWeek, parseWeekValue } from '../../../utils/dateHelpers';
+import { getCurrentWeek, getCurrentMonth, getCurrentYear, parseWeekValue } from '../../../utils/dateHelpers';
 
 export interface PotonganCustomData {
     id: string;
@@ -53,6 +53,7 @@ export const TabelPotonganCustom = ({ data = [], listPegawai = [], onDelete, onE
                     filterEndDate: parsed.endDate
                 };
             }
+            return { filterStartDate: '', filterEndDate: '' };
         } else if (periode === 'bulan') {
             const month = parseInt(filterValue.substring(5, 7));
             const startDate = new Date(year, month - 1, 1);
@@ -129,10 +130,9 @@ export const TabelPotonganCustom = ({ data = [], listPegawai = [], onDelete, onE
         if (newPeriode === 'minggu') {
             setFilterValue(defaultWeekStr);
         } else if (newPeriode === 'bulan') {
-            const monthStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-            setFilterValue(monthStr);
+            setFilterValue(getCurrentMonth());
         } else {
-            setFilterValue(String(now.getFullYear()));
+            setFilterValue(getCurrentYear());
         }
     };
 
