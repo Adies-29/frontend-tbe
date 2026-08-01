@@ -253,7 +253,7 @@ export default function ModalPreviewSlipGaji({
 
                 for (let i = 0; i < chunk.length; i++) {
                     const emp = chunk[i];
-                    const cardElem = document.getElementById(`export-pdf-card-${emp.id}`);
+                    const cardElem = document.getElementById(`offscreen-pdf-card-${emp.id}`);
                     if (!cardElem) continue;
 
                     const canvas = await toCanvas(cardElem, {
@@ -290,7 +290,7 @@ export default function ModalPreviewSlipGaji({
         setIsExportingPng(true);
         try {
             const currentPegawai = selectedEmployees[previewIndex] || selectedEmployees[0];
-            const cardId = `export-pdf-card-${currentPegawai.id}`;
+            const cardId = `offscreen-pdf-card-${currentPegawai.id}`;
             const cardElem = document.getElementById(cardId) || previewContainerRef.current;
             if (!cardElem) return;
 
@@ -750,24 +750,24 @@ export default function ModalPreviewSlipGaji({
                     {selectedEmployees.map((pegawai) => (
                         <div
                             key={pegawai.id}
-                            id={`export-pdf-card-${pegawai.id}`}
-                            className="bg-white p-3.5 w-[140mm] h-[97mm] text-[7.5px] font-sans text-slate-900 flex flex-col justify-between overflow-hidden border border-dashed border-slate-300"
+                            id={`offscreen-pdf-card-${pegawai.id}`}
+                            className="bg-white p-3.5 w-[140mm] h-[97mm] text-[9.5px] font-sans text-slate-900 flex flex-col justify-start gap-1.5 overflow-hidden border border-dashed border-slate-300"
                         >
                             {/* HEADER SLIP GAJI */}
-                            <div className="flex justify-between items-start border-b-2 border-slate-900 pb-1.5">
-                                <table className="text-left font-bold text-[7.5px] leading-tight">
+                            <div className="flex justify-between items-start border-b-2 border-slate-900 pb-1">
+                                <table className="text-left font-bold text-[9px] leading-tight">
                                     <tbody>
-                                        <tr><td className="w-14 pb-0.5 text-slate-500 font-medium">Nama Pegawai</td><td className="pb-0.5 font-extrabold text-slate-900">: {pegawai.nama}</td></tr>
-                                        <tr><td className="pb-0.5 text-slate-500 font-medium">Jabatan / Shift</td><td className="pb-0.5 font-bold text-slate-800">: {pegawai.jabatan} {pegawai.shift ? `(${pegawai.shift})` : ''}</td></tr>
-                                        <tr><td className="pb-0.5 text-slate-500 font-medium">Tipe Penggajian</td><td className="pb-0.5 font-bold text-slate-800">: {pegawai.tipe_penggajian}</td></tr>
-                                        <tr><td className="pb-0.5 text-slate-500 font-medium">Periode Tanggal</td><td className="pb-0.5 font-bold text-slate-800">: {pegawai.periode_tanggal || filterValue}</td></tr>
+                                        <tr><td className="w-14 pb-0.1 text-slate-500 font-medium">Nama Pegawai</td><td className="pb-0.1 font-extrabold text-slate-900">: {pegawai.nama}</td></tr>
+                                        <tr><td className="pb-0.1 text-slate-500 font-medium">Jabatan / Shift</td><td className="pb-0.1 font-bold text-slate-800">: {pegawai.jabatan} {pegawai.shift ? `(${pegawai.shift})` : ''}</td></tr>
+                                        <tr><td className="pb-0.1 text-slate-500 font-medium">Tipe Penggajian</td><td className="pb-0.1 font-bold text-slate-800">: {pegawai.tipe_penggajian}</td></tr>
+                                        <tr><td className="pb-0.1 text-slate-500 font-medium">Periode Tanggal</td><td className="pb-0.1 font-bold text-slate-800">: {pegawai.periode_tanggal || filterValue}</td></tr>
                                     </tbody>
                                 </table>
 
-                                <div className="text-right">
-                                    <h1 className="font-extrabold text-[8.5px] text-slate-900 uppercase leading-none">Perusahaan Krupuk Mie</h1>
-                                    <h2 className="font-black text-[10px] text-emerald-800 tracking-wider leading-tight">" Tiga Berlian Official "</h2>
-                                    <p className="mt-0.5 leading-tight text-[6px] text-slate-500 font-medium">
+                                <div className="text-right leading-none">
+                                    <h1 className="font-extrabold text-[9px] text-slate-900 uppercase leading-none">Perusahaan Krupuk Mie</h1>
+                                    <h2 className="font-black text-[10.5px] text-emerald-800 tracking-wider leading-tight mt-0.5">" Tiga Berlian Official "</h2>
+                                    <p className="mt-0.5 leading-tight text-[7px] text-slate-500 font-medium">
                                         Jl. Raya Belakang Yonif 407 &middot; Ds. Harjosari Lor RT 28 RW 06<br />
                                         Kec. Adiwerna Kab. Tegal &middot; Telp. 095743404555
                                     </p>
@@ -776,10 +776,10 @@ export default function ModalPreviewSlipGaji({
 
                             {/* 1. RINCIAN ABSENSI & UPAH HARIAN */}
                             <div>
-                                <h4 className="font-extrabold text-[7.5px] text-slate-800 uppercase mb-0.5 border-b border-slate-350 pb-0.2">
+                                <h4 className="font-extrabold text-[9px] text-slate-800 uppercase mb-0.5 border-b border-slate-350 pb-0.2">
                                     1. Rincian Absensi & Upah Harian
                                 </h4>
-                                <table className="w-full border-collapse border border-slate-900 text-center text-[7.5px] leading-tight">
+                                <table className="w-full border-collapse border border-slate-900 text-center text-[9.5px] leading-tight">
                                     <thead className="border-b border-slate-900 bg-slate-100 font-bold">
                                         <tr>
                                             <th className="border-r border-slate-900 py-0.5 w-5">No</th>
@@ -814,15 +814,15 @@ export default function ModalPreviewSlipGaji({
                                                         {pegawai.tipe_penggajian === 'Target' ? (
                                                             <>
                                                                 <td className="border-r border-slate-900 py-0.2 text-left px-1 italic truncate max-w-20">{hari.nama_target || '-'}</td>
-                                                                <td className="border-r border-slate-900 py-0.2 text-right px-1">{formatAngka(hari.harga_satuan)}</td>
+                                                                <td className="border-r border-slate-900 py-0.2 text-right px-1 font-semibold">{formatAngka(hari.harga_satuan)}</td>
                                                                 <td className="border-r border-slate-900 py-0.2 font-bold">{formatAngka(hari.capaian)}</td>
                                                             </>
                                                         ) : (
-                                                            <td className="border-r border-slate-900 py-0.2 text-right px-1">{formatAngka(hari.gaji_kehadiran)}</td>
+                                                            <td className="border-r border-slate-900 py-0.2 text-right px-1 font-semibold">{formatAngka(hari.gaji_kehadiran)}</td>
                                                         )}
-                                                        <td className="border-r border-slate-900 py-0.2 text-right px-1">{formatAngka(hari.t_absensi)}</td>
-                                                        <td className="border-r border-slate-900 py-0.2 text-right px-1">{formatAngka(hari.t_kerapian)}</td>
-                                                        <td className="border-r border-slate-900 py-0.2 text-right px-1">{formatAngka(hari.lembur)}</td>
+                                                        <td className="border-r border-slate-900 py-0.2 text-right px-1 font-semibold">{formatAngka(hari.t_absensi)}</td>
+                                                        <td className="border-r border-slate-900 py-0.2 text-right px-1 font-semibold">{formatAngka(hari.t_kerapian)}</td>
+                                                        <td className="border-r border-slate-900 py-0.2 text-right px-1 font-semibold">{formatAngka(hari.lembur)}</td>
                                                         <td className="border-r border-slate-900 py-0.2 text-right px-1 font-bold text-emerald-700 bg-emerald-50/30">
                                                             {bCustom > 0 ? `+${formatAngka(bCustom)}` : '-'}
                                                         </td>
@@ -854,10 +854,10 @@ export default function ModalPreviewSlipGaji({
                             {/* 2 & 3. RINCIAN AKUMULASI PENDAPATAN & POTONGAN */}
                             <div className="grid grid-cols-2 gap-3 leading-tight">
                                 <div className="border border-slate-900 p-1.5 rounded-md bg-slate-50/50">
-                                    <h5 className="font-bold text-[7.5px] text-slate-800 uppercase mb-0.5 border-b border-slate-300 pb-0.2">
+                                    <h5 className="font-bold text-[9px] text-slate-800 uppercase mb-0.5 border-b border-slate-300 pb-0.2">
                                         2. Informasi Kasbon & Tabungan
                                     </h5>
-                                    <table className="w-full text-[7.5px]">
+                                    <table className="w-full text-[9.5px]">
                                         <tbody className="divide-y divide-slate-200">
                                             {pegawai.rincian_potongan?.detail_kasbon?.map((bon: any, i: number) => (
                                                 <tr key={i}>
@@ -878,10 +878,10 @@ export default function ModalPreviewSlipGaji({
                                 </div>
 
                                 <div className="border border-slate-900 p-1.5 rounded-md bg-slate-50/50">
-                                    <h5 className="font-bold text-[7.5px] text-slate-800 uppercase mb-0.5 border-b border-slate-300 pb-0.2">
+                                    <h5 className="font-bold text-[9px] text-slate-800 uppercase mb-0.5 border-b border-slate-300 pb-0.2">
                                         3. Rincian Komponen Gaji
                                     </h5>
-                                    <table className="w-full text-[7.5px]">
+                                    <table className="w-full text-[9.5px]">
                                         <tbody className="divide-y divide-slate-200">
                                             <tr>
                                                 <td className="py-0.2 text-slate-650 font-medium">Jumlah Gaji Pokok:</td>
@@ -932,10 +932,10 @@ export default function ModalPreviewSlipGaji({
                             {/* 4. TOTAL UPAH BERSIH */}
                             <div className="bg-slate-900 text-white p-1.5 rounded-lg flex justify-between items-center shadow-xs shrink-0">
                                 <div>
-                                    <span className="text-[7.5px] uppercase font-bold text-slate-400 block tracking-wider leading-none">TOTAL UPAH BERSIH</span>
-                                    <span className="text-[7.5px] text-slate-300 font-semibold mt-0.5 leading-none">Status: <strong className={pegawai.status?.toLowerCase() === 'lunas' ? 'text-emerald-400' : 'text-amber-400'}>{pegawai.status}</strong></span>
+                                    <span className="text-[8px] uppercase font-bold text-slate-400 block tracking-wider leading-none">TOTAL UPAH BERSIH</span>
+                                    <span className="text-[8px] text-slate-300 font-semibold mt-0.5 leading-none">Status: <strong className={pegawai.status?.toLowerCase() === 'lunas' ? 'text-emerald-400' : 'text-amber-400'}>{pegawai.status}</strong></span>
                                 </div>
-                                <div className="text-[12px] font-black text-emerald-400 leading-none">
+                                <div className="text-[12.5px] font-black text-emerald-400 leading-none">
                                     {formatRupiah(pegawai.total_upah)}
                                 </div>
                             </div>
