@@ -332,7 +332,7 @@ export const TabelPotonganCustom = ({ data = [], listPegawai = [], onDelete, onE
             </div>
 
             {/* Matrix Table */}
-            <div className="overflow-x-auto w-full relative min-h-[380px] max-h-[500px] rounded-b-xl scrollbar-thin">
+            <div className="overflow-x-auto w-full relative min-h-[420px] max-h-[500px] rounded-b-xl scrollbar-thin">
                 <table className="w-full text-xs text-left border-collapse min-w-max">
                     <thead className="text-[11px] font-bold text-slate-600 uppercase bg-slate-100/90 sticky top-0 z-20 shadow-xs backdrop-blur-xs">
                         <tr>
@@ -433,13 +433,13 @@ export const TabelPotonganCustom = ({ data = [], listPegawai = [], onDelete, onE
                                                 cellBg = 'bg-rose-50/30 hover:bg-rose-100/40';
                                             }
 
-                                            // Smart tooltip positioning based on half of total rows
+                                            // Smart tooltip positioning: top 4 rows or totalRows <= 5 open downwards to avoid clipping top
                                             const totalRows = filteredPegawai.length;
-                                            const isTopHalf = totalRows <= 2 ? index === 0 : index < Math.ceil(totalRows / 2);
+                                            const openDownwards = index < 4 || totalRows <= 5;
                                             const isLeftCol = idx < 2;
                                             const isRightCol = idx >= daysArray.length - 2;
 
-                                            const vertPosClass = isTopHalf ? 'top-full mt-1.5' : 'bottom-full mb-1.5';
+                                            const vertPosClass = openDownwards ? 'top-full mt-1.5' : 'bottom-full mb-1.5';
                                             const horizPosClass = isLeftCol
                                                 ? 'left-0 translate-x-0'
                                                 : isRightCol
