@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ReceiptText, Briefcase, Loader2, PlayCircle, Printer } from 'lucide-react';
+import { ReceiptText, Briefcase, Loader2, PlayCircle, Printer, Download } from 'lucide-react';
 import Button from '../../../components/common/Button';
 import TabRekapGaji from './tabs/TabRekapGaji';
 import TabMasterGaji from './tabs/TabMasterGaji';
@@ -30,8 +30,16 @@ export default function GajiTunjanganIndex() {
                     {activeTab === 'rekap' && (
                         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
                             <Button 
-                                label="Cetak Slip Gaji" 
+                                label="Export Excel" 
                                 variant="success" 
+                                icon={<Download size={16} />} 
+                                onClick={() => rekapGajiParams.handleExportCSV()} 
+                                disabled={rekapGajiParams.rekapGajiData.length === 0}
+                                className="w-full md:w-auto active:scale-95 py-3 md:py-2 text-[15px] md:text-sm rounded-xl font-bold shadow-2xs cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white"
+                            />
+                            <Button 
+                                label="Cetak Slip Gaji" 
+                                variant="primary" 
                                 icon={<Printer size={16} />} 
                                 onClick={rekapGajiParams.handleCetakSemuaSlip} 
                                 disabled={rekapGajiParams.rekapGajiData.length === 0}
