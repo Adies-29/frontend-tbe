@@ -297,10 +297,10 @@ export default function TabelBonusCustom({
                                             {item.dayName}
                                         </span>
                                         <span className={`text-sm font-black ${item.isSunday ? 'text-rose-600' : 'text-slate-800'}`}>
-                                            {item.dayNumber}
+                                            {item.dayNum}
                                         </span>
                                         <span className={`text-[9px] font-medium ${item.isSunday ? 'text-rose-400' : 'text-slate-400'}`}>
-                                            {item.monthName}
+                                            {item.monthShort}
                                         </span>
                                     </div>
                                 </th>
