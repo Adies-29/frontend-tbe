@@ -3,6 +3,7 @@ import { apiFetchJson } from '../../../utils/apiFetch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNotif } from '../../../hooks/useNotif';
 import { getCurrentWeek, getCurrentMonth, getCurrentYear, parseWeekValue, formatPeriodeGaji } from '../../../utils/dateHelpers';
+import { formatRupiah } from '../../../utils/formatCurrency';
 
 export function useRekapGaji() {
     const queryClient = useQueryClient();
@@ -300,6 +301,85 @@ export function useRekapGaji() {
         else setFilterValue("");
     };
 
+    const handleExportCSV = (customData?: any[]) => {
+        const dataToExport = customData || rekapGajiData;
+        if (!dataToExport || dataToExport.length === 0) {
+            showNotif("Tidak ada data rekap gaji untuk diexport!", "error");
+            return;
+        }
+
+        const headers = [
+            "No",
+            "Nama Karyawan",
+            "Departemen",
+            "Jabatan",
+            "Gaji Dasar",
+            "Total Bonus",
+            "Total Potongan",
+            "Total Gaji (Take Home Pay)",
+            "Status Pembayaran"
+        ];
+
+        const csvRows: string[] = [];
+        csvRows.push(`"REKAPITULASI GAJI PEGAWAI - PERIODE ${filterValue || '-'}"`);
+        csvRows.push(`"Tanggal Export: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}"`);
+        csvRows.push("");
+
+        csvRows.push(headers.join(","));
+
+        let grandTotalGaji = 0;
+        let totalGajiDasar = 0;
+        let totalBonusAll = 0;
+        let totalPotonganAll = 0;
+
+        dataToExport.forEach((row: any, idx: number) => {
+            const gajiBersih = row.gaji_bersih || 0;
+            const gajiDasar = row.gaji_dasar || 0;
+            const bonus = row.total_bonus || 0;
+            const potongan = row.total_potongan || 0;
+
+            grandTotalGaji += gajiBersih;
+            totalGajiDasar += gajiDasar;
+            totalBonusAll += bonus;
+            totalPotonganAll += potongan;
+
+            const values = [
+                `"${idx + 1}"`,
+                `"${row.nama || ''}"`,
+                `"${row.departemen || '-'}"`,
+                `"${row.jabatan || '-'}"`,
+                `"${formatRupiah(gajiDasar)}"`,
+                `"${formatRupiah(bonus)}"`,
+                `"${formatRupiah(potongan)}"`,
+                `"${formatRupiah(gajiBersih)}"`,
+                `"${row.status || 'Pending'}"`
+            ];
+            csvRows.push(values.join(","));
+        });
+
+        csvRows.push("");
+        const summaryRow = [
+            `""`, `""`, `""`,
+            `"TOTAL GAJI KESELURUHAN YANG DIKELUARKAN:"`,
+            `"${formatRupiah(totalGajiDasar)}"`,
+            `"${formatRupiah(totalBonusAll)}"`,
+            `"${formatRupiah(totalPotonganAll)}"`,
+            `"${formatRupiah(grandTotalGaji)}"`,
+            `""`
+        ];
+        csvRows.push(summaryRow.join(","));
+
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csvRows.join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Rekap_Gaji_${filterValue || 'Periode'}_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showNotif("File rekap gaji berhasil diexport!", "success");
+    };
 
     return {
         periode,
@@ -320,6 +400,7 @@ export function useRekapGaji() {
         handleCetakSemuaSlip,
         handleFilter,
         handlePeriodeChange,
+        handleExportCSV,
 
         // PopUp Confirm States & Functions
         showConfirmGenerate,

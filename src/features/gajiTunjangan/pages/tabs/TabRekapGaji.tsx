@@ -1,6 +1,6 @@
 
 import { useState, useMemo } from 'react';
-import { Wallet, TrendingDown, TrendingUp, Search, RotateCcw } from 'lucide-react';
+import { Wallet, TrendingDown, TrendingUp, Search, RotateCcw, Download } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetchJson } from '../../../../utils/apiFetch';
 import Notif from '../../../../components/common/Notif';
@@ -242,6 +242,17 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
                                 onPeriodeChange={handlePeriodeChange}
                                 onFilterValueChange={setFilterValue}
                             />
+
+                            <button
+                                type="button"
+                                onClick={() => hookParams.handleExportCSV(filteredRekapGajiData)}
+                                disabled={filteredRekapGajiData.length === 0}
+                                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-2xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                                title="Export data rekap gaji ke file Excel / CSV"
+                            >
+                                <Download size={14} />
+                                <span>Export Excel</span>
+                            </button>
 
                             {(searchQuery || filterDepartemen || filterJabatan) && (
                                 <button
