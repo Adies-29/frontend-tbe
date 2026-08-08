@@ -556,7 +556,7 @@ export const TabelRiwayatAbsensi = ({ data = [], listPegawai = [], listJadwal = 
                                 const rowBg = index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50';
                                 const cellBg = index % 2 === 0 ? 'bg-white' : 'bg-slate-50';
                                 return (
-                                    <tr key={pegawai.id} className={`border-b border-slate-100 hover:bg-slate-100/60 transition-colors ${rowBg}`}>
+                                    <tr key={pegawai.id} className={`border-b border-slate-100 hover:bg-slate-100/60 transition-colors relative hover:z-30 ${rowBg}`}>
                                         {/* Sticky Employee Info */}
                                         <td className={`px-4 py-3 border-r border-slate-200 sticky left-0 z-10 ${cellBg} shadow-[2px_0_6px_-2px_rgba(0,0,0,0.06)]`}>
                                             <div className="flex items-center gap-2.5">
@@ -592,14 +592,26 @@ export const TabelRiwayatAbsensi = ({ data = [], listPegawai = [], listJadwal = 
                                                 baseCellBg = `${statusInfo.bgColor}/30 hover:${statusInfo.bgColor}/50`;
                                             }
 
+                                            // Smart tooltip positioning
+                                            const isTopRow = index < 3;
+                                            const isLeftCol = idx < 2;
+                                            const isRightCol = idx >= daysArray.length - 2;
+
+                                            const vertPosClass = isTopRow ? 'top-full mt-1.5' : 'bottom-full mb-1.5';
+                                            const horizPosClass = isLeftCol
+                                                ? 'left-0 translate-x-0'
+                                                : isRightCol
+                                                ? 'right-0 left-auto translate-x-0'
+                                                : 'left-1/2 -translate-x-1/2';
+
                                             return (
                                                 <td
                                                     key={idx}
-                                                    className={`p-2 border-r border-slate-100 relative group transition-colors hover:bg-slate-100/80 min-w-[110px] align-top ${baseCellBg}`}
+                                                    className={`p-2 border-r border-slate-100 relative group transition-colors hover:bg-slate-100/80 min-w-[110px] align-top hover:z-40 ${baseCellBg}`}
                                                 >
                                                     <div className="w-full min-h-[44px] flex flex-col gap-1 items-center justify-center relative">
                                                         {status !== 'kosong' ? (
-                                                            <div className={`relative group/badge ${statusInfo.bgColor} hover:brightness-95 ${statusInfo.color} border ${statusInfo.borderColor} rounded-lg p-1.5 shadow-2xs transition-all w-full flex flex-col gap-0.5 select-none`}>
+                                                            <div className={`relative group/badge group-hover/badge:z-50 ${statusInfo.bgColor} hover:brightness-95 ${statusInfo.color} border ${statusInfo.borderColor} rounded-lg p-1.5 shadow-2xs transition-all w-full flex flex-col gap-0.5 select-none`}>
                                                                 {/* Status Badge Header */}
                                                                 <div className="flex items-center justify-between gap-1 w-full">
                                                                     <div className="flex items-center gap-1">
@@ -619,9 +631,7 @@ export const TabelRiwayatAbsensi = ({ data = [], listPegawai = [], listJadwal = 
                                                                 )}
 
                                                                 {/* Hover Tooltip */}
-                                                                <div className={`absolute left-1/2 -translate-x-1/2 hidden group-hover/badge:flex flex-col bg-white border border-slate-200 text-slate-800 p-3 rounded-xl shadow-xl w-52 z-40 pointer-events-none transition-all ${
-                                                                    index < 2 ? 'top-full mt-2' : 'bottom-full mb-2'
-                                                                }`}>
+                                                                <div className={`absolute ${horizPosClass} ${vertPosClass} hidden group-hover/badge:flex flex-col bg-white border border-slate-200 text-slate-800 p-3 rounded-xl shadow-2xl w-56 z-[100] pointer-events-none transition-all`}>
                                                                     {/* Tooltip Header */}
                                                                     <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold pb-1.5 border-b border-slate-200">
                                                                         <div className="flex items-center gap-1">
