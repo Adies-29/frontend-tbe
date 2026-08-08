@@ -1,7 +1,7 @@
 
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
-import { CalendarDays, ChevronLeft, Clock, Coffee, DollarSign, LaptopMinimal, Layers, LogOut,  Menu,  Rows2,  Users, X, ListCheck, Wallet, Gift, Scissors } from "lucide-react";
+import { CalendarDays, ChevronLeft, Clock, Coffee, DollarSign, LaptopMinimal, Layers, LogOut,  Menu,  Rows2,  Users, X, ListCheck, Wallet, Gift, Scissors, ClipboardList } from "lucide-react";
 import logoTbe from "../../assets/r3a.png";
 
 interface SidebarProps {
@@ -43,6 +43,7 @@ export default function Sidebar({ isOpen, closeSidebar, toggleSidebar }: Sidebar
         { title: "Bonus Custom", path: "/dashboard/bonus-custom", icon: Gift },
         { title: "Potongan Custom", path: "/dashboard/potongan-custom", icon: Scissors },
         { title: "Waktu Mesin", path: "/dashboard/pengaturan-mesin", icon: Clock },
+        { title: "Riwayat Absensi", path: "/dashboard/riwayat-absensi", icon: ClipboardList },
     ];
 
     return (
