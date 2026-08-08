@@ -489,7 +489,7 @@ export const TabelRiwayatAbsensi = ({ data = [], listPegawai = [], listJadwal = 
             </div>
 
             {/* Matrix Table */}
-            <div className="overflow-x-auto w-full relative max-h-[500px] rounded-b-xl scrollbar-thin">
+            <div className="overflow-x-auto w-full relative min-h-[380px] max-h-[500px] rounded-b-xl scrollbar-thin">
                 <table className="w-full text-xs text-left border-collapse min-w-max">
                     <thead className="text-[11px] font-bold text-slate-600 uppercase bg-slate-100/90 sticky top-0 z-20 shadow-xs backdrop-blur-xs">
                         <tr>
@@ -592,12 +592,13 @@ export const TabelRiwayatAbsensi = ({ data = [], listPegawai = [], listJadwal = 
                                                 baseCellBg = `${statusInfo.bgColor}/30 hover:${statusInfo.bgColor}/50`;
                                             }
 
-                                            // Smart tooltip positioning
-                                            const isTopRow = index < 3;
+                                            // Smart tooltip positioning based on half of total rows
+                                            const totalRows = filteredPegawai.length;
+                                            const isTopHalf = totalRows <= 2 ? index === 0 : index < Math.ceil(totalRows / 2);
                                             const isLeftCol = idx < 2;
                                             const isRightCol = idx >= daysArray.length - 2;
 
-                                            const vertPosClass = isTopRow ? 'top-full mt-1.5' : 'bottom-full mb-1.5';
+                                            const vertPosClass = isTopHalf ? 'top-full mt-1.5' : 'bottom-full mb-1.5';
                                             const horizPosClass = isLeftCol
                                                 ? 'left-0 translate-x-0'
                                                 : isRightCol
