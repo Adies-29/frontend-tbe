@@ -275,7 +275,7 @@ export default function TabelBonusCustom({
 
 
             {/* Matrix Table */}
-            <div className="overflow-x-auto w-full relative max-h-125 rounded-b-xl scrollbar-thin">
+            <div className="overflow-x-auto w-full relative min-h-[380px] max-h-125 rounded-b-xl scrollbar-thin">
                 <table className="w-full text-xs text-left border-collapse min-w-max">
                     <thead className="text-[11px] font-bold text-slate-600 uppercase bg-slate-100/90 sticky top-0 z-20 shadow-xs backdrop-blur-xs">
                         <tr>
@@ -336,7 +336,7 @@ export default function TabelBonusCustom({
                                 const rowBg = index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50';
                                 const cellBg = index % 2 === 0 ? 'bg-white' : 'bg-slate-50';
                                 return (
-                                    <tr key={pegawai.id} className={`border-b border-slate-100 hover:bg-slate-100/60 transition-colors ${rowBg}`}>
+                                    <tr key={pegawai.id} className={`border-b border-slate-100 hover:bg-slate-100/60 transition-colors relative hover:z-30 ${rowBg}`}>
                                         {/* Sticky Employee Info */}
                                         <td className={`px-4 py-3 border-r border-slate-200 sticky left-0 z-10 ${cellBg} shadow-[2px_0_6px_-2px_rgba(0,0,0,0.06)]`}>
                                             <div className="flex items-center gap-2.5">
@@ -367,10 +367,23 @@ export default function TabelBonusCustom({
                                                 cellBg = 'bg-emerald-50/30 hover:bg-emerald-100/40';
                                             }
 
+                                            // Smart tooltip positioning based on half of total rows
+                                            const totalRows = filteredPegawai.length;
+                                            const isTopHalf = totalRows <= 2 ? index === 0 : index < Math.ceil(totalRows / 2);
+                                            const isLeftCol = idx < 2;
+                                            const isRightCol = idx >= formattedDays.length - 2;
+
+                                            const vertPosClass = isTopHalf ? 'top-full mt-1.5' : 'bottom-full mb-1.5';
+                                            const horizPosClass = isLeftCol
+                                                ? 'left-0 translate-x-0'
+                                                : isRightCol
+                                                ? 'right-0 left-auto translate-x-0'
+                                                : 'left-1/2 -translate-x-1/2';
+
                                             return (
                                                 <td
                                                     key={idx}
-                                                    className={`p-2 border-r border-slate-100 relative group hover:z-100 transition-colors hover:bg-slate-100/80 min-w-27.5 vertical-top ${cellBg}`}
+                                                    className={`p-2 border-r border-slate-100 relative group hover:z-40 transition-colors hover:bg-slate-100/80 min-w-27.5 vertical-top ${cellBg}`}
                                                 >
                                                     <div className="w-full min-h-11 flex flex-col gap-1.5 items-center justify-center relative">
                                                         {bonusesOnDay.length === 1 ? (
@@ -424,8 +437,7 @@ export default function TabelBonusCustom({
 
                                                                         {/* Rich Tooltip Popover on Hover */}
                                                                         {bonus.keterangan && (
-                                                                            <div className={`absolute left-1/2 -translate-x-1/2 hidden group-hover/bonus:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-48 z-40 pointer-events-none transition-all ${index < 2 ? 'top-full mt-2' : 'bottom-full mb-2'
-                                                                                }`}>
+                                                                            <div className={`absolute ${horizPosClass} ${vertPosClass} hidden group-hover/bonus:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-2xl w-48 z-[100] pointer-events-none transition-all`}>
                                                                                 <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium pb-1 border-b border-slate-200">
                                                                                     <span>Detail Bonus</span>
                                                                                     <span>{bonus.tanggal_diberikan}</span>
@@ -462,8 +474,7 @@ export default function TabelBonusCustom({
                                                                         </div>
 
                                                                         {/* Popover Breakdown on Hover */}
-                                                                        <div className={`absolute left-1/2 -translate-x-1/2 hidden group-hover/cell:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-xl w-56 z-50 transition-all pointer-events-auto ${index < 2 ? 'top-full mt-2' : 'bottom-full mb-2'
-                                                                            }`}>
+                                                                        <div className={`absolute ${horizPosClass} ${vertPosClass} hidden group-hover/cell:flex flex-col bg-white border border-slate-200 text-slate-800 p-2.5 rounded-xl shadow-2xl w-56 z-[100] transition-all pointer-events-auto`}>
                                                                             <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold pb-1.5 border-b border-slate-200">
                                                                                 <span>{bonusesOnDay.length} Bonus ({item.tglKey})</span>
                                                                                 <span className="text-emerald-700 font-black">Total: Rp{totalNominal.toLocaleString('id-ID')}</span>
