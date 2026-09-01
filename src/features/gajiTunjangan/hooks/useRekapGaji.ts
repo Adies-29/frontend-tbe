@@ -74,14 +74,22 @@ export function useRekapGaji() {
                     // Ekstrak sisa hutang terkini dari array detail_kasbon (ambil yang pertama jika ada)
                     const sisaHutang = rincianPotongan.detail_kasbon?.[0]?.sisa_pinjaman_terkini || 0;
 
+                    const shiftPegawai = item.pegawai?.shifts?.kode_shift || item.pegawai?.pola_rotasi_shift?.nama_pola || "-";
+
                     return {
                         id: String(item.id),
+                        pegawai_id: item.pegawai?.id ? String(item.pegawai.id) : undefined,
                         nama: item.pegawai?.nama || "Tanpa Nama",
                         jabatan: item.pegawai?.jabatan?.nama_jabatan || "-",
                         departemen: item.pegawai?.jabatan?.departemen?.nama_departemen || "-",
-                        shift: "-", 
+                        shift: shiftPegawai,
+                        default_shift_id: item.pegawai?.default_shift_id,
+                        pola_rotasi_id: item.pegawai?.pola_rotasi_id,
+                        shifts: item.pegawai?.shifts,
+                        pola_rotasi_shift: item.pegawai?.pola_rotasi_shift,
                         tipe_penggajian: item.pegawai?.jabatan?.tipe_penggajian || 'Bulanan',
                         periode_tanggal: formatPeriodeGaji(item.tanggal_awal_periode, item.tanggal_akhir_periode, filterValue),
+
 
                         detail_harian: item.detail_harian || [],
 

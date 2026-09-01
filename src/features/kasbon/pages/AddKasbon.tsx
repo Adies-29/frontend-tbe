@@ -1,5 +1,6 @@
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Wallet, FileText, User } from "lucide-react";
+import { ArrowLeft, Wallet, FileText, User, AlertTriangle, Sliders } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,7 +11,7 @@ import { Input } from "../../../components/common/InputText";
 import { TextArea } from "../../../components/common/TextArea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Autocomplete, TextField } from "@mui/material";
-import { formatNumberInput, parseCurrencyToNumber } from "../../../utils/formatCurrency";
+import { formatNumberInput, parseCurrencyToNumber, formatRupiah } from "../../../utils/formatCurrency";
 import { useNotif } from "../../../hooks/useNotif";
 
 // Schema validasi sesuai dengan kebutuhan backend
@@ -19,7 +20,9 @@ const kasbonSchema = z.object({
     tanggal_pengajuan: z.string().min(1, "Tanggal wajib diisi"),
     nominal_pinjaman: z.string().min(1, "Nominal wajib diisi"),
     persentase_cicilan: z.coerce.number().min(10, "Minimal 10%").max(100, "Maksimal 100%"),
-    keterangan_pinjaman: z.string().min(1, "Keterangan wajib diisi")
+    keterangan_pinjaman: z.string().min(1, "Keterangan wajib diisi"),
+    is_custom_kehadiran: z.boolean().optional(),
+    min_hari_hadir_mingguan: z.coerce.number().min(1).max(7).optional()
 });
 
 type KasbonFormData = z.infer<typeof kasbonSchema>;
@@ -28,6 +31,9 @@ export default function AddKasbon() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
+
+    const [isCustomHari, setIsCustomHari] = useState(false);
+    const [customHariVal, setCustomHariVal] = useState<number>(5);
 
     const {
         register,
@@ -43,16 +49,19 @@ export default function AddKasbon() {
             tanggal_pengajuan: new Date().toISOString().split("T")[0],
             nominal_pinjaman: "",
             persentase_cicilan: 20,
-            keterangan_pinjaman: ""
+            keterangan_pinjaman: "",
+            is_custom_kehadiran: false,
+            min_hari_hadir_mingguan: 5
         }
     });
 
-    // Ambil nilai untuk preview
+    const selectedPegawaiId = watch("pegawai_id");
     const nominalRaw = watch("nominal_pinjaman");
     const tenorNum = watch("persentase_cicilan");
 
     const nominalNum = parseCurrencyToNumber(nominalRaw);
     const cicilan = (nominalNum * tenorNum) / 100;
+    const estimasiMinggu = tenorNum > 0 ? Math.ceil(100 / tenorNum) : 0;
 
     // Load data pegawai menggunakan useQuery
     const pegawaiQuery = useQuery({
@@ -62,6 +71,37 @@ export default function AddKasbon() {
             return res.data || [];
         }
     });
+
+    // Load data kasbon aktif untuk proteksi double-loan
+    const existingKasbonQuery = useQuery({
+        queryKey: ['kasbonList'],
+        queryFn: async () => {
+            const res = await apiFetchJson('/api/v1/kasbon');
+            return res.data || [];
+        }
+    });
+
+    // Load data pengaturan kasbon global
+    const pengaturanQuery = useQuery({
+        queryKey: ['pengaturanKasbon'],
+        queryFn: async () => {
+            const res = await apiFetchJson('/api/v1/kasbon/pengaturan');
+            return res.data || {};
+        }
+    });
+
+    const globalMinHari = Number(pengaturanQuery.data?.kasbon_min_hari_kerja_mingguan);
+
+    // Cek apakah pegawai yang dipilih memiliki kasbon aktif
+
+    const activeLoanOfSelectedPegawai = useMemo(() => {
+        if (!selectedPegawaiId || !existingKasbonQuery.data) return null;
+        return (existingKasbonQuery.data || []).find((k: any) =>
+            String(k.pegawai_id) === String(selectedPegawaiId) &&
+            k.status === 'Disetujui' &&
+            (k.sisa_pinjaman || 0) > 0
+        );
+    }, [selectedPegawaiId, existingKasbonQuery.data]);
 
     // Mutasi untuk menyimpan kasbon baru
     const addKasbonMutation = useMutation({
@@ -78,7 +118,6 @@ export default function AddKasbon() {
         },
         onSuccess: () => {
             showNotif("Kasbon berhasil diajukan!", "success");
-            // Hapus cache kasbonList agar KasbonIndex langsung mereload data baru
             queryClient.invalidateQueries({ queryKey: ['kasbonList'] });
             setTimeout(() => navigate('/dashboard/kasbon'), 1500);
         },
@@ -95,13 +134,18 @@ export default function AddKasbon() {
             return;
         }
 
-        const payload = {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const payload: any = {
             pegawai_id: parseInt(data.pegawai_id),
             tanggal_pengajuan: data.tanggal_pengajuan,
             nominal_pinjaman: cleanNominal,
             persentase_cicilan: data.persentase_cicilan,
             keterangan_pinjaman: data.keterangan_pinjaman
         };
+
+        if (isCustomHari) {
+            payload.min_hari_hadir_mingguan = customHariVal;
+        }
 
         addKasbonMutation.mutate(payload);
     };
@@ -112,17 +156,17 @@ export default function AddKasbon() {
         setValue("nominal_pinjaman", formatted, { shouldValidate: true });
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (
         <div className="flex flex-col gap-6 w-full p-2 max-w-4xl mx-auto">
             <Notif show={notif.show} message={notif.message} type={notif.type} onClose={closeNotif} />
 
-            <div data-tour="add-kasbon-form" className="bg-white rounded-xl shadow-md p-4 md:p-8 border border-gray-100">
+            <div data-tour="add-kasbon-form" className="bg-white rounded-2xl shadow-md p-4 md:p-8 border border-gray-100">
                 <div className="flex justify-between items-center mb-6 mt-2">
                     <div>
-                        <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
                             Tambah Kasbon Pegawai
                         </h1>
+                        <p className="text-xs text-gray-500 mt-1">Formulir pengajuan pinjaman karyawan baru dengan kalkulasi cicilan otomatis.</p>
                     </div>
                     <div className="shrink-0 flex items-center justify-end">
                         <Button variant="back" icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)} label="Kembali" className="hidden sm:flex" />
@@ -131,16 +175,21 @@ export default function AddKasbon() {
 
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <section className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-5">
+
+                        {/* SEKSI 1: PEMINJAM & TANGGAL */}
+                        <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs flex flex-col gap-5">
                             <div className="flex items-center gap-3 text-blue-600 font-bold border-b border-gray-100 pb-3">
                                 <User size={20} /> <h2>Peminjam & Tanggal</h2>
                             </div>
+
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-sm font-semibold text-gray-700">Pilih Pegawai <span className="text-red-500">*</span></label>
                                 <Autocomplete
                                     options={pegawaiQuery.data || []}
-                                    getOptionLabel={(option: any) => `${option.nama}`}
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    getOptionLabel={(option: any) => `${option.nama} (${option.jabatan?.nama_jabatan || '-'})`}
                                     disabled={pegawaiQuery.isLoading}
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     value={(pegawaiQuery.data || []).find((p: any) => String(p.id) === String(watch("pegawai_id"))) || null}
                                     onChange={(_, newValue) => {
                                         setValue("pegawai_id", newValue ? String(newValue.id) : "", { shouldValidate: true });
@@ -154,7 +203,7 @@ export default function AddKasbon() {
                                             size="small"
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
-                                                    borderRadius: '8px',
+                                                    borderRadius: '10px',
                                                     backgroundColor: '#f9fafb',
                                                 }
                                             }}
@@ -162,6 +211,20 @@ export default function AddKasbon() {
                                     )}
                                 />
                             </div>
+
+                            {/* PERINGATAN KASBON AKTIF SEBELUMNYA */}
+                            {activeLoanOfSelectedPegawai && (
+                                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-xs text-amber-800">
+                                    <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="font-bold">Perhatian: Pegawai Masih Memiliki Kasbon Aktif</p>
+                                        <p className="text-amber-700 mt-0.5">
+                                            Sisa utang berjalan: <b>{formatRupiah(activeLoanOfSelectedPegawai.sisa_pinjaman)}</b>. Pastikan manajemen telah menyetujui pinjaman tambahan ini.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             <Input
                                 label="Tanggal Pengajuan"
                                 nama="tanggal_pengajuan"
@@ -171,19 +234,20 @@ export default function AddKasbon() {
                             />
                         </section>
 
+                        {/* SEKSI 2: DETAIL PINJAMAN */}
                         <section className="bg-emerald-50 p-6 rounded-xl border border-emerald-100 shadow-sm flex flex-col gap-5">
                             <div className="flex items-center gap-3 text-emerald-700 font-bold border-b border-emerald-200 pb-3">
-                                <Wallet size={20} /> <h2>Detail Pinjaman</h2>
+                                <Wallet size={20} /> <h2>Detail Pinjaman & Tenor</h2>
                             </div>
 
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-semibold text-gray-700">Nominal Pinjaman (Rp)</label>
+                                <label className="text-sm font-semibold text-gray-700">Nominal Pinjaman (Rp) <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     placeholder="Contoh: 1.000.000"
                                     {...register("nominal_pinjaman")}
                                     onChange={handleNominalChange}
-                                    className={`border rounded-lg px-3 py-2.5 text-sm focus:border-emerald-500 shadow-sm outline-none ${errors.nominal_pinjaman ? 'border-red-500' : 'border-gray-300'}`}
+                                    className={`border rounded-xl px-3.5 py-2.5 text-sm bg-white focus:border-emerald-500 shadow-xs outline-none ${errors.nominal_pinjaman ? 'border-red-500' : 'border-gray-300'}`}
                                 />
                                 {errors.nominal_pinjaman && <span className="text-xs text-red-500">{errors.nominal_pinjaman.message}</span>}
                             </div>
@@ -191,7 +255,9 @@ export default function AddKasbon() {
                             <div className="flex flex-col gap-1.5">
                                 <div className="flex justify-between items-center">
                                     <label className="text-sm font-semibold text-gray-700">Potongan Tenor (%)</label>
-                                    <span className="text-sm font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded">{tenorNum}% per minggu</span>
+                                    <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full">
+                                        {tenorNum}% per minggu
+                                    </span>
                                 </div>
                                 <input
                                     type="range"
@@ -203,46 +269,118 @@ export default function AddKasbon() {
                                 />
                                 <div className="flex justify-between text-xs text-gray-500 mt-1 px-1">
                                     <span>Min 10%</span>
-                                    <span>100% (Langsung Lunas)</span>
+                                    <span>Max 100%</span>
                                 </div>
                                 {errors.persentase_cicilan && <span className="text-xs text-red-500">{errors.persentase_cicilan.message}</span>}
                             </div>
 
-                            <div className="mt-2 bg-white border-2 border-emerald-200 rounded-xl p-4 shadow-sm relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-100 rounded-bl-full -mr-8 -mt-8"></div>
-                                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Preview Cicilan</p>
-                                <p className="text-2xl font-black text-emerald-700">
-                                    {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(cicilan)}
-                                    <span className="text-sm font-medium text-gray-500 ml-1">/ minggu</span>
-                                </p>
+                            <div className="mt-2 bg-white border-2 border-emerald-200 rounded-xl p-4 shadow-sm relative overflow-hidden flex items-center justify-between">
+
+                                <div>
+                                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Preview Cicilan</p>
+                                    <p className="text-xl md:text-2xl font-black text-emerald-700">
+                                        {formatRupiah(cicilan)}
+                                        <span className="text-xs font-medium text-gray-500 ml-1">/ minggu</span>
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-xs font-semibold text-gray-400 block">Lunas Dalam</span>
+                                    <span className="text-sm font-bold text-gray-700">{estimasiMinggu} Minggu</span>
+                                </div>
                             </div>
                         </section>
 
-                        <section className="md:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                        {/* SEKSI 3: ATURAN KHUSUS KEHADIRAN (OPSIONAL) */}
+                        <section className="md:col-span-2 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
+                                <div className="flex items-center gap-2 text-slate-800 font-bold text-sm">
+                                    <Sliders size={18} className="text-emerald-600" />
+                                    <h3>Syarat Kehadiran Mingguan untuk Pemotongan Kasbon</h3>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <label className="text-xs text-slate-600 font-medium cursor-pointer flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={isCustomHari}
+                                            onChange={(e) => setIsCustomHari(e.target.checked)}
+                                            className="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                                        />
+                                        <span>Gunakan Syarat Custom Khusus Kasbon Ini</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {isCustomHari ? (
+                                <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-2">
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-800">Tentukan Jumlah Hari Hadir Minimal:</p>
+                                        <p className="text-[11px] text-gray-500 mt-0.5">Kasbon ini hanya dipotong jika pegawai berangkat minimal hari di bawah ini.</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {[1, 2, 3, 4, 5, 6, 7].map((h) => (
+                                            <button
+                                                key={h}
+                                                type="button"
+                                                onClick={() => setCustomHariVal(h)}
+                                                className={`w-8 h-8 rounded-lg text-xs font-bold transition-all border ${customHariVal === h
+                                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                                                    : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                                                    }`}
+                                            >
+                                                {h}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="text-xs text-slate-500 italic">
+                                    Mengikuti kebijakan global perusahaan (Standar: Minimal {globalMinHari} hari kerja dalam seminggu).
+                                </p>
+                            )}
+
+                        </section>
+
+                        {/* SEKSI 4: KETERANGAN */}
+                        <section className="md:col-span-2 bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
                             <div className="flex items-center gap-3 text-gray-600 font-bold mb-4">
-                                <FileText size={20} /> <h2>Keterangan</h2>
+                                <FileText size={20} /> <h2>Keterangan & Alasan Peminjaman</h2>
                             </div>
                             <TextArea
                                 label="Alasan pengajuan kasbon"
                                 nama="keterangan_pinjaman"
                                 register={register}
                                 error={errors.keterangan_pinjaman?.message}
-                                placeholder="Tuliskan keperluan pinjaman di sini..."
+                                placeholder="Tuliskan keperluan pinjaman di sini (misal: Biaya pendidikan, darurat kesehatan, renovasi rumah)..."
                             />
                         </section>
                     </div>
 
+                    {/* TOMBOL AKSI SUBMIT */}
                     <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 sm:gap-4 mt-8 pt-6 border-t border-gray-100">
                         <div className="w-full sm:w-auto">
-                            <Button variant="success" label={addKasbonMutation.isPending ? "Menyimpan..." : "Simpan Kasbon Baru"} type="submit" disabled={addKasbonMutation.isPending} className="w-full sm:w-auto" />
+                            <Button
+                                variant="danger"
+                                label="Batal"
+                                type="button"
+                                onClick={() => navigate(-1)}
+                                disabled={addKasbonMutation.isPending}
+                                className="w-full sm:w-auto"
+                            />
                         </div>
                         <div className="w-full sm:w-auto">
-                            <Button variant="danger" label="Batal" type="button" onClick={() => navigate(-1)} disabled={addKasbonMutation.isPending} className="w-full sm:w-auto" />
+                            <Button
+                                variant="success"
+                                label={addKasbonMutation.isPending ? "Menyimpan..." : "Simpan Pengajuan Kasbon"}
+                                type="submit"
+                                disabled={addKasbonMutation.isPending}
+                                className="w-full sm:w-auto font-bold shadow-md cursor-pointer"
+                            />
                         </div>
-                        
                     </div>
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
+

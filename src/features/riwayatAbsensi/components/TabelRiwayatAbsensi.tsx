@@ -632,7 +632,7 @@ export const TabelRiwayatAbsensi = ({ data = [], listPegawai = [], listJadwal = 
                                                                 )}
 
                                                                 {/* Hover Tooltip */}
-                                                                <div className={`absolute ${horizPosClass} ${vertPosClass} hidden group-hover/badge:flex flex-col bg-white border border-slate-200 text-slate-800 p-3 rounded-xl shadow-2xl w-56 z-[100] pointer-events-none transition-all`}>
+                                                                <div className={`absolute ${horizPosClass} ${vertPosClass} hidden group-hover/badge:flex flex-col bg-white border border-slate-200 text-slate-800 p-3 rounded-xl shadow-2xl w-64 z-[100] pointer-events-none transition-all`}>
                                                                     {/* Tooltip Header */}
                                                                     <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold pb-1.5 border-b border-slate-200">
                                                                         <div className="flex items-center gap-1">
@@ -650,7 +650,7 @@ export const TabelRiwayatAbsensi = ({ data = [], listPegawai = [], listJadwal = 
                                                                         </span>
                                                                     </div>
 
-                                                                    {/* Jam Masuk */}
+                                                                    {/* Grid Informasi Absensi */}
                                                                     <div className="mt-1.5 grid grid-cols-2 gap-x-2 gap-y-1 text-[10px]">
                                                                         <span className="text-slate-500 font-medium">Jam Masuk</span>
                                                                         <span className="font-bold text-slate-700">
@@ -662,6 +662,38 @@ export const TabelRiwayatAbsensi = ({ data = [], listPegawai = [], listJadwal = 
                                                                         <span className="font-bold text-slate-700">
                                                                             {absensi ? formatWaktu(absensi.waktu_akhir) : '-'}
                                                                         </span>
+
+                                                                        {/* Tipe Absensi */}
+                                                                        <span className="text-slate-500 font-medium">Tipe Absensi</span>
+                                                                        <div className="font-bold">
+                                                                            {absensi?.metode_absen === 'manual' || absensi?.tipe_absensi_label?.startsWith('Manual') ? (
+                                                                                <span className="inline-block text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 leading-tight">
+                                                                                    {absensi.tipe_absensi_label || (absensi.penanggung_jawab ? `Manual - ${absensi.penanggung_jawab}` : 'Manual')}
+                                                                                </span>
+                                                                            ) : (absensi?.waktu_awal || absensi?.waktu_akhir) ? (
+                                                                                <span className="inline-block text-[9px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 leading-tight">
+                                                                                    Mesin
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="text-slate-400">-</span>
+                                                                            )}
+                                                                        </div>
+
+                                                                        {/* Kerapian */}
+                                                                        <span className="text-slate-500 font-medium">Kerapihan</span>
+                                                                        <div className="font-bold">
+                                                                            {absensi?.is_kerapian === true ? (
+                                                                                <span className="inline-block text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 leading-tight">
+                                                                                    Rapi
+                                                                                </span>
+                                                                            ) : absensi?.is_kerapian === false ? (
+                                                                                <span className="inline-block text-[9px] font-bold text-red-700 bg-red-50 px-1.5 py-0.5 rounded border border-red-200 leading-tight">
+                                                                                    Tidak Rapi
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="text-slate-400">-</span>
+                                                                            )}
+                                                                        </div>
 
                                                                         {/* Status Lembur */}
                                                                         <span className="text-slate-500 font-medium">Status Lembur</span>
@@ -687,6 +719,7 @@ export const TabelRiwayatAbsensi = ({ data = [], listPegawai = [], listJadwal = 
                                                                             </>
                                                                         )}
                                                                     </div>
+
 
                                                                     {/* Deskripsi Tambahan */}
                                                                     {status === 'terlambat' && (

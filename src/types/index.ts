@@ -9,7 +9,11 @@ export interface AbsensiData {
     status_masuk: string;
     waktu_pulang: string;
     status_lembur: string;
+    metode_absen?: 'mesin' | 'manual' | '-';
+    penanggung_jawab?: string | null;
+    tipe_absensi_label?: string;
 }
+
 
 export interface LemburData{
     id: number;
@@ -150,7 +154,11 @@ export interface DashboardKaryawanResponse {
     status_masuk?: string;
     status_lembur?: string;
     is_kerapian?: boolean;
+    metode_absen?: 'mesin' | 'manual' | '-';
+    penanggung_jawab?: string | null;
+    tipe_absensi_label?: string;
 }
+
 
 // === TARGET PACKING ===
 

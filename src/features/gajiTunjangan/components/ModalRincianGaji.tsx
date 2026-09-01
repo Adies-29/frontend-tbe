@@ -152,6 +152,27 @@ export default function ModalRincianGaji({
                                 </div>
                             )}
 
+                            {/* DETAIL KASBON DITANGGUHKAN / DILEWATI */}
+                            {Array.isArray(data.detail_kasbon_tertunda) && data.detail_kasbon_tertunda.length > 0 && (
+                                <div className="mt-3">
+                                    <h5 className="text-xs font-bold text-gray-600 mb-2 flex items-center gap-1">
+                                        <AlertCircle size={14} className="text-blue-600" /> Cicilan Kasbon Ditangguhkan (Tidak Dipotong):
+                                    </h5>
+                                    <div className="border border-blue-200 bg-blue-50/50 rounded-lg p-2.5 space-y-1.5">
+                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                        {data.detail_kasbon_tertunda.map((kt: any, idx: number) => (
+                                            <div key={idx} className="flex justify-between items-center text-xs">
+                                                <span className="text-gray-700 font-medium">{kt.keterangan || 'Pinjaman'}</span>
+                                                <span className="text-[11px] font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
+                                                    {kt.alasan || 'Kehadiran kurang dari syarat'}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+
                             {/* DETAIL POTONGAN CUSTOM JIKA ADA */}
                             {Array.isArray(data.detail_potongan_custom) && data.detail_potongan_custom.length > 0 && (
                                 <div className="mt-3">
