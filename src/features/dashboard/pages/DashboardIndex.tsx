@@ -61,9 +61,13 @@ export default function DashboardIndex() {
                     status_masuk: karyawan.status_masuk || labelStatus,
                     waktu_pulang: karyawan.waktu_pulang || "-",
                     status_lembur: karyawan.status_lembur || "-",
-                    is_kerapian: karyawan.is_kerapian || false
+                    is_kerapian: karyawan.is_kerapian || false,
+                    metode_absen: karyawan.metode_absen || '-',
+                    penanggung_jawab: karyawan.penanggung_jawab || null,
+                    tipe_absensi_label: karyawan.tipe_absensi_label || '-'
                 };
             });
+
 
             const sortedRows = formattedRows.sort((a: AbsensiData, b: AbsensiData) => {
                 // Ambil waktu terakhir pegawai A (prioritaskan waktu pulang, jika "-" pakai waktu masuk)

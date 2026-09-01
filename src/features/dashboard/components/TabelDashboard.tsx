@@ -106,13 +106,14 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     const cekKerapihan = async (row: AbsensiData, newStatus: boolean) => {
         setUpdatingId(row.id);
         try {
-            const hariIni = new Date().toISOString().split("T")[0];
+            const hariIni = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
 
             const payload = {
                 pegawai_id: row.pegawai_id || row.id,
                 tanggal: hariIni,
                 is_kerapian: newStatus
             };
+
 
             await apiFetchJson('/api/kerapian', {
                 method: "PUT",
@@ -249,10 +250,48 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             renderCell: (params) => formatWaktuAbsen(params.value)
         },
         {
+            field: "tipe_absensi_label",
+            headerName: "Absensi",
+            flex: 1,
+            minWidth: 150,
+            align: "center",
+            headerAlign: "center",
+            renderCell: (params) => {
+                const label = params.row.tipe_absensi_label || params.value || "-";
+                const isManual = params.row.metode_absen === 'manual' || (typeof label === 'string' && label.startsWith('Manual'));
+                const isMesin = params.row.metode_absen === 'mesin' || label === 'Mesin';
+
+                if (isManual) {
+                    return (
+                        <div className="flex items-center justify-center h-full">
+                            <span className="bg-amber-50 text-amber-800 font-semibold px-2.5 py-1 rounded-lg text-xs border border-amber-200/80 shadow-2xs inline-flex items-center gap-1.5 truncate max-w-[170px]" title={label}>
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                                <span className="truncate">{label}</span>
+                            </span>
+                        </div>
+                    );
+                }
+
+                if (isMesin) {
+                    return (
+                        <div className="flex items-center justify-center h-full">
+                            <span className="bg-blue-50 text-blue-700 font-semibold px-2.5 py-1 rounded-lg text-xs border border-blue-200/80 shadow-2xs inline-flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></span>
+                                Mesin
+                            </span>
+                        </div>
+                    );
+                }
+
+                return <span className="text-gray-400 font-bold">-</span>;
+            }
+        },
+        {
             field: "is_kerapian",
             headerName: "Cek Kerapihan",
             width: 110,
             sortable: false,
+
             renderCell: (params) => {
                 const status = params.row.is_kerapian;
                 const isNuklir = params.row.status_masuk === "Absensi di Batalkan";  
@@ -424,7 +463,7 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
     ];
 
     const handleExportCSV = () => {
-        const headers = ["Nama Karyawan", "Waktu Masuk", "Status", "Waktu Pulang", "Kerapihan", "Status Lembur"];
+        const headers = ["Nama Karyawan", "Waktu Masuk", "Status", "Waktu Pulang", "Tipe Absensi", "Kerapihan", "Status Lembur"];
         const csvRows = [headers.join(",")];
 
         filteredRows.forEach((row) => {
@@ -432,16 +471,20 @@ export default function TabelDashboard({ data: initialData, onRefresh }: TabelAb
             if (row.is_kerapian === true) kerapihanText = "Rapi";
             else if (row.is_kerapian === false) kerapihanText = "Tidak rapi";
 
+            const tipeAbsen = row.tipe_absensi_label || (row.metode_absen === 'manual' ? `Manual - ${row.penanggung_jawab || ''}` : row.metode_absen === 'mesin' ? 'Mesin' : '-');
+
             const values = [
                 `"${row.nama || ''}"`,
                 `"${row.waktu_masuk || '-'}"`,
                 `"${row.status_masuk || 'Belum Hadir'}"`,
                 `"${row.waktu_pulang || '-'}"`,
+                `"${tipeAbsen}"`,
                 `"${kerapihanText}"`,
                 `"${row.status_lembur || '-'}"`
             ];
             csvRows.push(values.join(","));
         });
+
 
         const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csvRows.join("\n");
         const encodedUri = encodeURI(csvContent);

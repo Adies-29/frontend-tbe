@@ -11,6 +11,10 @@ export interface AbsensiData {
     waktu_akhir: string | null;
     status: string; // 'intime' | 'late' | 'void'
     status_lembur: string | null;
+    is_kerapian?: boolean | null;
+    metode_absen?: 'mesin' | 'manual' | '-';
+    penanggung_jawab?: string | null;
+    tipe_absensi_label?: string;
 }
 
 export function useRiwayatAbsensi() {
@@ -30,9 +34,14 @@ export function useRiwayatAbsensi() {
                 waktu_akhir: item.waktu_akhir || null,
                 status: item.status || '',
                 status_lembur: item.status_lembur || null,
+                is_kerapian: typeof item.is_kerapian === 'boolean' ? item.is_kerapian : null,
+                metode_absen: item.metode_absen || (item.waktu_awal || item.waktu_akhir ? 'mesin' : '-'),
+                penanggung_jawab: item.penanggung_jawab || null,
+                tipe_absensi_label: item.tipe_absensi_label || (item.metode_absen === 'manual' ? `Manual - ${item.penanggung_jawab || ''}` : item.metode_absen === 'mesin' ? 'Mesin' : '-'),
             }));
         }
     });
+
 
     // 2. Fetch semua data pegawai (untuk dropdown filter departemen/jabatan)
     const { data: listPegawai = [], isLoading: isLoadingPegawai } = useQuery({
