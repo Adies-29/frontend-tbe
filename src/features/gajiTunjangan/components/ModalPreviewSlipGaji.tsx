@@ -47,15 +47,551 @@ interface ModalPreviewSlipGajiProps {
     periode?: string;
 }
 
-const formatAngka = (angka?: number | null) => {
+export const formatAngka = (angka?: number | null) => {
     if (!angka) return "0";
     return new Intl.NumberFormat('id-ID').format(Math.round(angka));
 };
 
-const formatRupiah = (angka?: number | null) => {
+export const formatRupiah = (angka?: number | null) => {
     if (!angka) return "Rp0";
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
 };
+
+export const chunkArray = <T,>(arr: T[], size: number): T[][] => {
+    const chunked: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) {
+        chunked.push(arr.slice(i, i + size));
+    }
+    return chunked;
+};
+
+// Helper matching bonus custom to specific day without duplicating on multi-target rows
+export const getBonusCustomForHari = (hari: DetailHarian, pegawai: RekapGajiLengkap, idx: number) => {
+    if (Number((hari as any).bonus_custom) > 0) {
+        return Number((hari as any).bonus_custom);
+    }
+
+    const bonusList = pegawai.rincian_bonus?.detail_bonus_custom;
+    if (!Array.isArray(bonusList) || bonusList.length === 0) return 0;
+
+    const detailHarian = pegawai.detail_harian || [];
+    const hDate = (hari.hari_tanggal || '').toLowerCase();
+    const hTanggal = ((hari as any).tanggal || '').toLowerCase();
+
+    const firstIdx = detailHarian.findIndex((h: DetailHarian) => {
+        const dateStr = (h.hari_tanggal || '').toLowerCase();
+        const tglStr = ((h as any).tanggal || '').toLowerCase();
+        return (dateStr && hDate && dateStr === hDate) || (tglStr && hTanggal && tglStr === hTanggal);
+    });
+
+    if (firstIdx !== -1 && idx !== firstIdx) {
+        return 0;
+    }
+
+    const matched = bonusList.filter((b: any) => {
+        const bTanggal = (b.tanggal || '').toLowerCase();
+        const bHari = (b.hari_tanggal || '').toLowerCase();
+        if (hTanggal && bTanggal && hTanggal === bTanggal) return true;
+        if (hDate && bHari && hDate === bHari) return true;
+        if (hDate && bTanggal && bTanggal.includes(hDate)) return true;
+        return false;
+    });
+
+    if (matched.length > 0) {
+        return matched.reduce((sum: number, b: any) => sum + (Number(b.nominal) || 0), 0);
+    }
+
+    return 0;
+};
+
+// Helper matching potongan custom to specific day without duplicating on multi-target rows
+export const getPotonganCustomForHari = (hari: DetailHarian, pegawai: RekapGajiLengkap, idx: number) => {
+    if (Number((hari as any).potongan_custom) > 0) {
+        return Number((hari as any).potongan_custom);
+    }
+
+    const potonganList = pegawai.rincian_potongan?.detail_potongan_custom;
+    if (!Array.isArray(potonganList) || potonganList.length === 0) return 0;
+
+    const detailHarian = pegawai.detail_harian || [];
+    const hDate = (hari.hari_tanggal || '').toLowerCase();
+    const hTanggal = ((hari as any).tanggal || '').toLowerCase();
+
+    const firstIdx = detailHarian.findIndex((h: DetailHarian) => {
+        const dateStr = (h.hari_tanggal || '').toLowerCase();
+        const tglStr = ((h as any).tanggal || '').toLowerCase();
+        return (dateStr && hDate && dateStr === hDate) || (tglStr && hTanggal && tglStr === hTanggal);
+    });
+
+    if (firstIdx !== -1 && idx !== firstIdx) {
+        return 0;
+    }
+
+    const matched = potonganList.filter((p: any) => {
+        const pTanggal = (p.tanggal || '').toLowerCase();
+        const pHari = (p.hari_tanggal || '').toLowerCase();
+        if (hTanggal && pTanggal && hTanggal === pTanggal) return true;
+        if (hDate && pHari && hDate === pHari) return true;
+        if (hDate && pTanggal && pTanggal.includes(hDate)) return true;
+        return false;
+    });
+
+    if (matched.length > 0) {
+        return matched.reduce((sum: number, p: any) => sum + (Number(p.nominal) || 0), 0);
+    }
+
+    return 0;
+};
+
+export const getGroupedBonusCustom = (pegawai: RekapGajiLengkap) => {
+    const list = pegawai.rincian_bonus?.detail_bonus_custom;
+    if (!Array.isArray(list) || list.length === 0) return [];
+
+    const groups: { [key: string]: number } = {};
+    for (const item of list) {
+        const ket = (item.keterangan || 'Bonus Custom').trim();
+        groups[ket] = (groups[ket] || 0) + (Number(item.nominal) || 0);
+    }
+    return Object.entries(groups).map(([keterangan, total]) => ({ keterangan, total }));
+};
+
+export const getGroupedPotonganCustom = (pegawai: RekapGajiLengkap) => {
+    const list = pegawai.rincian_potongan?.detail_potongan_custom;
+    if (!Array.isArray(list) || list.length === 0) return [];
+
+    const groups: { [key: string]: number } = {};
+    for (const item of list) {
+        const ket = (item.keterangan || 'Potongan Custom').trim();
+        groups[ket] = (groups[ket] || 0) + (Number(item.nominal) || 0);
+    }
+    return Object.entries(groups).map(([keterangan, total]) => ({ keterangan, total }));
+};
+
+/**
+ * KOMPONEN KARTU SLIP GAJI TUNGGAL (SINGLE SOURCE OF TRUTH)
+ * Digunakan seragam untuk:
+ * 1. Pratinjau Live di Layar Modal
+ * 2. Ekspor PDF & PNG via Canvas Screenshot
+ * 3. Cetak Langsung Browser via window.print()
+ */
+export function SlipGajiCard({
+    pegawai,
+    filterValue = '',
+    isLong = false,
+    cardId,
+    isLivePreview = false
+}: {
+    pegawai: RekapGajiLengkap;
+    filterValue?: string;
+    isLong?: boolean;
+    cardId?: string;
+    isLivePreview?: boolean;
+}) {
+    const isTarget = pegawai.tipe_penggajian === 'Target';
+    const isLunas = pegawai.status?.toLowerCase() === 'lunas';
+
+    // Container style khusus Live Preview di layar modal vs Print/PDF
+    if (isLivePreview) {
+        return (
+            <div
+                id={cardId}
+                className="bg-white border border-slate-300 shadow-xl p-4 sm:p-5 w-full max-w-[21cm] text-[10px] font-sans text-slate-900 rounded-lg space-y-3"
+            >
+                {/* HEADER SLIP GAJI */}
+                <div className="flex justify-between items-start border-b-2 border-slate-900 pb-2">
+                    <table className="text-left font-semibold text-[10px]">
+                        <tbody>
+                            <tr><td className="w-20 pb-0.5 text-slate-600">Nama Pegawai</td><td className="pb-0.5 font-extrabold text-slate-900">: {pegawai.nama}</td></tr>
+                            <tr><td className="pb-0.5 text-slate-600">Jabatan / Shift</td><td className="pb-0.5 font-bold text-slate-800">: {pegawai.jabatan} {pegawai.shift ? `(${pegawai.shift})` : ''}</td></tr>
+                            <tr><td className="pb-0.5 text-slate-600">Tipe Penggajian</td><td className="pb-0.5 font-bold text-slate-800">: {pegawai.tipe_penggajian}</td></tr>
+                            <tr><td className="pb-0.5 text-slate-600">Periode Tanggal</td><td className="pb-0.5 font-bold text-slate-800">: {pegawai.periode_tanggal || filterValue}</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div className="text-right">
+                        <h1 className="font-extrabold text-sm text-slate-900 uppercase tracking-wider">Perusahaan Krupuk Mie</h1>
+                        <h2 className="font-black text-base text-emerald-700 tracking-widest">" Tiga Berlian Official "</h2>
+                        <p className="mt-0.5 leading-tight text-[9px] text-slate-500 font-medium">
+                            Jl. Raya Belakang Yonif 407 &middot; Ds. Harjosari Lor RT 28 RW 06<br />
+                            Kec. Adiwerna Kab. Tegal &middot; Telp. 095743404555
+                        </p>
+                    </div>
+                </div>
+
+                {/* 1. RINCIAN PRESENSI & UPAH HARIAN */}
+                <div>
+                    <h4 className="font-extrabold text-[10px] text-slate-800 uppercase mb-1 border-b border-slate-300 pb-0.5">
+                        1. Rincian Absensi & Upah Harian
+                    </h4>
+                    <table className="w-full border-collapse border border-slate-900 text-center text-[9px]">
+                        <thead className="border-b border-slate-900 bg-slate-100 font-bold">
+                            <tr>
+                                <th className="border-r border-slate-900 py-1 w-6">No</th>
+                                <th className="border-r border-slate-900 py-1 w-20">Hari / Tgl</th>
+                                {isTarget ? (
+                                    <>
+                                        <th className="border-r border-slate-900 py-1">Pekerjaan Target</th>
+                                        <th className="border-r border-slate-900 py-1 w-14">Harga</th>
+                                        <th className="border-r border-slate-900 py-1 w-12">Capaian</th>
+                                    </>
+                                ) : (
+                                    <th className="border-r border-slate-900 py-1 w-16">Upah Pokok</th>
+                                )}
+                                <th className="border-r border-slate-900 py-1 w-14">T. Disiplin</th>
+                                <th className="border-r border-slate-900 py-1 w-14">T. Kerapian</th>
+                                <th className="border-r border-slate-900 py-1 w-14">U. Lembur</th>
+                                <th className="border-r border-slate-900 py-1 w-16 bg-emerald-50/70 text-emerald-900">Bonus Custom</th>
+                                <th className="border-r border-slate-900 py-1 w-16 bg-rose-50/70 text-rose-900">Pot. Custom</th>
+                                <th className="py-1 w-20 text-right px-1.5">Total Harian</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {pegawai.detail_harian && pegawai.detail_harian.length > 0 ? (
+                                pegawai.detail_harian.map((hari: DetailHarian, idx: number) => {
+                                    const bCustom = getBonusCustomForHari(hari, pegawai, idx);
+                                    const pCustom = getPotonganCustomForHari(hari, pegawai, idx);
+
+                                    return (
+                                        <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50">
+                                            <td className="border-r border-slate-900 py-0.5 font-medium text-slate-500">{idx + 1}</td>
+                                            <td className="border-r border-slate-900 py-0.5 text-left px-1.5 font-semibold">{hari.hari_tanggal || '-'}</td>
+                                            {isTarget ? (
+                                                <>
+                                                    <td className="border-r border-slate-900 py-0.5 text-left px-1.5 italic truncate max-w-30">{hari.nama_target || '-'}</td>
+                                                    <td className="border-r border-slate-900 py-0.5 text-right px-1.5">{formatAngka(hari.harga_satuan)}</td>
+                                                    <td className="border-r border-slate-900 py-0.5 font-bold">{formatAngka(hari.capaian)}</td>
+                                                </>
+                                            ) : (
+                                                <td className="border-r border-slate-900 py-0.5 text-right px-1.5">{formatAngka(hari.gaji_kehadiran)}</td>
+                                            )}
+                                            <td className="border-r border-slate-900 py-0.5 text-right px-1.5">{formatAngka(hari.t_absensi)}</td>
+                                            <td className="border-r border-slate-900 py-0.5 text-right px-1.5">{formatAngka(hari.t_kerapian)}</td>
+                                            <td className="border-r border-slate-900 py-0.5 text-right px-1.5">{formatAngka(hari.lembur)}</td>
+                                            <td className="border-r border-slate-900 py-0.5 text-right px-1.5 font-bold text-emerald-700 bg-emerald-50/30">
+                                                {bCustom > 0 ? `+${formatAngka(bCustom)}` : '-'}
+                                            </td>
+                                            <td className="border-r border-slate-900 py-0.5 text-right px-1.5 font-bold text-rose-600 bg-rose-50/30">
+                                                {pCustom > 0 ? `-${formatAngka(pCustom)}` : '-'}
+                                            </td>
+                                            <td className="py-0.5 font-extrabold text-right px-1.5 text-slate-900">
+                                                {formatAngka(
+                                                    (isTarget
+                                                        ? (Number(hari.harga_satuan) || 0) * (Number(hari.capaian) || 0)
+                                                        : (Number(hari.gaji_kehadiran) || 0))
+                                                    + (Number(hari.t_absensi) || 0)
+                                                    + (Number(hari.t_kerapian) || 0)
+                                                    + (Number(hari.lembur) || 0)
+                                                    + bCustom
+                                                    - pCustom
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr><td colSpan={isTarget ? 11 : 9} className="py-3 text-slate-400 italic">Data absensi harian tidak tersedia</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* 2 & 3. RINCIAN AKUMULASI PENDAPATAN & POTONGAN */}
+                <div className="grid grid-cols-2 gap-3">
+                    {/* TABUNGAN & KASBON INFO */}
+                    <div className="border border-slate-900 p-2 rounded-md bg-slate-50/50">
+                        <h5 className="font-bold text-[10px] text-slate-800 uppercase mb-1 border-b border-slate-300 pb-0.5">
+                            2. Informasi Kasbon & Tabungan
+                        </h5>
+                        <table className="w-full text-[9px]">
+                            <tbody className="divide-y divide-slate-200">
+                                {pegawai.rincian_potongan?.detail_kasbon?.map((bon: any, i: number) => (
+                                    <tr key={i}>
+                                        <td className="py-0.5 text-slate-600 font-medium">Sisa Kasbon ({bon.keterangan}):</td>
+                                        <td className="py-0.5 text-right font-bold text-rose-600">{formatRupiah(bon.sisa_pinjaman_terkini)}</td>
+                                    </tr>
+                                ))}
+                                <tr>
+                                    <td className="py-0.5 text-slate-600 font-medium">Tabungan Lembur Tahunan:</td>
+                                    <td className="py-0.5 text-right font-bold text-slate-800">{formatRupiah(pegawai.informasi_tabungan?.tabungan_lembur_tahunan_terkumpul)}</td>
+                                </tr>
+                                <tr>
+                                    <td className="py-0.5 text-slate-600 font-medium">Tabungan Loyalitas:</td>
+                                    <td className="py-0.5 text-right font-bold text-slate-800">{formatRupiah(pegawai.informasi_tabungan?.tabungan_loyalitas_akumulasi)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* KOMPONEN PENDAPATAN & POTONGAN */}
+                    <div className="border border-slate-900 p-2 rounded-md bg-slate-50/50">
+                        <h5 className="font-bold text-[10px] text-slate-800 uppercase mb-1 border-b border-slate-300 pb-0.5">
+                            3. Rincian Komponen Gaji
+                        </h5>
+                        <table className="w-full text-[9px]">
+                            <tbody className="divide-y divide-slate-200">
+                                <tr>
+                                    <td className="py-0.5 text-slate-600 font-medium">Jumlah Upah Dasar:</td>
+                                    <td className="py-0.5 text-right font-bold text-slate-800">{formatRupiah(pegawai.gaji_dasar)}</td>
+                                </tr>
+                                {pegawai.rincian_bonus?.bonus_kehadiran_mingguan > 0 && (
+                                    <tr>
+                                        <td className="py-0.5 text-slate-600 font-medium">Bonus Mingguan Full:</td>
+                                        <td className="py-0.5 text-right font-bold text-emerald-600">+{formatRupiah(pegawai.rincian_bonus?.bonus_kehadiran_mingguan)}</td>
+                                    </tr>
+                                )}
+                                {pegawai.rincian_bonus?.uang_lembur_akumulasi > 0 && (
+                                    <tr>
+                                        <td className="py-0.5 text-slate-600 font-medium">Total Lembur:</td>
+                                        <td className="py-0.5 text-right font-bold text-emerald-600">+{formatRupiah(pegawai.rincian_bonus?.uang_lembur_akumulasi)}</td>
+                                    </tr>
+                                )}
+                                {getGroupedBonusCustom(pegawai).map((bGroup, i) => (
+                                    <tr key={'bg-' + i}>
+                                        <td className="py-0.5 text-emerald-700 font-semibold italic">Bonus ({bGroup.keterangan}):</td>
+                                        <td className="py-0.5 text-right font-extrabold text-emerald-600">+{formatRupiah(bGroup.total)}</td>
+                                    </tr>
+                                ))}
+
+                                {/* POTONGAN */}
+                                {pegawai.denda_sistem > 0 && (
+                                    <tr>
+                                        <td className="py-0.5 text-rose-600 font-medium">Denda / Telat / Alpha:</td>
+                                        <td className="py-0.5 text-right font-bold text-rose-600">-{formatRupiah(pegawai.denda_sistem)}</td>
+                                    </tr>
+                                )}
+                                {pegawai.rincian_potongan?.detail_kasbon?.map((bon: any, i: number) => (
+                                    <tr key={'bon-' + i}>
+                                        <td className="py-0.5 text-rose-600 font-medium">Pot. Kasbon ({bon.keterangan}):</td>
+                                        <td className="py-0.5 text-right font-bold text-rose-600">-{formatRupiah(bon.nominal_potongan)}</td>
+                                    </tr>
+                                ))}
+                                {getGroupedPotonganCustom(pegawai).map((pGroup, i) => (
+                                    <tr key={'pg-' + i}>
+                                        <td className="py-0.5 text-rose-700 font-semibold italic">Pot. Custom ({pGroup.keterangan}):</td>
+                                        <td className="py-0.5 text-right font-extrabold text-rose-600">-{formatRupiah(pGroup.total)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* 4. TOTAL UPAH BERSIH (TAKE-HOME PAY BANNER) */}
+                <div className="bg-slate-900 text-white p-2.5 rounded-lg flex justify-between items-center shadow-xs">
+                    <div>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">TOTAL UPAH BERSIH (TAKE-HOME PAY)</span>
+                        <span className="text-[10px] font-semibold text-slate-300">Status: <strong className={isLunas ? 'text-emerald-400' : 'text-amber-400'}>{pegawai.status}</strong></span>
+                    </div>
+                    <div className="text-base font-black text-emerald-400">
+                        {formatRupiah(pegawai.total_upah)}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Container style standar untuk Cetak Browser (@media print) & Ekspor PDF/PNG
+    return (
+        <div
+            id={cardId}
+            className={`bg-white p-3.5 w-[140mm] ${isLong ? 'min-h-[195mm] max-h-[198mm]' : 'h-[97mm] max-h-[97mm] overflow-hidden'} text-[9px] font-sans text-slate-900 flex flex-col justify-between gap-1 border border-dashed border-slate-300 box-border`}
+        >
+            {/* BAGIAN ATAS: HEADER & TABEL RINCIAN */}
+            <div className="flex flex-col gap-1">
+                {/* HEADER SLIP GAJI */}
+                <div className="flex justify-between items-start border-b-2 border-slate-900 pb-1">
+                    <table className="text-left font-bold text-[9px] leading-tight">
+                        <tbody>
+                            <tr><td className="w-14 pb-0.1 text-slate-500 font-medium">Nama Pegawai</td><td className="pb-0.1 font-extrabold text-slate-900">: {pegawai.nama}</td></tr>
+                            <tr><td className="pb-0.1 text-slate-500 font-medium">Jabatan / Shift</td><td className="pb-0.1 font-bold text-slate-800">: {pegawai.jabatan} {pegawai.shift ? `(${pegawai.shift})` : ''}</td></tr>
+                            <tr><td className="pb-0.1 text-slate-500 font-medium">Tipe Penggajian</td><td className="pb-0.1 font-bold text-slate-800">: {pegawai.tipe_penggajian}</td></tr>
+                            <tr><td className="pb-0.1 text-slate-500 font-medium">Periode Tanggal</td><td className="pb-0.1 font-bold text-slate-800">: {pegawai.periode_tanggal || filterValue}</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div className="text-right leading-none">
+                        <h1 className="font-extrabold text-[9px] text-slate-900 uppercase leading-none">Perusahaan Krupuk Mie</h1>
+                        <h2 className="font-black text-[10.5px] text-emerald-800 tracking-wider leading-tight mt-0.5">" Tiga Berlian Official "</h2>
+                        <p className="mt-0.5 leading-tight text-[7px] text-slate-500 font-medium">
+                            Jl. Raya Belakang Yonif 407 &middot; Ds. Harjosari Lor RT 28 RW 06<br />
+                            Kec. Adiwerna Kab. Tegal &middot; Telp. 095743404555
+                        </p>
+                    </div>
+                </div>
+
+                {/* 1. RINCIAN ABSENSI & UPAH HARIAN */}
+                <div>
+                    <h4 className="font-extrabold text-[8.5px] text-slate-800 uppercase mb-0.5 border-b border-slate-350 pb-0.2">
+                        1. Rincian Absensi & Upah Harian
+                    </h4>
+                    <table className="w-full border-collapse border border-slate-900 text-center text-[8.5px] leading-tight">
+                        <thead className="border-b border-slate-900 bg-slate-100 font-bold">
+                            <tr>
+                                <th className="border-r border-slate-900 py-0.2 w-4">No</th>
+                                <th className="border-r border-slate-900 py-0.2 w-14">Hari / Tgl</th>
+                                {isTarget ? (
+                                    <>
+                                        <th className="border-r border-slate-900 py-0.2">Pekerjaan Target</th>
+                                        <th className="border-r border-slate-900 py-0.2 w-11">Harga</th>
+                                        <th className="border-r border-slate-900 py-0.2 w-9">Capaian</th>
+                                    </>
+                                ) : (
+                                    <th className="border-r border-slate-900 py-0.2 w-14">Upah Pokok</th>
+                                )}
+                                <th className="border-r border-slate-900 py-0.2 w-9">T. Disiplin</th>
+                                <th className="border-r border-slate-900 py-0.2 w-9">T. Kerapian</th>
+                                <th className="border-r border-slate-900 py-0.2 w-9">U. Lembur</th>
+                                <th className="border-r border-slate-900 py-0.2 w-12 bg-emerald-50/70 text-emerald-900">Bonus Custom</th>
+                                <th className="border-r border-slate-900 py-0.2 w-12 bg-rose-50/70 text-rose-900">Pot. Custom</th>
+                                <th className="py-0.2 w-16 text-right px-1">Total Harian</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {pegawai.detail_harian && pegawai.detail_harian.length > 0 ? (
+                                pegawai.detail_harian.map((hari: DetailHarian, idx: number) => {
+                                    const bCustom = getBonusCustomForHari(hari, pegawai, idx);
+                                    const pCustom = getPotonganCustomForHari(hari, pegawai, idx);
+
+                                    return (
+                                        <tr key={idx} className="border-b border-slate-200">
+                                            <td className="border-r border-slate-900 py-0.2 font-medium text-slate-500">{idx + 1}</td>
+                                            <td className="border-r border-slate-900 py-0.2 text-left px-1 font-semibold">{hari.hari_tanggal || '-'}</td>
+                                            {isTarget ? (
+                                                <>
+                                                    <td className="border-r border-slate-900 py-0.2 text-left px-1 italic truncate max-w-20">{hari.nama_target || '-'}</td>
+                                                    <td className="border-r border-slate-900 py-0.2 text-right px-1 font-semibold">{formatAngka(hari.harga_satuan)}</td>
+                                                    <td className="border-r border-slate-900 py-0.2 font-bold">{formatAngka(hari.capaian)}</td>
+                                                </>
+                                            ) : (
+                                                <td className="border-r border-slate-900 py-0.2 text-right px-1 font-semibold">{formatAngka(hari.gaji_kehadiran)}</td>
+                                            )}
+                                            <td className="border-r border-slate-900 py-0.2 text-right px-1 font-semibold">{formatAngka(hari.t_absensi)}</td>
+                                            <td className="border-r border-slate-900 py-0.2 text-right px-1 font-semibold">{formatAngka(hari.t_kerapian)}</td>
+                                            <td className="border-r border-slate-900 py-0.2 text-right px-1 font-semibold">{formatAngka(hari.lembur)}</td>
+                                            <td className="border-r border-slate-900 py-0.2 text-right px-1 font-bold text-emerald-700 bg-emerald-50/30">
+                                                {bCustom > 0 ? `+${formatAngka(bCustom)}` : '-'}
+                                            </td>
+                                            <td className="border-r border-slate-900 py-0.2 text-right px-1 font-bold text-rose-600 bg-rose-50/30">
+                                                {pCustom > 0 ? `-${formatAngka(pCustom)}` : '-'}
+                                            </td>
+                                            <td className="py-0.2 font-extrabold text-right px-1 text-slate-900">
+                                                {formatAngka(
+                                                    (isTarget
+                                                        ? (Number(hari.harga_satuan) || 0) * (Number(hari.capaian) || 0)
+                                                        : (Number(hari.gaji_kehadiran) || 0))
+                                                    + (Number(hari.t_absensi) || 0)
+                                                    + (Number(hari.t_kerapian) || 0)
+                                                    + (Number(hari.lembur) || 0)
+                                                    + bCustom
+                                                    - pCustom
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr><td colSpan={isTarget ? 11 : 9} className="py-1 text-slate-400 italic">Data absensi harian tidak tersedia</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* BAGIAN BAWAH: SEKSI 2 & 3 (KASBON, TABUNGAN & KOMPONEN) DAN SEKSI 4 (UPAH BERSIH) */}
+            <div className="flex flex-col gap-1">
+                {/* 2 & 3. RINCIAN AKUMULASI PENDAPATAN & POTONGAN */}
+                <div className="grid grid-cols-2 gap-2 leading-tight">
+                    <div className="border border-slate-900 p-1.5 rounded-md bg-slate-50/50">
+                        <h5 className="font-bold text-[8.5px] text-slate-800 uppercase mb-0.5 border-b border-slate-300 pb-0.2">
+                            2. Informasi Kasbon & Tabungan
+                        </h5>
+                        <table className="w-full text-[8.5px]">
+                            <tbody className="divide-y divide-slate-200">
+                                {pegawai.rincian_potongan?.detail_kasbon?.map((bon: any, i: number) => (
+                                    <tr key={i}>
+                                        <td className="py-0.2 text-slate-650 font-medium">Sisa Kasbon ({bon.keterangan}):</td>
+                                        <td className="py-0.2 text-right font-bold text-rose-600">{formatRupiah(bon.sisa_pinjaman_terkini)}</td>
+                                    </tr>
+                                ))}
+                                <tr>
+                                    <td className="py-0.2 text-slate-650 font-medium">Tabungan Lembur Tahunan:</td>
+                                    <td className="py-0.2 text-right font-bold text-slate-800">{formatRupiah(pegawai.informasi_tabungan?.tabungan_lembur_tahunan_terkumpul)}</td>
+                                </tr>
+                                <tr>
+                                    <td className="py-0.2 text-slate-650 font-medium">Tabungan Loyalitas:</td>
+                                    <td className="py-0.2 text-right font-bold text-slate-800">{formatRupiah(pegawai.informasi_tabungan?.tabungan_loyalitas_akumulasi)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="border border-slate-900 p-1.5 rounded-md bg-slate-50/50">
+                        <h5 className="font-bold text-[8.5px] text-slate-800 uppercase mb-0.5 border-b border-slate-300 pb-0.2">
+                            3. Rincian Komponen Gaji
+                        </h5>
+                        <table className="w-full text-[8.5px]">
+                            <tbody className="divide-y divide-slate-200">
+                                <tr>
+                                    <td className="py-0.2 text-slate-650 font-medium">Jumlah Gaji Pokok:</td>
+                                    <td className="py-0.2 text-right font-bold text-slate-800">{formatRupiah(pegawai.gaji_dasar)}</td>
+                                </tr>
+                                {pegawai.rincian_bonus?.bonus_kehadiran_mingguan > 0 && (
+                                    <tr>
+                                        <td className="py-0.2 text-slate-650 font-medium">Bonus Mingguan Full:</td>
+                                        <td className="py-0.2 text-right font-bold text-emerald-600">+{formatRupiah(pegawai.rincian_bonus?.bonus_kehadiran_mingguan)}</td>
+                                    </tr>
+                                )}
+                                {pegawai.rincian_bonus?.uang_lembur_akumulasi > 0 && (
+                                    <tr>
+                                        <td className="py-0.2 text-slate-650 font-medium">Total Lembur:</td>
+                                        <td className="py-0.2 text-right font-bold text-emerald-600">+{formatRupiah(pegawai.rincian_bonus?.uang_lembur_akumulasi)}</td>
+                                    </tr>
+                                )}
+                                {getGroupedBonusCustom(pegawai).map((bGroup, i) => (
+                                    <tr key={'bg-' + i}>
+                                        <td className="py-0.2 text-emerald-700 font-semibold italic">Bonus ({bGroup.keterangan}):</td>
+                                        <td className="py-0.2 text-right font-extrabold text-emerald-600">+{formatRupiah(bGroup.total)}</td>
+                                    </tr>
+                                ))}
+
+                                {/* POTONGAN */}
+                                {pegawai.denda_sistem > 0 && (
+                                    <tr>
+                                        <td className="py-0.2 text-rose-650 font-medium">Denda / Telat / Alpha:</td>
+                                        <td className="py-0.2 text-right font-bold text-rose-600">-{formatRupiah(pegawai.denda_sistem)}</td>
+                                    </tr>
+                                )}
+                                {pegawai.rincian_potongan?.detail_kasbon?.map((bon: any, i: number) => (
+                                    <tr key={'bon-' + i}>
+                                        <td className="py-0.2 text-rose-650 font-medium">Pot. Kasbon ({bon.keterangan}):</td>
+                                        <td className="py-0.2 text-right font-bold text-rose-600">-{formatRupiah(bon.nominal_potongan)}</td>
+                                    </tr>
+                                ))}
+                                {getGroupedPotonganCustom(pegawai).map((pGroup, i) => (
+                                    <tr key={'pg-' + i}>
+                                        <td className="py-0.2 text-rose-750 font-semibold italic">Pot. Custom ({pGroup.keterangan}):</td>
+                                        <td className="py-0.2 text-right font-extrabold text-rose-600">-{formatRupiah(pGroup.total)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* 4. TOTAL UPAH BERSIH */}
+                <div className="bg-slate-900 text-white p-1.5 rounded-lg flex justify-between items-center shadow-xs shrink-0">
+                    <div>
+                        <span className="text-[8px] uppercase font-bold text-slate-400 block tracking-wider leading-none">TOTAL UPAH BERSIH</span>
+                        <span className="text-[8px] text-slate-300 font-semibold mt-0.5 leading-none">Status: <strong className={isLunas ? 'text-emerald-400' : 'text-amber-400'}>{pegawai.status}</strong></span>
+                    </div>
+                    <div className="text-[12.5px] font-black text-emerald-400 leading-none">
+                        {formatRupiah(pegawai.total_upah)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function ModalPreviewSlipGaji({
     isOpen,
@@ -139,8 +675,6 @@ export default function ModalPreviewSlipGaji({
         });
     }, [data, searchQuery, statusFilter, tipeFilter, shiftFilter]);
 
-
-
     // Selected employee items
     const selectedEmployees = useMemo(() => {
         return data.filter(item => selectedIds.includes(String(item.id)));
@@ -170,119 +704,6 @@ export default function ModalPreviewSlipGaji({
         setSelectedIds(prev =>
             prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
         );
-    };
-
-    if (!isOpen) return null;
-
-    // Helper matching bonus custom to specific day without duplicating on multi-target rows
-    const getBonusCustomForHari = (hari: DetailHarian, pegawai: RekapGajiLengkap, idx: number) => {
-        if (Number((hari as any).bonus_custom) > 0) {
-            return Number((hari as any).bonus_custom);
-        }
-
-        const bonusList = pegawai.rincian_bonus?.detail_bonus_custom;
-        if (!Array.isArray(bonusList) || bonusList.length === 0) return 0;
-
-        const detailHarian = pegawai.detail_harian || [];
-        const hDate = (hari.hari_tanggal || '').toLowerCase();
-        const hTanggal = ((hari as any).tanggal || '').toLowerCase();
-
-        const firstIdx = detailHarian.findIndex((h: DetailHarian) => {
-            const dateStr = (h.hari_tanggal || '').toLowerCase();
-            const tglStr = ((h as any).tanggal || '').toLowerCase();
-            return (dateStr && hDate && dateStr === hDate) || (tglStr && hTanggal && tglStr === hTanggal);
-        });
-
-        if (firstIdx !== -1 && idx !== firstIdx) {
-            return 0;
-        }
-
-        const matched = bonusList.filter((b: any) => {
-            const bTanggal = (b.tanggal || '').toLowerCase();
-            const bHari = (b.hari_tanggal || '').toLowerCase();
-            if (hTanggal && bTanggal && hTanggal === bTanggal) return true;
-            if (hDate && bHari && hDate === bHari) return true;
-            if (hDate && bTanggal && bTanggal.includes(hDate)) return true;
-            return false;
-        });
-
-        if (matched.length > 0) {
-            return matched.reduce((sum: number, b: any) => sum + (Number(b.nominal) || 0), 0);
-        }
-
-        return 0;
-    };
-
-    // Helper matching potongan custom to specific day without duplicating on multi-target rows
-    const getPotonganCustomForHari = (hari: DetailHarian, pegawai: RekapGajiLengkap, idx: number) => {
-        if (Number((hari as any).potongan_custom) > 0) {
-            return Number((hari as any).potongan_custom);
-        }
-
-        const potonganList = pegawai.rincian_potongan?.detail_potongan_custom;
-        if (!Array.isArray(potonganList) || potonganList.length === 0) return 0;
-
-        const detailHarian = pegawai.detail_harian || [];
-        const hDate = (hari.hari_tanggal || '').toLowerCase();
-        const hTanggal = ((hari as any).tanggal || '').toLowerCase();
-
-        const firstIdx = detailHarian.findIndex((h: DetailHarian) => {
-            const dateStr = (h.hari_tanggal || '').toLowerCase();
-            const tglStr = ((h as any).tanggal || '').toLowerCase();
-            return (dateStr && hDate && dateStr === hDate) || (tglStr && hTanggal && tglStr === hTanggal);
-        });
-
-        if (firstIdx !== -1 && idx !== firstIdx) {
-            return 0;
-        }
-
-        const matched = potonganList.filter((p: any) => {
-            const pTanggal = (p.tanggal || '').toLowerCase();
-            const pHari = (p.hari_tanggal || '').toLowerCase();
-            if (hTanggal && pTanggal && hTanggal === pTanggal) return true;
-            if (hDate && pHari && hDate === pHari) return true;
-            if (hDate && pTanggal && pTanggal.includes(hDate)) return true;
-            return false;
-        });
-
-        if (matched.length > 0) {
-            return matched.reduce((sum: number, p: any) => sum + (Number(p.nominal) || 0), 0);
-        }
-
-        return 0;
-    };
-
-    const getGroupedBonusCustom = (pegawai: RekapGajiLengkap) => {
-        const list = pegawai.rincian_bonus?.detail_bonus_custom;
-        if (!Array.isArray(list) || list.length === 0) return [];
-
-        const groups: { [key: string]: number } = {};
-        for (const item of list) {
-            const ket = (item.keterangan || 'Bonus Custom').trim();
-            groups[ket] = (groups[ket] || 0) + (Number(item.nominal) || 0);
-        }
-        return Object.entries(groups).map(([keterangan, total]) => ({ keterangan, total }));
-    };
-
-    const getGroupedPotonganCustom = (pegawai: RekapGajiLengkap) => {
-        const list = pegawai.rincian_potongan?.detail_potongan_custom;
-        if (!Array.isArray(list) || list.length === 0) return [];
-
-        const groups: { [key: string]: number } = {};
-        for (const item of list) {
-            const ket = (item.keterangan || 'Potongan Custom').trim();
-            groups[ket] = (groups[ket] || 0) + (Number(item.nominal) || 0);
-        }
-        return Object.entries(groups).map(([keterangan, total]) => ({ keterangan, total }));
-    };
-
-    // Helper to chunk array
-    const chunkArray = <T,>(arr: T[], size: number): T[][] => {
-        const chunked: T[][] = [];
-        for (let i = 0; i < arr.length; i += size) {
-            chunked.push(arr.slice(i, i + size));
-        }
-        return chunked;
     };
 
     // Handle PDF Export using html-to-image (toCanvas) & jsPDF for ALL selected employees with Adaptive Hybrid Layout
@@ -427,7 +848,6 @@ export default function ModalPreviewSlipGaji({
         }
     };
 
-
     // Handle PNG Export using html-to-image (toPng)
     const handleExportPng = async () => {
         if (selectedEmployees.length === 0) return;
@@ -460,721 +880,469 @@ export default function ModalPreviewSlipGaji({
         window.print();
     };
 
+    if (!isOpen) return null;
+
     const currentPreviewPegawai = selectedEmployees[previewIndex] || selectedEmployees[0];
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-5 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl h-[92vh] max-h-212.5 overflow-hidden border border-gray-200 flex flex-col my-auto">
+    // Helper untuk render halaman cetak browser berdasarkan layoutMode
+    const renderPrintPages = () => {
+        if (selectedEmployees.length === 0) return null;
 
-                {/* MODAL HEADER */}
-                <div className="bg-white text-slate-800 border-b border-gray-200 px-5 py-4 flex justify-between items-center shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div>
-                            <h3 className="font-extrabold text-slate-800 text-lg leading-tight">Preview & Cetak Slip Gaji</h3>
-                            <p className="text-xs text-slate-500 font-medium mt-0.5">
-                                Pilih pegawai, pratinjau tampilan slip gaji, dan ekspor ke PDF, PNG, atau Print.
-                            </p>
+        if (layoutMode === '2-per-page') {
+            const chunks = chunkArray(selectedEmployees, 2);
+            return chunks.map((chunk, chunkIdx) => (
+                <div key={'print-p2-' + chunkIdx} className="print-page-long">
+                    {chunk.map(emp => (
+                        <SlipGajiCard
+                            key={emp.id}
+                            pegawai={emp}
+                            filterValue={filterValue}
+                            isLong={true}
+                        />
+                    ))}
+                </div>
+            ));
+        }
+
+        if (layoutMode === '4-per-page') {
+            const chunks = chunkArray(selectedEmployees, 4);
+            return chunks.map((chunk, chunkIdx) => (
+                <div key={'print-p4-' + chunkIdx} className="print-page-standard">
+                    {chunk.map(emp => (
+                        <SlipGajiCard
+                            key={emp.id}
+                            pegawai={emp}
+                            filterValue={filterValue}
+                            isLong={false}
+                        />
+                    ))}
+                </div>
+            ));
+        }
+
+        // Mode Otomatis (Adaptif): standar 4-per-page, long 2-per-page
+        const standardEmps = selectedEmployees.filter(e => !isLongSlip(e));
+        const longEmps = selectedEmployees.filter(e => isLongSlip(e));
+
+        const standardChunks = chunkArray(standardEmps, 4);
+        const longChunks = chunkArray(longEmps, 2);
+
+        return (
+            <>
+                {standardChunks.map((chunk, chunkIdx) => (
+                    <div key={'print-pstd-' + chunkIdx} className="print-page-standard">
+                        {chunk.map(emp => (
+                            <SlipGajiCard
+                                key={emp.id}
+                                pegawai={emp}
+                                filterValue={filterValue}
+                                isLong={false}
+                            />
+                        ))}
+                    </div>
+                ))}
+                {longChunks.map((chunk, chunkIdx) => (
+                    <div key={'print-plng-' + chunkIdx} className="print-page-long">
+                        {chunk.map(emp => (
+                            <SlipGajiCard
+                                key={emp.id}
+                                pegawai={emp}
+                                filterValue={filterValue}
+                                isLong={true}
+                            />
+                        ))}
+                    </div>
+                ))}
+            </>
+        );
+    };
+
+    return (
+        <>
+            {/* MODAL DIALOG CONTAINER (TERSEMBUNYI SAAT PRINT) */}
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-5 animate-in fade-in duration-200 print:hidden">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl h-[92vh] max-h-212.5 overflow-hidden border border-gray-200 flex flex-col my-auto">
+
+                    {/* MODAL HEADER */}
+                    <div className="bg-white text-slate-800 border-b border-gray-200 px-5 py-4 flex justify-between items-center shrink-0">
+                        <div className="flex items-center gap-3">
+                            <div>
+                                <h3 className="font-extrabold text-slate-800 text-lg leading-tight">Preview & Cetak Slip Gaji</h3>
+                                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                                    Pilih pegawai, pratinjau tampilan slip gaji, dan ekspor ke PDF, PNG, atau Print.
+                                </p>
+                            </div>
                         </div>
+
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                            title="Tutup Modal"
+                        >
+                            <X size={20} />
+                        </button>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                        title="Tutup Modal"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
+                    {/* MODAL BODY (2 COLUMNS: LEFT FILTER/CONTROLS, RIGHT LIVE PREVIEW) */}
+                    <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-0">
 
-                {/* MODAL BODY (2 COLUMNS: LEFT FILTER/CONTROLS, RIGHT LIVE PREVIEW) */}
-                <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-0">
+                        {/* LEFT PANEL: FILTERS & EMPLOYEE SELECTOR (4 COLUMNS) */}
+                        <div className="lg:col-span-4 bg-slate-50 border-r border-slate-200 p-4 flex flex-col gap-3.5 h-full overflow-hidden min-h-0">
 
-                    {/* LEFT PANEL: FILTERS & EMPLOYEE SELECTOR (4 COLUMNS) */}
-                    <div className="lg:col-span-4 bg-slate-50 border-r border-slate-200 p-4 flex flex-col gap-3.5 h-full overflow-hidden min-h-0">
+                            {/* SEARCH INPUT */}
+                            <div className="relative shrink-0">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+                                <input
+                                    type="text"
+                                    placeholder="Cari nama / jabatan pegawai..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full text-xs pl-9 pr-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium shadow-2xs"
+                                />
+                            </div>
 
-                        {/* SEARCH INPUT */}
-                        <div className="relative shrink-0">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-                            <input
-                                type="text"
-                                placeholder="Cari nama / jabatan pegawai..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full text-xs pl-9 pr-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium shadow-2xs"
-                            />
-                        </div>
+                            {/* FILTER DROPDOWNS: STATUS, TIPE, SHIFT, FORMAT */}
+                            <div className="grid grid-cols-2 gap-2 shrink-0">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 truncate">Status Gaji</label>
+                                    <select
+                                        value={statusFilter}
+                                        onChange={(e) => setStatusFilter(e.target.value as 'Semua' | 'Lunas' | 'Pending')}
+                                        className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white font-semibold text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500"
+                                    >
+                                        <option value="Semua">Semua Status</option>
+                                        <option value="Lunas">Lunas</option>
+                                        <option value="Pending">Pending</option>
+                                    </select>
+                                </div>
 
-                        {/* FILTER DROPDOWNS: STATUS, TIPE, SHIFT, FORMAT */}
-                        <div className="grid grid-cols-2 gap-2 shrink-0">
-                            <div>
-                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 truncate">Status Gaji</label>
-                                <select
-                                    value={statusFilter}
-                                    onChange={(e) => setStatusFilter(e.target.value as 'Semua' | 'Lunas' | 'Pending')}
-                                    className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white font-semibold text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500"
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 truncate">Tipe Gaji</label>
+                                    <select
+                                        value={tipeFilter}
+                                        onChange={(e) => setTipeFilter(e.target.value as 'Semua' | 'Harian' | 'Target' | 'Bulanan')}
+                                        className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white font-semibold text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500"
+                                    >
+                                        <option value="Semua">Semua Tipe</option>
+                                        <option value="Target">Target</option>
+                                        <option value="Harian">Harian</option>
+                                        <option value="Bulanan">Bulanan</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 truncate">Shift Pegawai</label>
+                                    <select
+                                        value={shiftFilter}
+                                        onChange={(e) => setShiftFilter(e.target.value)}
+                                        className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white font-semibold text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500"
+                                    >
+                                        <option value="Semua">Semua Shift</option>
+                                        {uniqueShifts.map(s => (
+                                            <option key={s} value={s}>{s}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 truncate">Format Cetak</label>
+                                    <select
+                                        value={layoutMode}
+                                        onChange={(e) => setLayoutMode(e.target.value as 'auto' | '2-per-page' | '4-per-page')}
+                                        className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white font-semibold text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500"
+                                    >
+                                        <option value="auto">⚡ Otomatis (Adaptif)</option>
+                                        <option value="2-per-page">📄 2 Slip / Lembar (Luas)</option>
+                                        <option value="4-per-page">📑 4 Slip / Lembar (Ringkas)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* EMPLOYEE LIST HEADER & SELECT ALL BUTTON */}
+                            <div className="flex justify-between items-center border-b border-slate-200 pb-2 shrink-0 pt-1">
+                                <div className="flex items-center gap-1.5">
+                                    <UserCheck size={14} className="text-emerald-600" />
+                                    <span className="text-xs font-bold text-slate-700">Daftar Pegawai</span>
+                                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
+                                        {selectedIds.length} / {data.length}
+                                    </span>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={toggleSelectAll}
+                                    className="text-xs font-bold text-emerald-700 hover:text-emerald-900 transition-colors flex items-center gap-1 cursor-pointer"
                                 >
-                                    <option value="Semua">Semua Status</option>
-                                    <option value="Lunas">Lunas</option>
-                                    <option value="Pending">Pending</option>
-                                </select>
+                                    {isAllSelected ? <CheckSquare size={13} /> : <Square size={13} />}
+                                    {isAllSelected ? 'Batal Semua' : 'Pilih Semua'}
+                                </button>
                             </div>
 
-                            <div>
-                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 truncate">Tipe Gaji</label>
-                                <select
-                                    value={tipeFilter}
-                                    onChange={(e) => setTipeFilter(e.target.value as 'Semua' | 'Harian' | 'Target' | 'Bulanan')}
-                                    className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white font-semibold text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500"
-                                >
-                                    <option value="Semua">Semua Tipe</option>
-                                    <option value="Target">Target</option>
-                                    <option value="Harian">Harian</option>
-                                    <option value="Bulanan">Bulanan</option>
-                                </select>
-                            </div>
+                            {/* EMPLOYEE CHECKLIST AREA */}
+                            <div className="flex-1 overflow-y-auto border border-slate-200 rounded-xl p-2 divide-y divide-slate-100 bg-white min-h-0 shadow-2xs">
+                                {filteredEmployees.length > 0 ? (
+                                    filteredEmployees.map((pegawai) => {
+                                        const pId = String(pegawai.id);
+                                        const isChecked = selectedIds.includes(pId);
+                                        const isLunas = pegawai.status?.toLowerCase() === 'lunas';
+                                        const pShift = pegawai.shift && pegawai.shift !== '-' ? pegawai.shift : (pegawai.shifts?.kode_shift || pegawai.pola_rotasi_shift?.nama_pola || '');
 
-                            <div>
-                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 truncate">Shift Pegawai</label>
-                                <select
-                                    value={shiftFilter}
-                                    onChange={(e) => setShiftFilter(e.target.value)}
-                                    className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white font-semibold text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500"
-                                >
-                                    <option value="Semua">Semua Shift</option>
-                                    {uniqueShifts.map(s => (
-                                        <option key={s} value={s}>{s}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 truncate">Format Cetak</label>
-                                <select
-                                    value={layoutMode}
-                                    onChange={(e) => setLayoutMode(e.target.value as 'auto' | '2-per-page' | '4-per-page')}
-                                    className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white font-semibold text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500"
-                                >
-                                    <option value="auto">⚡ Otomatis (Adaptif)</option>
-                                    <option value="2-per-page">📄 2 Slip / Lembar (Luas)</option>
-                                    <option value="4-per-page">📑 4 Slip / Lembar (Ringkas)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* EMPLOYEE LIST HEADER & SELECT ALL BUTTON */}
-                        <div className="flex justify-between items-center border-b border-slate-200 pb-2 shrink-0 pt-1">
-                            <div className="flex items-center gap-1.5">
-                                <UserCheck size={14} className="text-emerald-600" />
-                                <span className="text-xs font-bold text-slate-700">Daftar Pegawai</span>
-                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
-                                    {selectedIds.length} / {data.length}
-                                </span>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={toggleSelectAll}
-                                className="text-xs font-bold text-emerald-700 hover:text-emerald-900 transition-colors flex items-center gap-1 cursor-pointer"
-                            >
-                                {isAllSelected ? <CheckSquare size={13} /> : <Square size={13} />}
-                                {isAllSelected ? 'Batal Semua' : 'Pilih Semua'}
-                            </button>
-                        </div>
-
-                        {/* EMPLOYEE CHECKLIST AREA */}
-                        <div className="flex-1 overflow-y-auto border border-slate-200 rounded-xl p-2 divide-y divide-slate-100 bg-white min-h-0 shadow-2xs">
-                            {filteredEmployees.length > 0 ? (
-                                filteredEmployees.map((pegawai) => {
-                                    const pId = String(pegawai.id);
-                                    const isChecked = selectedIds.includes(pId);
-                                    const isLunas = pegawai.status?.toLowerCase() === 'lunas';
-                                    const pShift = pegawai.shift && pegawai.shift !== '-' ? pegawai.shift : (pegawai.shifts?.kode_shift || pegawai.pola_rotasi_shift?.nama_pola || '');
-
-                                    return (
-                                        <label
-                                            key={pId}
-                                            className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${isChecked ? 'bg-emerald-50/80 border border-emerald-200/60' : 'hover:bg-slate-50'
-                                                }`}
-                                        >
-                                            <div className="flex items-center gap-2.5 min-w-0">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isChecked}
-                                                    onChange={() => toggleSelectEmployee(pId)}
-                                                    className="w-4 h-4 text-emerald-600 rounded-xs focus:ring-emerald-500 border-slate-300 cursor-pointer shrink-0"
-                                                />
-                                                <div className="flex flex-col min-w-0">
-                                                    <span className="text-xs font-bold text-slate-800 truncate">{pegawai.nama}</span>
-                                                    <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                                                        <span className="text-[10px] text-slate-500 truncate">{pegawai.jabatan}</span>
-                                                        {pShift && (
-                                                            <span className="text-[9px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200">
-                                                                {pShift.toLowerCase().startsWith('shift') ? pShift : `Shift ${pShift}`}
-                                                            </span>
-                                                        )}
+                                        return (
+                                            <label
+                                                key={pId}
+                                                className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${isChecked ? 'bg-emerald-50/80 border border-emerald-200/60' : 'hover:bg-slate-50'
+                                                    }`}
+                                            >
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isChecked}
+                                                        onChange={() => toggleSelectEmployee(pId)}
+                                                        className="w-4 h-4 text-emerald-600 rounded-xs focus:ring-emerald-500 border-slate-300 cursor-pointer shrink-0"
+                                                    />
+                                                    <div className="flex flex-col min-w-0">
+                                                        <span className="text-xs font-bold text-slate-800 truncate">{pegawai.nama}</span>
+                                                        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                                            <span className="text-[10px] text-slate-500 truncate">{pegawai.jabatan}</span>
+                                                            {pShift && (
+                                                                <span className="text-[9px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200">
+                                                                    {pShift.toLowerCase().startsWith('shift') ? pShift : `Shift ${pShift}`}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            <div className="flex flex-col items-end shrink-0 pl-2">
-                                                <span className="text-xs font-extrabold text-slate-800">{formatRupiah(pegawai.total_upah)}</span>
-                                                <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${isLunas
-                                                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                                                    : 'bg-amber-100 text-amber-800 border-amber-200'
-                                                    }`}>
-                                                    {isLunas ? 'Lunas' : 'Pending'}
-                                                </span>
-                                            </div>
-                                        </label>
-                                    );
-                                })
-                            ) : (
-                                <div className="p-8 text-center text-xs text-slate-400 italic">
-                                    Pegawai tidak ditemukan dengan filter ini.
+                                                <div className="flex flex-col items-end shrink-0 pl-2">
+                                                    <span className="text-xs font-extrabold text-slate-800">{formatRupiah(pegawai.total_upah)}</span>
+                                                    <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${isLunas
+                                                        ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                                                        : 'bg-amber-100 text-amber-800 border-amber-200'
+                                                        }`}>
+                                                        {isLunas ? 'Lunas' : 'Pending'}
+                                                    </span>
+                                                </div>
+                                            </label>
+                                        );
+                                    })
+                                ) : (
+                                    <div className="p-8 text-center text-xs text-slate-400 italic">
+                                        Pegawai tidak ditemukan dengan filter ini.
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* ACTION BUTTONS: EXPORT OPTIONS DENGAN VALIDASI STATUS PENDING */}
+                            <div className="flex flex-col gap-2 shrink-0 pt-2 border-t border-slate-200">
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Button
+                                        label={isExportingPdf ? "Memproses..." : "Simpan PDF"}
+                                        variant="secondary"
+                                        icon={isExportingPdf ? <Loader2 className="animate-spin" size={14} /> : <FileText size={14} className="text-rose-600" />}
+                                        onClick={() => {
+                                            if (selectedEmployees.length === 0) return;
+                                            const pendingList = selectedEmployees.filter(e => e.status?.toLowerCase() !== 'lunas');
+                                            if (pendingList.length > 0) {
+                                                setConfirmPendingModal({
+                                                    isOpen: true,
+                                                    actionType: 'pdf',
+                                                    pendingCount: pendingList.length,
+                                                    pendingNames: pendingList.map(e => e.nama)
+                                                });
+                                            } else {
+                                                handleExportPdf();
+                                            }
+                                        }}
+                                        disabled={isExportingPdf || selectedEmployees.length === 0}
+                                        className="w-full text-xs font-bold py-2 border-slate-300 cursor-pointer"
+                                    />
+
+                                    <Button
+                                        label={isExportingPng ? "Memproses..." : "Unduh PNG"}
+                                        variant="secondary"
+                                        icon={isExportingPng ? <Loader2 className="animate-spin" size={14} /> : <ImageIcon size={14} className="text-blue-600" />}
+                                        onClick={() => {
+                                            if (selectedEmployees.length === 0) return;
+                                            const pendingList = selectedEmployees.filter(e => e.status?.toLowerCase() !== 'lunas');
+                                            if (pendingList.length > 0) {
+                                                setConfirmPendingModal({
+                                                    isOpen: true,
+                                                    actionType: 'png',
+                                                    pendingCount: pendingList.length,
+                                                    pendingNames: pendingList.map(e => e.nama)
+                                                });
+                                            } else {
+                                                handleExportPng();
+                                            }
+                                        }}
+                                        disabled={isExportingPng || selectedEmployees.length === 0}
+                                        className="w-full text-xs font-bold py-2 border-slate-300 cursor-pointer"
+                                    />
                                 </div>
-                            )}
-                        </div>
 
-                        {/* ACTION BUTTONS: EXPORT OPTIONS DENGAN VALIDASI STATUS PENDING */}
-                        <div className="flex flex-col gap-2 shrink-0 pt-2 border-t border-slate-200">
-                            <div className="grid grid-cols-2 gap-2">
                                 <Button
-                                    label={isExportingPdf ? "Memproses..." : "Simpan PDF"}
-                                    variant="secondary"
-                                    icon={isExportingPdf ? <Loader2 className="animate-spin" size={14} /> : <FileText size={14} className="text-rose-600" />}
+                                    label={`Cetak (${selectedEmployees.length} Slip)`}
+                                    variant="success"
+                                    icon={<Printer size={16} />}
                                     onClick={() => {
                                         if (selectedEmployees.length === 0) return;
                                         const pendingList = selectedEmployees.filter(e => e.status?.toLowerCase() !== 'lunas');
                                         if (pendingList.length > 0) {
                                             setConfirmPendingModal({
                                                 isOpen: true,
-                                                actionType: 'pdf',
+                                                actionType: 'print',
                                                 pendingCount: pendingList.length,
                                                 pendingNames: pendingList.map(e => e.nama)
                                             });
                                         } else {
-                                            handleExportPdf();
+                                            handleDirectPrint();
                                         }
                                     }}
-                                    disabled={isExportingPdf || selectedEmployees.length === 0}
-                                    className="w-full text-xs font-bold py-2 border-slate-300 cursor-pointer"
-                                />
-
-                                <Button
-                                    label={isExportingPng ? "Memproses..." : "Unduh PNG"}
-                                    variant="secondary"
-                                    icon={isExportingPng ? <Loader2 className="animate-spin" size={14} /> : <ImageIcon size={14} className="text-blue-600" />}
-                                    onClick={() => {
-                                        if (selectedEmployees.length === 0) return;
-                                        const pendingList = selectedEmployees.filter(e => e.status?.toLowerCase() !== 'lunas');
-                                        if (pendingList.length > 0) {
-                                            setConfirmPendingModal({
-                                                isOpen: true,
-                                                actionType: 'png',
-                                                pendingCount: pendingList.length,
-                                                pendingNames: pendingList.map(e => e.nama)
-                                            });
-                                        } else {
-                                            handleExportPng();
-                                        }
-                                    }}
-                                    disabled={isExportingPng || selectedEmployees.length === 0}
-                                    className="w-full text-xs font-bold py-2 border-slate-300 cursor-pointer"
+                                    disabled={selectedEmployees.length === 0}
+                                    className="w-full text-xs font-extrabold py-2.5 shadow-sm cursor-pointer"
                                 />
                             </div>
 
-                            <Button
-                                label={`Cetak (${selectedEmployees.length} Slip)`}
-                                variant="success"
-                                icon={<Printer size={16} />}
-                                onClick={() => {
-                                    if (selectedEmployees.length === 0) return;
-                                    const pendingList = selectedEmployees.filter(e => e.status?.toLowerCase() !== 'lunas');
-                                    if (pendingList.length > 0) {
-                                        setConfirmPendingModal({
-                                            isOpen: true,
-                                            actionType: 'print',
-                                            pendingCount: pendingList.length,
-                                            pendingNames: pendingList.map(e => e.nama)
-                                        });
-                                    } else {
-                                        handleDirectPrint();
-                                    }
-                                }}
-                                disabled={selectedEmployees.length === 0}
-                                className="w-full text-xs font-extrabold py-2.5 shadow-sm cursor-pointer"
-                            />
                         </div>
 
+                        {/* RIGHT PANEL: LIVE A4 SLIP GAJI PREVIEW (8 COLUMNS) */}
+                        <div className="lg:col-span-8 bg-slate-200/70 p-4 sm:p-6 flex flex-col h-full overflow-hidden min-h-0">
 
-                    </div>
-
-                    {/* RIGHT PANEL: LIVE A4 SLIP GAJI PREVIEW (8 COLUMNS) */}
-                    <div className="lg:col-span-8 bg-slate-200/70 p-4 sm:p-6 flex flex-col h-full overflow-hidden min-h-0">
-
-                        {/* PREVIEW TOOLBAR / PAGINATION */}
-                        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex justify-between items-center shrink-0 mb-4">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-extrabold text-slate-800">Pratinjau Lembar Slip Gaji</span>
-                                <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                                    Periode: {filterValue || '-'}
-                                </span>
-                            </div>
-
-                            {selectedEmployees.length > 1 && (
+                            {/* PREVIEW TOOLBAR / PAGINATION */}
+                            <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex justify-between items-center shrink-0 mb-4">
                                 <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setPreviewIndex(prev => Math.max(0, prev - 1))}
-                                        disabled={previewIndex === 0}
-                                        className="p-1 border border-slate-300 rounded-lg bg-white disabled:opacity-40 hover:bg-slate-50 transition-colors cursor-pointer"
-                                        title="Slip Sebelumnya"
-                                    >
-                                        <ChevronLeft size={16} />
-                                    </button>
-
-                                    <span className="text-xs font-bold text-slate-700">
-                                        {previewIndex + 1} dari {selectedEmployees.length}
+                                    <span className="text-xs font-extrabold text-slate-800">Pratinjau Lembar Slip Gaji</span>
+                                    <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                                        Periode: {filterValue || '-'}
                                     </span>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => setPreviewIndex(prev => Math.min(selectedEmployees.length - 1, prev + 1))}
-                                        disabled={previewIndex >= selectedEmployees.length - 1}
-                                        className="p-1 border border-slate-300 rounded-lg bg-white disabled:opacity-40 hover:bg-slate-50 transition-colors cursor-pointer"
-                                        title="Slip Berikutnya"
-                                    >
-                                        <ChevronRight size={16} />
-                                    </button>
                                 </div>
-                            )}
-                        </div>
 
-                        {/* LIVE PREVIEW CANVAS AREA */}
-                        <div className="flex-1 overflow-y-auto flex justify-center p-2 scrollbar-thin">
-                            {selectedEmployees.length > 0 && currentPreviewPegawai ? (
-                                <div
-                                    ref={previewContainerRef}
-                                    id={`export-pdf-card-${currentPreviewPegawai.id}`}
-                                    className="bg-white border border-slate-300 shadow-xl p-4 sm:p-5 w-full max-w-[21cm] text-[10px] font-sans text-slate-900 rounded-lg space-y-3"
-                                >
-                                    {/* HEADER SLIP GAJI */}
-                                    <div className="flex justify-between items-start border-b-2 border-slate-900 pb-2">
-                                        <table className="text-left font-semibold text-[10px]">
-                                            <tbody>
-                                                <tr><td className="w-20 pb-0.5 text-slate-600">Nama Pegawai</td><td className="pb-0.5 font-extrabold text-slate-900">: {currentPreviewPegawai.nama}</td></tr>
-                                                <tr><td className="pb-0.5 text-slate-600">Jabatan / Shift</td><td className="pb-0.5 font-bold text-slate-800">: {currentPreviewPegawai.jabatan} {currentPreviewPegawai.shift ? `(${currentPreviewPegawai.shift})` : ''}</td></tr>
-                                                <tr><td className="pb-0.5 text-slate-600">Tipe Penggajian</td><td className="pb-0.5 font-bold text-slate-800">: {currentPreviewPegawai.tipe_penggajian}</td></tr>
-                                                <tr><td className="pb-0.5 text-slate-600">Periode Tanggal</td><td className="pb-0.5 font-bold text-slate-800">: {currentPreviewPegawai.periode_tanggal || filterValue}</td></tr>
-                                            </tbody>
-                                        </table>
+                                {selectedEmployees.length > 1 && (
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPreviewIndex(prev => Math.max(0, prev - 1))}
+                                            disabled={previewIndex === 0}
+                                            className="p-1 border border-slate-300 rounded-lg bg-white disabled:opacity-40 hover:bg-slate-50 transition-colors cursor-pointer"
+                                            title="Slip Sebelumnya"
+                                        >
+                                            <ChevronLeft size={16} />
+                                        </button>
 
-                                        <div className="text-right">
-                                            <h1 className="font-extrabold text-sm text-slate-900 uppercase tracking-wider">Perusahaan Krupuk Mie</h1>
-                                            <h2 className="font-black text-base text-emerald-700 tracking-widest">" Tiga Berlian Official "</h2>
-                                            <p className="mt-0.5 leading-tight text-[9px] text-slate-500 font-medium">
-                                                Jl. Raya Belakang Yonif 407 &middot; Ds. Harjosari Lor RT 28 RW 06<br />
-                                                Kec. Adiwerna Kab. Tegal &middot; Telp. 095743404555
-                                            </p>
-                                        </div>
+                                        <span className="text-xs font-bold text-slate-700">
+                                            {previewIndex + 1} dari {selectedEmployees.length}
+                                        </span>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setPreviewIndex(prev => Math.min(selectedEmployees.length - 1, prev + 1))}
+                                            disabled={previewIndex >= selectedEmployees.length - 1}
+                                            className="p-1 border border-slate-300 rounded-lg bg-white disabled:opacity-40 hover:bg-slate-50 transition-colors cursor-pointer"
+                                            title="Slip Berikutnya"
+                                        >
+                                            <ChevronRight size={16} />
+                                        </button>
                                     </div>
+                                )}
+                            </div>
 
-                                    {/* 1. RINCIAN PRESENSI & UPAH HARIAN (DENGAN 2 KOLOM BARU BONUS & POTONGAN CUSTOM) */}
-                                    <div>
-                                        <h4 className="font-extrabold text-[10px] text-slate-800 uppercase mb-1 border-b border-slate-300 pb-0.5">
-                                            1. Rincian Absensi & Upah Harian
-                                        </h4>
-                                        <table className="w-full border-collapse border border-slate-900 text-center text-[9px]">
-                                            <thead className="border-b border-slate-900 bg-slate-100 font-bold">
-                                                <tr>
-                                                    <th className="border-r border-slate-900 py-1 w-6">No</th>
-                                                    <th className="border-r border-slate-900 py-1 w-20">Hari / Tgl</th>
-                                                    {currentPreviewPegawai.tipe_penggajian === 'Target' ? (
-                                                        <>
-                                                            <th className="border-r border-slate-900 py-1">Pekerjaan Target</th>
-                                                            <th className="border-r border-slate-900 py-1 w-14">Harga</th>
-                                                            <th className="border-r border-slate-900 py-1 w-12">Capaian</th>
-                                                        </>
-                                                    ) : (
-                                                        <th className="border-r border-slate-900 py-1 w-16">Upah Pokok</th>
-                                                    )}
-                                                    <th className="border-r border-slate-900 py-1 w-14">T. Disiplin</th>
-                                                    <th className="border-r border-slate-900 py-1 w-14">T. Kerapian</th>
-                                                    <th className="border-r border-slate-900 py-1 w-14">U. Lembur</th>
-                                                    <th className="border-r border-slate-900 py-1 w-16 bg-emerald-50/70 text-emerald-900">Bonus Custom</th>
-                                                    <th className="border-r border-slate-900 py-1 w-16 bg-rose-50/70 text-rose-900">Pot. Custom</th>
-                                                    <th className="py-1 w-20 text-right px-1.5">Total Harian</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {currentPreviewPegawai.detail_harian && currentPreviewPegawai.detail_harian.length > 0 ? (
-                                                    currentPreviewPegawai.detail_harian.map((hari: DetailHarian, idx: number) => {
-                                                        const bCustom = getBonusCustomForHari(hari, currentPreviewPegawai, idx);
-                                                        const pCustom = getPotonganCustomForHari(hari, currentPreviewPegawai, idx);
-
-                                                        return (
-                                                            <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50">
-                                                                <td className="border-r border-slate-900 py-0.5 font-medium text-slate-500">{idx + 1}</td>
-                                                                <td className="border-r border-slate-900 py-0.5 text-left px-1.5 font-semibold">{hari.hari_tanggal || '-'}</td>
-                                                                {currentPreviewPegawai.tipe_penggajian === 'Target' ? (
-                                                                    <>
-                                                                        <td className="border-r border-slate-900 py-0.5 text-left px-1.5 italic truncate max-w-30">{hari.nama_target || '-'}</td>
-                                                                        <td className="border-r border-slate-900 py-0.5 text-right px-1.5">{formatAngka(hari.harga_satuan)}</td>
-                                                                        <td className="border-r border-slate-900 py-0.5 font-bold">{formatAngka(hari.capaian)}</td>
-                                                                    </>
-                                                                ) : (
-                                                                    <td className="border-r border-slate-900 py-0.5 text-right px-1.5">{formatAngka(hari.gaji_kehadiran)}</td>
-                                                                )}
-                                                                <td className="border-r border-slate-900 py-0.5 text-right px-1.5">{formatAngka(hari.t_absensi)}</td>
-                                                                <td className="border-r border-slate-900 py-0.5 text-right px-1.5">{formatAngka(hari.t_kerapian)}</td>
-                                                                <td className="border-r border-slate-900 py-0.5 text-right px-1.5">{formatAngka(hari.lembur)}</td>
-                                                                <td className="border-r border-slate-900 py-0.5 text-right px-1.5 font-bold text-emerald-700 bg-emerald-50/30">
-                                                                    {bCustom > 0 ? `+${formatAngka(bCustom)}` : '-'}
-                                                                </td>
-                                                                <td className="border-r border-slate-900 py-0.5 text-right px-1.5 font-bold text-rose-600 bg-rose-50/30">
-                                                                    {pCustom > 0 ? `-${formatAngka(pCustom)}` : '-'}
-                                                                </td>
-                                                                <td className="py-0.5 font-extrabold text-right px-1.5 text-slate-900">
-                                                                    {formatAngka(
-                                                                        (currentPreviewPegawai.tipe_penggajian === 'Target'
-                                                                            ? (Number(hari.harga_satuan) || 0) * (Number(hari.capaian) || 0)
-                                                                            : (Number(hari.gaji_kehadiran) || 0))
-                                                                        + (Number(hari.t_absensi) || 0)
-                                                                        + (Number(hari.t_kerapian) || 0)
-                                                                        + (Number(hari.lembur) || 0)
-                                                                        + bCustom
-                                                                        - pCustom
-                                                                    )}
-                                                                </td>
-                                                            </tr>
-                                                        );
-                                                    })
-                                                ) : (
-                                                    <tr><td colSpan={currentPreviewPegawai.tipe_penggajian === 'Target' ? 11 : 9} className="py-3 text-slate-400 italic">Data absensi harian tidak tersedia</td></tr>
-                                                )}
-                                            </tbody>
-                                        </table>
+                            {/* LIVE PREVIEW CANVAS AREA */}
+                            <div className="flex-1 overflow-y-auto flex justify-center p-2 scrollbar-thin">
+                                {selectedEmployees.length > 0 && currentPreviewPegawai ? (
+                                    <div ref={previewContainerRef}>
+                                        <SlipGajiCard
+                                            pegawai={currentPreviewPegawai}
+                                            filterValue={filterValue}
+                                            isLivePreview={true}
+                                        />
                                     </div>
-
-                                    {/* 2 & 3. RINCIAN AKUMULASI PENDAPATAN & POTONGAN */}
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {/* TABUNGAN & KASBON INFO */}
-                                        <div className="border border-slate-900 p-2 rounded-md bg-slate-50/50">
-                                            <h5 className="font-bold text-[10px] text-slate-800 uppercase mb-1 border-b border-slate-300 pb-0.5">
-                                                2. Informasi Kasbon & Tabungan
-                                            </h5>
-                                            <table className="w-full text-[9px]">
-                                                <tbody className="divide-y divide-slate-200">
-                                                    {currentPreviewPegawai.rincian_potongan?.detail_kasbon?.map((bon: any, i: number) => (
-                                                        <tr key={i}>
-                                                            <td className="py-0.5 text-slate-600 font-medium">Sisa Kasbon ({bon.keterangan}):</td>
-                                                            <td className="py-0.5 text-right font-bold text-rose-600">{formatRupiah(bon.sisa_pinjaman_terkini)}</td>
-                                                        </tr>
-                                                    ))}
-                                                    <tr>
-                                                        <td className="py-0.5 text-slate-600 font-medium">Tabungan Lembur Tahunan:</td>
-                                                        <td className="py-0.5 text-right font-bold text-slate-800">{formatRupiah(currentPreviewPegawai.informasi_tabungan?.tabungan_lembur_tahunan_terkumpul)}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td className="py-0.5 text-slate-600 font-medium">Tabungan Loyalitas:</td>
-                                                        <td className="py-0.5 text-right font-bold text-slate-800">{formatRupiah(currentPreviewPegawai.informasi_tabungan?.tabungan_loyalitas_akumulasi)}</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-
-                                        {/* KOMPONEN PENDAPATAN & POTONGAN (HANYA MENAMPILKAN TOTAL HARIAN GAJI) */}
-                                        <div className="border border-slate-900 p-2 rounded-md bg-slate-50/50">
-                                            <h5 className="font-bold text-[10px] text-slate-800 uppercase mb-1 border-b border-slate-300 pb-0.5">
-                                                3. Rincian Komponen Gaji
-                                            </h5>
-                                            <table className="w-full text-[9px]">
-                                                <tbody className="divide-y divide-slate-200">
-                                                    <tr>
-                                                        <td className="py-0.5 text-slate-600 font-medium">Jumlah Upah Dasar:</td>
-                                                        <td className="py-0.5 text-right font-bold text-slate-800">{formatRupiah(currentPreviewPegawai.gaji_dasar)}</td>
-                                                    </tr>
-                                                    {currentPreviewPegawai.rincian_bonus?.bonus_kehadiran_mingguan > 0 && (
-                                                        <tr>
-                                                            <td className="py-0.5 text-slate-600 font-medium">Bonus Mingguan Full:</td>
-                                                            <td className="py-0.5 text-right font-bold text-emerald-600">+{formatRupiah(currentPreviewPegawai.rincian_bonus?.bonus_kehadiran_mingguan)}</td>
-                                                        </tr>
-                                                    )}
-                                                    {currentPreviewPegawai.rincian_bonus?.uang_lembur_akumulasi > 0 && (
-                                                        <tr>
-                                                            <td className="py-0.5 text-slate-600 font-medium">Total Lembur:</td>
-                                                            <td className="py-0.5 text-right font-bold text-emerald-600">+{formatRupiah(currentPreviewPegawai.rincian_bonus?.uang_lembur_akumulasi)}</td>
-                                                        </tr>
-                                                    )}
-                                                    {getGroupedBonusCustom(currentPreviewPegawai).map((bGroup, i) => (
-                                                        <tr key={'bg-' + i}>
-                                                            <td className="py-0.5 text-emerald-700 font-semibold italic">Bonus ({bGroup.keterangan}):</td>
-                                                            <td className="py-0.5 text-right font-extrabold text-emerald-600">+{formatRupiah(bGroup.total)}</td>
-                                                        </tr>
-                                                    ))}
-
-                                                    {/* POTONGAN */}
-                                                    {currentPreviewPegawai.denda_sistem > 0 && (
-                                                        <tr>
-                                                            <td className="py-0.5 text-rose-600 font-medium">Denda / Telat / Alpha:</td>
-                                                            <td className="py-0.5 text-right font-bold text-rose-600">-{formatRupiah(currentPreviewPegawai.denda_sistem)}</td>
-                                                        </tr>
-                                                    )}
-                                                    {currentPreviewPegawai.rincian_potongan?.detail_kasbon?.map((bon: any, i: number) => (
-                                                        <tr key={'bon-' + i}>
-                                                            <td className="py-0.5 text-rose-600 font-medium">Pot. Kasbon ({bon.keterangan}):</td>
-                                                            <td className="py-0.5 text-right font-bold text-rose-600">-{formatRupiah(bon.nominal_potongan)}</td>
-                                                        </tr>
-                                                    ))}
-                                                    {getGroupedPotonganCustom(currentPreviewPegawai).map((pGroup, i) => (
-                                                        <tr key={'pg-' + i}>
-                                                            <td className="py-0.5 text-rose-700 font-semibold italic">Pot. Custom ({pGroup.keterangan}):</td>
-                                                            <td className="py-0.5 text-right font-extrabold text-rose-600">-{formatRupiah(pGroup.total)}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
+                                        <FileText size={40} className="text-slate-300" />
+                                        <p className="font-semibold text-sm">Tidak Ada Slip Gaji Dipilih</p>
+                                        <p className="text-xs text-slate-400 max-w-xs text-center">
+                                            Silakan centang satu atau beberapa pegawai pada panel di sebelah kiri untuk melihat pratinjau slip gaji.
+                                        </p>
                                     </div>
+                                )}
+                            </div>
 
-                                    {/* 4. TOTAL UPAH BERSIH (TAKE-HOME PAY BANNER) */}
-                                    <div className=" text-black p-2.5 rounded-lg flex justify-between items-center shadow-xs">
-                                        <div>
-                                            <span className="text-[9px] uppercase font-bold block tracking-wider">TOTAL UPAH BERSIH (TAKE-HOME PAY)</span>
-                                            <span className="text-[10px] font-semibold">Status: <strong className={currentPreviewPegawai.status?.toLowerCase() === 'lunas' ? 'text-emerald-700' : 'text-amber-400'}>{currentPreviewPegawai.status}</strong></span>
-                                        </div>
-                                        <div className="text-base font-black text-emerald-500">
-                                            {formatRupiah(currentPreviewPegawai.total_upah)}
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
-                                    <FileText size={40} className="text-slate-300" />
-                                    <p className="font-semibold text-sm">Tidak Ada Slip Gaji Dipilih</p>
-                                    <p className="text-xs text-slate-400 max-w-xs text-center">
-                                        Silakan centang satu atau beberapa pegawai pada panel di sebelah kiri untuk melihat pratinjau slip gaji.
-                                    </p>
-                                </div>
-                            )}
                         </div>
 
                     </div>
 
                 </div>
+            </div>
 
-                {/* HIDDEN OFFSCREEN CARDS FOR MULTI-PAGE PDF & PNG EXPORT */}
-                <div style={{ position: 'absolute', top: '-99999px', left: '-99999px', opacity: 0, pointerEvents: 'none' }}>
-                    {selectedEmployees.map((pegawai) => {
-                        const isLong = isLongSlip(pegawai);
-                        const isTarget = pegawai.tipe_penggajian === 'Target';
+            {/* HIDDEN OFFSCREEN CARDS FOR MULTI-PAGE PDF & PNG EXPORT */}
+            <div style={{ position: 'absolute', top: '-99999px', left: '-99999px', opacity: 0, pointerEvents: 'none' }}>
+                {selectedEmployees.map((pegawai) => {
+                    const isLong = isLongSlip(pegawai);
+                    return (
+                        <SlipGajiCard
+                            key={pegawai.id}
+                            cardId={`offscreen-pdf-card-${pegawai.id}`}
+                            pegawai={pegawai}
+                            filterValue={filterValue}
+                            isLong={isLong}
+                            isLivePreview={false}
+                        />
+                    );
+                })}
+            </div>
 
-                        return (
-                            <div
-                                key={pegawai.id}
-                                id={`offscreen-pdf-card-${pegawai.id}`}
-                                className={`bg-white p-3.5 w-[140mm] ${isLong ? 'min-h-[195mm] max-h-[198mm]' : 'h-[97mm] overflow-hidden'} text-[9px] font-sans text-slate-900 flex flex-col justify-between gap-1 border border-dashed border-slate-300`}
-                            >
-                                {/* BAGIAN ATAS: HEADER & TABEL RINCIAN */}
-                                <div className="flex flex-col gap-1">
-                                    {/* HEADER SLIP GAJI */}
-                                    <div className="flex justify-between items-start border-b-2 border-slate-900 pb-1">
-                                        <table className="text-left font-bold text-[9px] leading-tight">
-                                            <tbody>
-                                                <tr><td className="w-14 pb-0.1 text-slate-500 font-medium">Nama Pegawai</td><td className="pb-0.1 font-extrabold text-slate-900">: {pegawai.nama}</td></tr>
-                                                <tr><td className="pb-0.1 text-slate-500 font-medium">Jabatan / Shift</td><td className="pb-0.1 font-bold text-slate-800">: {pegawai.jabatan} {pegawai.shift ? `(${pegawai.shift})` : ''}</td></tr>
-                                                <tr><td className="pb-0.1 text-slate-500 font-medium">Tipe Penggajian</td><td className="pb-0.1 font-bold text-slate-800">: {pegawai.tipe_penggajian}</td></tr>
-                                                <tr><td className="pb-0.1 text-slate-500 font-medium">Periode Tanggal</td><td className="pb-0.1 font-bold text-slate-800">: {pegawai.periode_tanggal || filterValue}</td></tr>
-                                            </tbody>
-                                        </table>
+            {/* PRINT-ONLY CONTAINER (UNTUK CETAK BROWSER / WINDOW.PRINT) */}
+            <div className="hidden print:block bg-white text-black font-sans absolute top-0 left-0 w-full z-[99999] m-0 p-0">
+                <style type="text/css" media="print">
+                    {`
+                        @page { 
+                            size: A4 landscape; 
+                            margin: 4mm 6mm; 
+                        }
+                        * { 
+                            -webkit-print-color-adjust: exact !important; 
+                            color-adjust: exact !important; 
+                            print-color-adjust: exact !important;
+                        }
+                        
+                        /* PAKSA SEMUA CONTAINER INDUK UNTUK MEMBUKA OVERFLOW-NYA SAAT PRINT */
+                        html, body, #root, main, .overflow-hidden, .overflow-y-auto, .h-screen {
+                            height: auto !important;
+                            min-height: auto !important;
+                            overflow: visible !important;
+                            position: static !important;
+                        }
 
-                                        <div className="text-right leading-none">
-                                            <h1 className="font-extrabold text-[9px] text-slate-900 uppercase leading-none">Perusahaan Krupuk Mie</h1>
-                                            <h2 className="font-black text-[10.5px] text-emerald-800 tracking-wider leading-tight mt-0.5">" Tiga Berlian Official "</h2>
-                                            <p className="mt-0.5 leading-tight text-[7px] text-slate-500 font-medium">
-                                                Jl. Raya Belakang Yonif 407 &middot; Ds. Harjosari Lor RT 28 RW 06<br />
-                                                Kec. Adiwerna Kab. Tegal &middot; Telp. 095743404555
-                                            </p>
-                                        </div>
-                                    </div>
+                        .print-page-standard {
+                            display: grid !important;
+                            grid-template-columns: repeat(2, 1fr) !important;
+                            grid-template-rows: repeat(2, 1fr) !important;
+                            gap: 3mm 5mm !important;
+                            width: 285mm !important;
+                            height: 200mm !important;
+                            page-break-after: always !important;
+                            break-after: page !important;
+                            box-sizing: border-box !important;
+                            padding: 1mm 0 !important;
+                        }
 
-                                    {/* 1. RINCIAN ABSENSI & UPAH HARIAN */}
-                                    <div>
-                                        <h4 className="font-extrabold text-[8.5px] text-slate-800 uppercase mb-0.5 border-b border-slate-350 pb-0.2">
-                                            1. Rincian Absensi & Upah Harian
-                                        </h4>
-                                        <table className="w-full border-collapse border border-slate-900 text-center text-[8.5px] leading-tight">
-                                            <thead className="border-b border-slate-900 bg-slate-100 font-bold">
-                                                <tr>
-                                                    <th className="border-r border-slate-900 py-0.2 w-4">No</th>
-                                                    <th className="border-r border-slate-900 py-0.2 w-14">Hari / Tgl</th>
-                                                    {isTarget ? (
-                                                        <>
-                                                            <th className="border-r border-slate-900 py-0.2">Pekerjaan Target</th>
-                                                            <th className="border-r border-slate-900 py-0.2 w-11">Harga</th>
-                                                            <th className="border-r border-slate-900 py-0.2 w-9">Capaian</th>
-                                                        </>
-                                                    ) : (
-                                                        <th className="border-r border-slate-900 py-0.2 w-14">Upah Pokok</th>
-                                                    )}
-                                                    <th className="border-r border-slate-900 py-0.2 w-9">T. Disiplin</th>
-                                                    <th className="border-r border-slate-900 py-0.2 w-9">T. Kerapian</th>
-                                                    <th className="border-r border-slate-900 py-0.2 w-9">U. Lembur</th>
-                                                    <th className="border-r border-slate-900 py-0.2 w-12 bg-emerald-50/70 text-emerald-900">Bonus Custom</th>
-                                                    <th className="border-r border-slate-900 py-0.2 w-12 bg-rose-50/70 text-rose-900">Pot. Custom</th>
-                                                    <th className="py-0.2 w-16 text-right px-1">Total Harian</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {pegawai.detail_harian && pegawai.detail_harian.length > 0 ? (
-                                                    pegawai.detail_harian.map((hari: DetailHarian, idx: number) => {
-                                                        const bCustom = getBonusCustomForHari(hari, pegawai, idx);
-                                                        const pCustom = getPotonganCustomForHari(hari, pegawai, idx);
+                        .print-page-long {
+                            display: grid !important;
+                            grid-template-columns: repeat(2, 1fr) !important;
+                            grid-template-rows: 1fr !important;
+                            gap: 3mm 5mm !important;
+                            width: 285mm !important;
+                            height: 200mm !important;
+                            page-break-after: always !important;
+                            break-after: page !important;
+                            box-sizing: border-box !important;
+                            padding: 1mm 0 !important;
+                        }
+                    `}
+                </style>
 
-                                                        return (
-                                                            <tr key={idx} className="border-b border-slate-200">
-                                                                <td className="border-r border-slate-900 py-0.2 font-medium text-slate-500">{idx + 1}</td>
-                                                                <td className="border-r border-slate-900 py-0.2 text-left px-1 font-semibold">{hari.hari_tanggal || '-'}</td>
-                                                                {isTarget ? (
-                                                                    <>
-                                                                        <td className="border-r border-slate-900 py-0.2 text-left px-1 italic truncate max-w-20">{hari.nama_target || '-'}</td>
-                                                                        <td className="border-r border-slate-900 py-0.2 text-right px-1 font-semibold">{formatAngka(hari.harga_satuan)}</td>
-                                                                        <td className="border-r border-slate-900 py-0.2 font-bold">{formatAngka(hari.capaian)}</td>
-                                                                    </>
-                                                                ) : (
-                                                                    <td className="border-r border-slate-900 py-0.2 text-right px-1 font-semibold">{formatAngka(hari.gaji_kehadiran)}</td>
-                                                                )}
-                                                                <td className="border-r border-slate-900 py-0.2 text-right px-1 font-semibold">{formatAngka(hari.t_absensi)}</td>
-                                                                <td className="border-r border-slate-900 py-0.2 text-right px-1 font-semibold">{formatAngka(hari.t_kerapian)}</td>
-                                                                <td className="border-r border-slate-900 py-0.2 text-right px-1 font-semibold">{formatAngka(hari.lembur)}</td>
-                                                                <td className="border-r border-slate-900 py-0.2 text-right px-1 font-bold text-emerald-700 bg-emerald-50/30">
-                                                                    {bCustom > 0 ? `+${formatAngka(bCustom)}` : '-'}
-                                                                </td>
-                                                                <td className="border-r border-slate-900 py-0.2 text-right px-1 font-bold text-rose-600 bg-rose-50/30">
-                                                                    {pCustom > 0 ? `-${formatAngka(pCustom)}` : '-'}
-                                                                </td>
-                                                                <td className="py-0.2 font-extrabold text-right px-1 text-slate-900">
-                                                                    {formatAngka(
-                                                                        (isTarget
-                                                                            ? (Number(hari.harga_satuan) || 0) * (Number(hari.capaian) || 0)
-                                                                            : (Number(hari.gaji_kehadiran) || 0))
-                                                                        + (Number(hari.t_absensi) || 0)
-                                                                        + (Number(hari.t_kerapian) || 0)
-                                                                        + (Number(hari.lembur) || 0)
-                                                                        + bCustom
-                                                                        - pCustom
-                                                                    )}
-                                                                </td>
-                                                            </tr>
-                                                        );
-                                                    })
-                                                ) : (
-                                                    <tr><td colSpan={isTarget ? 11 : 9} className="py-1 text-slate-400 italic">Data absensi harian tidak tersedia</td></tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                {/* BAGIAN BAWAH: SEKSI 2 & 3 (KASBON, TABUNGAN & KOMPONEN) DAN SEKSI 4 (UPAH BERSIH) */}
-                                <div className="flex flex-col gap-1">
-                                    {/* 2 & 3. RINCIAN AKUMULASI PENDAPATAN & POTONGAN */}
-                                    <div className="grid grid-cols-2 gap-2 leading-tight">
-                                        <div className="border border-slate-900 p-1.5 rounded-md bg-slate-50/50">
-                                            <h5 className="font-bold text-[8.5px] text-slate-800 uppercase mb-0.5 border-b border-slate-300 pb-0.2">
-                                                2. Informasi Kasbon & Tabungan
-                                            </h5>
-                                            <table className="w-full text-[8.5px]">
-                                                <tbody className="divide-y divide-slate-200">
-                                                    {pegawai.rincian_potongan?.detail_kasbon?.map((bon: any, i: number) => (
-                                                        <tr key={i}>
-                                                            <td className="py-0.2 text-slate-650 font-medium">Sisa Kasbon ({bon.keterangan}):</td>
-                                                            <td className="py-0.2 text-right font-bold text-rose-600">{formatRupiah(bon.sisa_pinjaman_terkini)}</td>
-                                                        </tr>
-                                                    ))}
-                                                    <tr>
-                                                        <td className="py-0.2 text-slate-650 font-medium">Tabungan Lembur Tahunan:</td>
-                                                        <td className="py-0.2 text-right font-bold text-slate-800">{formatRupiah(pegawai.informasi_tabungan?.tabungan_lembur_tahunan_terkumpul)}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td className="py-0.2 text-slate-650 font-medium">Tabungan Loyalitas:</td>
-                                                        <td className="py-0.2 text-right font-bold text-slate-800">{formatRupiah(pegawai.informasi_tabungan?.tabungan_loyalitas_akumulasi)}</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-
-                                        <div className="border border-slate-900 p-1.5 rounded-md bg-slate-50/50">
-                                            <h5 className="font-bold text-[8.5px] text-slate-800 uppercase mb-0.5 border-b border-slate-300 pb-0.2">
-                                                3. Rincian Komponen Gaji
-                                            </h5>
-                                            <table className="w-full text-[8.5px]">
-                                                <tbody className="divide-y divide-slate-200">
-                                                    <tr>
-                                                        <td className="py-0.2 text-slate-650 font-medium">Jumlah Gaji Pokok:</td>
-                                                        <td className="py-0.2 text-right font-bold text-slate-800">{formatRupiah(pegawai.gaji_dasar)}</td>
-                                                    </tr>
-                                                    {pegawai.rincian_bonus?.bonus_kehadiran_mingguan > 0 && (
-                                                        <tr>
-                                                            <td className="py-0.2 text-slate-650 font-medium">Bonus Mingguan Full:</td>
-                                                            <td className="py-0.2 text-right font-bold text-emerald-600">+{formatRupiah(pegawai.rincian_bonus?.bonus_kehadiran_mingguan)}</td>
-                                                        </tr>
-                                                    )}
-                                                    {pegawai.rincian_bonus?.uang_lembur_akumulasi > 0 && (
-                                                        <tr>
-                                                            <td className="py-0.2 text-slate-650 font-medium">Total Lembur:</td>
-                                                            <td className="py-0.2 text-right font-bold text-emerald-600">+{formatRupiah(pegawai.rincian_bonus?.uang_lembur_akumulasi)}</td>
-                                                        </tr>
-                                                    )}
-                                                    {getGroupedBonusCustom(pegawai).map((bGroup, i) => (
-                                                        <tr key={'bg-' + i}>
-                                                            <td className="py-0.2 text-emerald-700 font-semibold italic">Bonus ({bGroup.keterangan}):</td>
-                                                            <td className="py-0.2 text-right font-extrabold text-emerald-600">+{formatRupiah(bGroup.total)}</td>
-                                                        </tr>
-                                                    ))}
-
-                                                    {/* POTONGAN */}
-                                                    {pegawai.denda_sistem > 0 && (
-                                                        <tr>
-                                                            <td className="py-0.2 text-rose-650 font-medium">Denda / Telat / Alpha:</td>
-                                                            <td className="py-0.2 text-right font-bold text-rose-600">-{formatRupiah(pegawai.denda_sistem)}</td>
-                                                        </tr>
-                                                    )}
-                                                    {pegawai.rincian_potongan?.detail_kasbon?.map((bon: any, i: number) => (
-                                                        <tr key={'bon-' + i}>
-                                                            <td className="py-0.2 text-rose-650 font-medium">Pot. Kasbon ({bon.keterangan}):</td>
-                                                            <td className="py-0.2 text-right font-bold text-rose-600">-{formatRupiah(bon.nominal_potongan)}</td>
-                                                        </tr>
-                                                    ))}
-                                                    {getGroupedPotonganCustom(pegawai).map((pGroup, i) => (
-                                                        <tr key={'pg-' + i}>
-                                                            <td className="py-0.2 text-rose-750 font-semibold italic">Pot. Custom ({pGroup.keterangan}):</td>
-                                                            <td className="py-0.2 text-right font-extrabold text-rose-600">-{formatRupiah(pGroup.total)}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-
-                                    {/* 4. TOTAL UPAH BERSIH */}
-                                    <div className="bg-slate-900 text-white p-1.5 rounded-lg flex justify-between items-center shadow-xs shrink-0">
-                                        <div>
-                                            <span className="text-[8px] uppercase font-bold text-slate-400 block tracking-wider leading-none">TOTAL UPAH BERSIH</span>
-                                            <span className="text-[8px] text-slate-300 font-semibold mt-0.5 leading-none">Status: <strong className={pegawai.status?.toLowerCase() === 'lunas' ? 'text-emerald-400' : 'text-amber-400'}>{pegawai.status}</strong></span>
-                                        </div>
-                                        <div className="text-[12.5px] font-black text-emerald-400 leading-none">
-                                            {formatRupiah(pegawai.total_upah)}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-
-
+                {renderPrintPages()}
             </div>
 
             {/* POPUP KONFIRMASI STATUS GAJI PENDING & PERINGATAN SISA KASBON */}
@@ -1215,7 +1383,6 @@ export default function ModalPreviewSlipGaji({
                     </div>
                 }
             />
-        </div>
+        </>
     );
 }
-

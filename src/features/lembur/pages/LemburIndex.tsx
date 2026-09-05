@@ -13,7 +13,7 @@ export default function LemburIndex() {
         queryKey: ['lemburList'],
         queryFn: async () => {
             const [resultLembur, resultPegawai] = await Promise.all([
-                apiFetchJson('/api/v1/lembur/future'),
+                apiFetchJson('/api/v1/lembur'),
                 apiFetchJson('/api/v1/pegawai').catch(() => ({ data: [] }))
             ]);
 
@@ -23,7 +23,7 @@ export default function LemburIndex() {
             const formattedData = (resultLembur.data || []).map((item: LemburData, index: number) => ({
                 ...item,
                 id: item.id || index + 1,
-                nama: item.nama || item.pegawai?.nama || pegawaiMap.get(String(item.pegawai_id)) || ""
+                nama: item.nama || item.nama_pegawai || item.pegawai?.nama || pegawaiMap.get(String(item.pegawai_id)) || ""
             }));
 
             return formattedData;

@@ -26,6 +26,7 @@ export interface LemburData{
     nominal_upah_custom?: number | null;
     tipe_hitung_lembur?: 'per_jam' | 'flat';
     nama?: string;
+    nama_pegawai?: string;
     pegawai?: { nama: string };
 }
 
