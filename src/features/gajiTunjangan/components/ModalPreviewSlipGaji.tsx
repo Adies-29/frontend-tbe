@@ -394,7 +394,7 @@ export function SlipGajiCard({
     return (
         <div
             id={cardId}
-            className={`bg-white p-3.5 w-[140mm] ${isLong ? 'min-h-[195mm] max-h-[198mm]' : 'h-[97mm] max-h-[97mm] overflow-hidden'} text-[9px] font-sans text-slate-900 flex flex-col justify-between gap-1 border border-dashed border-slate-300 box-border`}
+            className={`bg-white p-3.5 w-[140mm] ${isLong ? 'min-h-[195mm] max-h-[198mm]' : 'h-[97mm] max-h-[97mm] overflow-hidden'} text-[9px] font-sans text-slate-900 flex flex-col justify-start gap-1.5 border border-dashed border-slate-300 box-border`}
         >
             {/* BAGIAN ATAS: HEADER & TABEL RINCIAN */}
             <div className="flex flex-col gap-1">
