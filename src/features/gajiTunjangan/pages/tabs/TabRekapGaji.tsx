@@ -6,7 +6,6 @@ import { apiFetchJson } from '../../../../utils/apiFetch';
 import Notif from '../../../../components/common/Notif';
 import ConfirmPopUp from '../../../../components/common/ConfirmPopUp';
 import { TabelRekapGaji, type RekapGajiData } from '../../../../features/gajiTunjangan/components/TabelRekapGaji';
-import SlipGajiTemplate from '../../../../features/gajiTunjangan/components/SlipGajiTemplate';
 import ModalRincianGaji from '../../../../features/gajiTunjangan/components/ModalRincianGaji';
 import ModalPreviewSlipGaji from '../../../../features/gajiTunjangan/components/ModalPreviewSlipGaji';
 import { useRekapGaji } from '../../hooks/useRekapGaji';
@@ -269,8 +268,6 @@ export default function TabRekapGaji({ hookParams }: TabRekapGajiProps) {
                 />
 
             </section>
-
-            <SlipGajiTemplate data={rekapGajiData} filterValue={filterValue} />
 
             <ModalRincianGaji
                 isOpen={modalDetail.isOpen}
