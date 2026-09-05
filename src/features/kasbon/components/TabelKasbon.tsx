@@ -73,8 +73,8 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
             `${item.persentase_cicilan || 0}%`,
             item.nominal_cicilan_per_gajian || 0,
             item.sisa_pinjaman || 0,
-            item.min_hari_hadir_mingguan 
-                ? `${item.min_hari_hadir_mingguan} Hari` 
+            (item.min_hari_hadir_mingguan !== undefined && item.min_hari_hadir_mingguan !== null)
+                ? (Number(item.min_hari_hadir_mingguan) === 0 ? 'Tanpa Minimal Absensi' : `${item.min_hari_hadir_mingguan} Hari`)
                 : (isAturanAktif ? `Ikuti Global (${globalMinHari} Hari)` : 'Aturan Nonaktif'),
             item.status || '',
             item.is_paused ? 'Ya (Hold)' : 'Tidak',
@@ -191,7 +191,15 @@ export default function TabelKasbon({ data, isLoading = false, onDelete, onStatu
                     );
                 }
 
-                if (customHari) {
+                if (customHari !== undefined && customHari !== null) {
+                    if (Number(customHari) === 0) {
+                        return (
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-full text-[11px] font-bold inline-flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                Tanpa Minimal
+                            </span>
+                        );
+                    }
                     return (
                         <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[11px] font-semibold">
                             Min. {customHari} Hari
