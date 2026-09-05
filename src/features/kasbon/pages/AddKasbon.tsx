@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Wallet, FileText, User, AlertTriangle, Sliders } from "lucide-react";
+import { ArrowLeft, Wallet, FileText, User, AlertTriangle, Sliders, Zap, CalendarCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,7 +22,7 @@ const kasbonSchema = z.object({
     persentase_cicilan: z.coerce.number().min(10, "Minimal 10%").max(100, "Maksimal 100%"),
     keterangan_pinjaman: z.string().min(1, "Keterangan wajib diisi"),
     is_custom_kehadiran: z.boolean().optional(),
-    min_hari_hadir_mingguan: z.coerce.number().min(1).max(7).optional()
+    min_hari_hadir_mingguan: z.coerce.number().min(0).max(7).optional()
 });
 
 type KasbonFormData = z.infer<typeof kasbonSchema>;
@@ -33,6 +33,7 @@ export default function AddKasbon() {
     const { notif, showNotif, showErrorNotif, closeNotif } = useNotif();
 
     const [isCustomHari, setIsCustomHari] = useState(false);
+    const [customSyaratType, setCustomSyaratType] = useState<'tanpa_minimal' | 'hari_tertentu'>('tanpa_minimal');
     const [customHariVal, setCustomHariVal] = useState<number>(5);
 
     const {
@@ -51,9 +52,10 @@ export default function AddKasbon() {
             persentase_cicilan: 20,
             keterangan_pinjaman: "",
             is_custom_kehadiran: false,
-            min_hari_hadir_mingguan: 5
+            min_hari_hadir_mingguan: 0
         }
     });
+
 
     const selectedPegawaiId = watch("pegawai_id");
     const nominalRaw = watch("nominal_pinjaman");
@@ -144,11 +146,12 @@ export default function AddKasbon() {
         };
 
         if (isCustomHari) {
-            payload.min_hari_hadir_mingguan = customHariVal;
+            payload.min_hari_hadir_mingguan = customSyaratType === 'tanpa_minimal' ? 0 : customHariVal;
         }
 
         addKasbonMutation.mutate(payload);
     };
+
 
     // Format input uang
     const handleNominalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -306,32 +309,87 @@ export default function AddKasbon() {
                                             onChange={(e) => setIsCustomHari(e.target.checked)}
                                             className="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
                                         />
-                                        <span>Gunakan Syarat Custom Khusus Kasbon Ini</span>
+                                        <span className="font-semibold text-slate-700">Gunakan Syarat Custom Khusus Kasbon Ini</span>
                                     </label>
                                 </div>
                             </div>
 
                             {isCustomHari ? (
-                                <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-2">
-                                    <div>
-                                        <p className="text-xs font-bold text-gray-800">Tentukan Jumlah Hari Hadir Minimal:</p>
-                                        <p className="text-[11px] text-gray-500 mt-0.5">Kasbon ini hanya dipotong jika pegawai berangkat minimal hari di bawah ini.</p>
+                                <div className="bg-white p-4 rounded-xl border border-slate-200 mt-2 space-y-4">
+                                    <p className="text-xs font-bold text-gray-800">Pilih Tipe Syarat Pemotongan Custom:</p>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {/* OPSI 1: TANPA MINIMAL ABSENSI */}
+                                        <div
+                                            onClick={() => setCustomSyaratType('tanpa_minimal')}
+                                            className={`p-3.5 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between gap-2 ${customSyaratType === 'tanpa_minimal'
+                                                    ? 'border-emerald-600 bg-emerald-50/50 shadow-xs ring-1 ring-emerald-600'
+                                                    : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'
+                                                }`}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <Zap size={16} className={customSyaratType === 'tanpa_minimal' ? 'text-emerald-600 fill-emerald-600' : 'text-slate-400'} />
+                                                    <span className="text-xs font-extrabold text-slate-800">Tanpa Minimal Absensi</span>
+                                                </div>
+                                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${customSyaratType === 'tanpa_minimal' ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
+                                                    }`}>
+                                                    Otomatis
+                                                </span>
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 leading-relaxed">
+                                                Kasbon akan <strong>selalu otomatis dipotong</strong> di setiap periode penggajian tanpa syarat minimal hari masuk kerja.
+                                            </p>
+                                        </div>
+
+                                        {/* OPSI 2: MINIMAL HARI HADIR TERTENTU */}
+                                        <div
+                                            onClick={() => setCustomSyaratType('hari_tertentu')}
+                                            className={`p-3.5 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between gap-2 ${customSyaratType === 'hari_tertentu'
+                                                    ? 'border-emerald-600 bg-emerald-50/50 shadow-xs ring-1 ring-emerald-600'
+                                                    : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'
+                                                }`}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <CalendarCheck size={16} className={customSyaratType === 'hari_tertentu' ? 'text-emerald-600' : 'text-slate-400'} />
+                                                    <span className="text-xs font-extrabold text-slate-800">Minimal Hari Hadir</span>
+                                                </div>
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${customSyaratType === 'hari_tertentu' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-200 text-slate-600'
+                                                    }`}>
+                                                    {customHariVal} Hari
+                                                </span>
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 leading-relaxed">
+                                                Kasbon hanya dipotong jika kehadiran pegawai dalam seminggu mencapai target minimal hari.
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        {[1, 2, 3, 4, 5, 6, 7].map((h) => (
-                                            <button
-                                                key={h}
-                                                type="button"
-                                                onClick={() => setCustomHariVal(h)}
-                                                className={`w-8 h-8 rounded-lg text-xs font-bold transition-all border ${customHariVal === h
-                                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                                                    : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                                                    }`}
-                                            >
-                                                {h}
-                                            </button>
-                                        ))}
-                                    </div>
+
+                                    {/* PEMILIH HARI JIKA MEMILIH HARI TERTENTU */}
+                                    {customSyaratType === 'hari_tertentu' && (
+                                        <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50 p-3 rounded-lg">
+                                            <div>
+                                                <span className="text-xs font-bold text-slate-700 block">Tentukan Jumlah Hari Minimal:</span>
+                                                <span className="text-[10.5px] text-slate-500">Pilih antara 1 sampai 7 hari kerja per minggu</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                {[1, 2, 3, 4, 5, 6, 7].map((h) => (
+                                                    <button
+                                                        key={h}
+                                                        type="button"
+                                                        onClick={() => setCustomHariVal(h)}
+                                                        className={`w-8 h-8 rounded-lg text-xs font-bold transition-all border cursor-pointer ${customHariVal === h
+                                                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs scale-105'
+                                                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                                                            }`}
+                                                    >
+                                                        {h}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <p className="text-xs text-slate-500 italic">
@@ -340,6 +398,7 @@ export default function AddKasbon() {
                             )}
 
                         </section>
+
 
                         {/* SEKSI 4: KETERANGAN */}
                         <section className="md:col-span-2 bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
